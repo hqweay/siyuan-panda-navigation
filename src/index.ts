@@ -150,9 +150,9 @@ export class PandaNavigation extends Plugin {
   private initDefaultSettings() {
     const defaultSettings: Record<string, any> = {
       enableBottomNav: "both",
-      showBackButton: "both",
+      showBackButton: "mobile",
       noteBookID: "",
-      showForwardButton: "both",
+      showForwardButton: "mobile",
       showCustomLinksButton: "both",
       showDailyNoteButton: "both",
       showNavigationMenuButton: "both",
