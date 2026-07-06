@@ -36,6 +36,7 @@
     --btn-color: var(--b3-theme-on-surface, inherit);
     --btn-active-color: var(--b3-theme-primary, #007aff);
   "
+  title={deviceType === "desktop" ? button.label : undefined}
   on:click={handleClick}
   on:touchstart={handleTouchStart}
   on:touchend={handleTouchEnd}
@@ -81,12 +82,12 @@
 
   .nav-button.desktop {
     background: transparent;
-    border: 1px solid var(--b3-border-color, rgba(89, 130, 246, 0.2));
+    border: none;
     font-size: 12px;
-    padding: 6px 8px;
+    padding: 8px;
     gap: 2px;
-    min-width: 45px;
-    min-height: 38px;
+    min-width: 36px;
+    min-height: 36px;
     border-radius: 8px;
   }
 
@@ -100,10 +101,8 @@
   }
 
   .nav-button.desktop:hover {
-    background: var(--b3-theme-background-light, rgba(59, 130, 246, 0.12));
-    border-color: var(--btn-active-color);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: var(--b3-theme-background-light, rgba(59, 130, 246, 0.12));
+    color: var(--btn-active-color);
   }
 
   .icon {
@@ -116,18 +115,18 @@
   }
   
   .nav-button.desktop .icon {
-    font-size: 14px;
+    font-size: 20px;
     margin-bottom: 0;
+  }
+
+  .nav-button.desktop .label {
+    display: none;
   }
 
   .label {
     pointer-events: none;
     font-size: 10px;
     font-weight: 500;
-  }
-
-  .nav-button.desktop .label {
-    color: var(--b3-theme-on-surface-light, #6c757d);
   }
 
   .icon.svg-icon svg {

@@ -200,7 +200,6 @@ const log = getLogger("lets-nav-helper");
       "showNavigationMenuButton",
       "showForwardButton",
       "showCustomLinksButton",
-      "showContextButton"
     ];
     const buttonOrder = settings.getBySpace(pluginMetadata.name, "buttonOrder") || defaultOrder;
     return buttonOrder.indexOf(a.key) - buttonOrder.indexOf(b.key);
@@ -417,46 +416,6 @@ const log = getLogger("lets-nav-helper");
     submenuVisible = true;
   }
 
-  // 显示 PC 专属悬浮球菜单
-  function showDesktopMenu(event: MouseEvent) {
-    submenuType = "navigation"; // 复用基本样式
-    submenuTriggerButton = event.currentTarget as HTMLElement;
-    submenuItems = [];
-
-    // 上下级导航
-    if (settings.getBySpace(pluginMetadata.name, "showContextButton")) {
-      submenuItems.push(
-        {
-          icon: "#iconUp",
-          label: plugin.i18n["lets-nav-helper.jumpToParent"],
-          action: async () => {
-            await navigation.goToParent();
-          }
-        },
-        {
-          icon: "#iconDown",
-          label: plugin.i18n["lets-nav-helper.jumpToChild"],
-          action: async () => {
-            await navigation.goToChild();
-          }
-        }
-      );
-    }
-
-    // 快捷动作 (合并 position === "submenu" 以及可能的回退动作)
-    if (finalSubmenuActions.length > 0) {
-      finalSubmenuActions.forEach((action) => {
-        submenuItems.push({
-          icon: action.icon || "🔗",
-          label: action.title,
-          action: () => executeCustomAction(action)
-        });
-      });
-    }
-
-    submenuVisible = true;
-  }
-
   // 隐藏子菜单
   function hideSubmenu() {
     submenuVisible = false;
@@ -505,17 +464,9 @@ const log = getLogger("lets-nav-helper");
       }
     }}
   >
-    {#if deviceType === "desktop"}
-      <button class="fab-button" on:click={showDesktopMenu}>
-        <svg><use xlink:href="#iconStar"></use></svg>
-      </button>
-    {/if}
-
-    {#if deviceType === "mobile"}
-      {#each visibleButtons as button (button.key)}
-        <NavButton {button} {deviceType} />
-      {/each}
-    {/if}
+    {#each visibleButtons as button (button.key)}
+      <NavButton {button} {deviceType} />
+    {/each}
   </div>
 
   {#if submenuVisible}
@@ -613,46 +564,36 @@ const log = getLogger("lets-nav-helper");
   }
 
   .navigation-container.desktop {
-    bottom: 30px;
-    right: 30px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    height: auto;
+    padding: 4px;
+    gap: 2px;
+    justify-content: center;
+    border-radius: 999px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.2));
-    justify-content: center;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    cursor: pointer;
+    -webkit-backdrop-filter: blur(20px);
+    background-color: var(--nav-bg);
+    border: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.15));
   }
 
-  .navigation-container.desktop:hover {
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  }
-  
-  .navigation-container.desktop:active {
-    transform: translateY(0) scale(0.95);
+  .navigation-container.desktop .nav-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+    border-radius: 8px;
   }
 
-  .fab-button {
-    background: transparent;
-    border: none;
+  .navigation-container.desktop .nav-button .icon {
     font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    outline: none;
-    cursor: pointer;
   }
 
-  .fab-button svg {
-    width: 24px;
-    height: 24px;
-    fill: var(--b3-theme-on-surface, #333);
+  .navigation-container.desktop .nav-button .icon svg {
+    width: 20px;
+    height: 20px;
   }
 
   /* 键盘弹出时的样式调整 */
