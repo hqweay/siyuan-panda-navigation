@@ -350,18 +350,17 @@
         </div>
 
         {#each displayButtons as btn, i (btn.key)}
-          <div class="setting-row">
-            <div class="setting-info fn__flex align-center" style="gap: 10px;">
+          <div class="setting-row button-setting-row">
+            <div class="button-info">
               <div class="action-icon-preview">
                 <svg class="preview-svg"><use xlink:href={btn.icon}></use></svg>
               </div>
-              <span class="setting-title" style="margin: 0;">{btn.label}</span>
+              <span class="setting-title">{btn.label}</span>
             </div>
-            
-            <div class="fn__flex align-center" style="gap: 12px;">
+
+            <div class="button-controls">
               <select
                 class="b3-select"
-                style="width: 140px;"
                 value={getBtnValue(btn.key)}
                 on:change={(e) => setBtnValue(btn.key, e.currentTarget.value)}
               >
@@ -657,6 +656,29 @@
     border-radius: 6px;
   }
 
+  .button-setting-row {
+    gap: 12px;
+  }
+
+  .button-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .button-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .button-controls .b3-select {
+    width: 130px;
+  }
+
   .setting-info {
     display: flex;
     flex-direction: column;
@@ -666,6 +688,7 @@
   .setting-title {
     font-size: 14px;
     font-weight: 500;
+    white-space: nowrap;
   }
 
   .setting-desc {
@@ -730,20 +753,27 @@
   }
 
   .action-icon-preview {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: 6px;
     background-color: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
   }
 
   .preview-svg {
-    width: 14px;
-    height: 14px;
-    fill: currentColor;
+    width: 16px;
+    height: 16px;
+    fill: var(--b3-theme-on-surface);
+    display: block;
+  }
+
+  .preview-emoji {
+    font-size: 16px;
+    line-height: 1;
   }
 
   .preview-emoji {
