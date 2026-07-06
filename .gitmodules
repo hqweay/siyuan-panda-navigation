@@ -1,3 +1,6 @@
 [submodule "vendor/plugin-sample"]
 	path = vendor/plugin-sample
 	url = https://github.com/siyuan-note/plugin-sample
+[submodule "vendor/siyuan"]
+	path = vendor/siyuan
+	url = https://github.com/siyuan-note/siyuan
