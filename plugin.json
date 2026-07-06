@@ -2,11 +2,15 @@
   "name": "siyuan-panda-navigation",
   "author": "养恐龙",
   "url": "https://github.com/hqweay/siyuan-panda-navigation",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minAppVersion": "3.7.0",
   "disabledInPublish": false,
-  "backends": ["all"],
-  "frontends": ["all"],
+  "backends": [
+    "all"
+  ],
+  "frontends": [
+    "all"
+  ],
   "displayName": {
     "default": "熊猫导航",
     "zh-CN": "熊猫导航"
@@ -22,5 +26,9 @@
   "funding": {
     "custom": []
   },
-  "keywords": ["plugin", "navigation", "mobile"]
+  "keywords": [
+    "plugin",
+    "navigation",
+    "mobile"
+  ]
 }

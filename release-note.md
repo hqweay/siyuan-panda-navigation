@@ -1,5 +1,3 @@
-# siyuan-panda-navigation
-
 ## 0.2.0
 
 ### Minor Changes
@@ -9,7 +7,3 @@
   - 按钮显示位置、顺序、标签文字均可自由配置
   - 新增 IconPicker 图标选择器，方便选取思源内置图标
   - 完整的中文设置面板，基础设置、按钮显示、快捷动作三 tab 管理
-
-## 0.1.0
-
-- Initial release.
