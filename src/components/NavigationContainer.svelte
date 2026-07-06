@@ -45,11 +45,7 @@ const log = getLogger("lets-nav-helper");
     if (target === document || target === window) {
       currentScrollTop = window.scrollY || document.documentElement.scrollTop;
     } else {
-      const el = target as HTMLElement;
-      if (!el.classList || (!el.classList.contains("protyle-scroll") && !el.classList.contains("protyle-content"))) {
-        return;
-      }
-      currentScrollTop = el.scrollTop;
+      currentScrollTop = (target as HTMLElement).scrollTop;
     }
     
     if (currentScrollTop === undefined) return;
