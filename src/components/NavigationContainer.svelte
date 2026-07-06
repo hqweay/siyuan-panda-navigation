@@ -103,6 +103,7 @@ const log = getLogger("lets-nav-helper");
 
   // 加载自定义动作
   let customActions: CustomAction[] = settings.getBySpace(pluginMetadata.name, "customActions") || [];
+  let submenuDisplayMode = settings.getBySpace(pluginMetadata.name, "submenuDisplayMode") || "list";
 
   // 动作执行分发
   async function executeCustomAction(action: CustomAction) {
@@ -444,6 +445,17 @@ const log = getLogger("lets-nav-helper");
     submenuTriggerButton = null;
   }
 
+  $: showIconPanel = submenuVisible && submenuType === "customLinks" && submenuDisplayMode === "iconPanel";
+
+  function handleIconPanelOutsideClick(event: Event) {
+    if (showIconPanel) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.icon-panel') && !target.closest('.navigation-container')) {
+        hideSubmenu();
+      }
+    }
+  }
+
   // 过滤显示的按钮
   $: visibleButtons = allNavbarButtons;
 
@@ -489,7 +501,26 @@ const log = getLogger("lets-nav-helper");
     {/each}
   </div>
 
-  {#if submenuVisible}
+  {#if showIconPanel}
+    <div class="icon-panel" class:is-mobile={deviceType === "mobile"}>
+      {#each submenuItems as item, idx (idx)}
+        <button
+          class="icon-panel-btn"
+          title={item.label}
+          on:click={() => {
+            item.action?.();
+            hideSubmenu();
+          }}
+        >
+          {#if item.icon && item.icon.startsWith("#icon")}
+            <svg class="icon-panel-svg"><use xlink:href={item.icon}></use></svg>
+          {:else}
+            <span class="icon-panel-emoji">{item.icon || "🔗"}</span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+  {:else if submenuVisible}
     <Submenu
       type={submenuType}
       items={submenuItems}
@@ -610,6 +641,73 @@ const log = getLogger("lets-nav-helper");
 
   .navigation-container.desktop :global(.nav-button .icon) {
     font-size: 20px;
+  }
+
+  /* 图标面板 */
+  .icon-panel {
+    position: fixed;
+    display: flex;
+    gap: 4px;
+    padding: 6px 10px;
+    background: var(--nav-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.15));
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    z-index: 3;
+    animation: iconPanelIn 0.2s ease-out;
+  }
+
+  .icon-panel.is-mobile {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom, 16px) + var(--nav-height, 44px) + 12px);
+  }
+
+  .icon-panel:not(.is-mobile) {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(20px + 44px + 12px);
+  }
+
+  .icon-panel-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--b3-theme-on-surface);
+    transition: background-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .icon-panel-btn:hover {
+    background-color: var(--b3-theme-background-light, rgba(59, 130, 246, 0.12));
+  }
+
+  .icon-panel-btn:active {
+    transform: scale(0.9);
+  }
+
+  .icon-panel-svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+    display: block;
+  }
+
+  .icon-panel-emoji {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  @keyframes iconPanelIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   /* 键盘弹出时的样式调整 */

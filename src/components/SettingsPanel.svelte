@@ -94,6 +94,8 @@
     settings.getBySpace("nav-helper", "showContextButton") ?? "both";
   let showButtonLabels =
     settings.getBySpace("nav-helper", "showButtonLabels") ?? "both";
+  let submenuDisplayMode =
+    settings.getBySpace("nav-helper", "submenuDisplayMode") ?? "list";
 
   // Button Order Settings
   const ALL_BUTTONS = [
@@ -277,6 +279,7 @@
     settings.setBySpace("nav-helper", "showContextButton", showContextButton);
     settings.setBySpace("nav-helper", "showButtonLabels", showButtonLabels);
     settings.setBySpace("nav-helper", "buttonOrder", buttonOrder);
+    settings.setBySpace("nav-helper", "submenuDisplayMode", submenuDisplayMode);
     settings.setBySpace("nav-helper", "customActions", actions);
 
     await settings.save();
@@ -425,6 +428,14 @@
 
     {#if activeTab === "links"}
       <div class="tab-pane align-stretch">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label">子菜单展示方式</label>
+          <select class="b3-select" bind:value={submenuDisplayMode}>
+            <option value="list">列表</option>
+            <option value="iconPanel">图标面板</option>
+          </select>
+        </div>
+
         <div
           class="fn__flex align-center justify-between"
           style="margin-bottom: 12px;"
