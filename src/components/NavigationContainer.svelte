@@ -495,6 +495,7 @@ const log = getLogger("lets-nav-helper");
   <div
     class="navigation-container {deviceType}"
     class:scrolling-down={isScrollingDown}
+    class:expanded={showIconPanel}
     on:click={(e) => {
       if (isScrollingDown && deviceType === "mobile") {
         isScrollingDown = false;
@@ -580,7 +581,8 @@ const log = getLogger("lets-nav-helper");
     transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 opacity 0.3s ease,
-                transform 0.3s ease;
+                transform 0.3s ease,
+                border-radius 0.2s ease;
     cursor: default;
   }
 
@@ -661,11 +663,8 @@ const log = getLogger("lets-nav-helper");
     background-image: linear-gradient(var(--nav-bg), var(--nav-bg));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 16px 16px 0 0;
-    border-bottom: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.12));
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+    border-radius: 999px 999px 0 0;
     animation: expansionIn 0.18s ease-out;
-    z-index: 5;
   }
 
   .expansion-icons {
@@ -733,6 +732,11 @@ const log = getLogger("lets-nav-helper");
 
   .navigation-container.desktop .buttons-wrapper {
     justify-content: center;
+  }
+
+  /* 展开时导航栏只保留底部圆角，与二级栏合体成一个完整胶囊 */
+  .navigation-container.expanded {
+    border-radius: 0 0 999px 999px;
   }
 
   /* 键盘弹出时的样式调整 */
