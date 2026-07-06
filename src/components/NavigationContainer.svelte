@@ -122,7 +122,13 @@ const log = getLogger("lets-nav-helper");
       await goToRandomBlock(value);
     } else if (type === "command") {
       try {
-        globalCommand(value, plugin.app);
+        if (value === "goBack") {
+          navigation.goBack();
+        } else if (value === "goForward") {
+          navigation.goForward();
+        } else {
+          globalCommand(value, plugin.app);
+        }
       } catch (err) {
         log.error("执行内置命令失败:", err);
         showMessage("执行内置命令失败");
