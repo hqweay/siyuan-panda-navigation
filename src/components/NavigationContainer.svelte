@@ -507,10 +507,7 @@ const log = getLogger("lets-nav-helper");
         <button
           class="icon-panel-btn"
           title={item.label}
-          on:click={() => {
-            item.action?.();
-            hideSubmenu();
-          }}
+          on:click={() => item.action?.()}
         >
           {#if item.icon && item.icon.startsWith("#icon")}
             <svg class="icon-panel-svg"><use xlink:href={item.icon}></use></svg>
