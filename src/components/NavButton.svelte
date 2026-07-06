@@ -65,7 +65,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: background-color 0.15s ease,
+                color 0.15s ease,
+                transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     font-family: inherit;
     position: relative;
   }
