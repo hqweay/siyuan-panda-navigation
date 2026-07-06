@@ -139,7 +139,16 @@
   if (!Array.isArray(customActions)) {
     customActions = [];
   }
-  let actions = [...customActions];
+  let actions = customActions.map((a: any) => ({
+    enabled: a.enabled ?? true,
+    title: a.title,
+    type: a.type,
+    value: a.value,
+    icon: a.icon,
+    showOn: a.showOn ?? "both",
+    mobilePosition: a.mobilePosition ?? a.position ?? "navbar",
+    desktopPosition: a.desktopPosition ?? a.position ?? "navbar",
+  }));
 
   // 折叠与选择相关的状态
   let expandedIndex: number | null = null;
@@ -183,11 +192,14 @@
     actions = [
       ...actions,
       {
+        enabled: true,
         title: "新动作",
         type: "url",
         value: "",
         icon: "#iconLink",
-        position: "submenu",
+        showOn: "both",
+        mobilePosition: "navbar",
+        desktopPosition: "navbar",
       },
     ];
     expandedIndex = actions.length - 1;
@@ -427,7 +439,7 @@
 
         <div class="actions-list">
           {#each actions as action, i (i)}
-            <div class="action-card" class:expanded={expandedIndex === i}>
+            <div class="action-card" class:expanded={expandedIndex === i} class:disabled={!action.enabled}>
               <!-- Header of card -->
               <!-- svelte-ignore a11y-no-static-element-interactions -->
               <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -436,6 +448,19 @@
                   <span class="arrow-indicator"
                     >{expandedIndex === i ? "▼" : "▶"}</span
                   >
+                  <!-- svelte-ignore a11y-click-events-have-key-events -->
+                  <span
+                    class="enable-toggle"
+                    class:enabled={action.enabled}
+                    on:click|stopPropagation
+                    on:click={() => {
+                      action.enabled = !action.enabled;
+                      actions = [...actions];
+                    }}
+                    role="checkbox"
+                    aria-checked={action.enabled}
+                    tabindex="-1"
+                  ></span>
                   <div class="action-icon-preview">
                     {#if action.icon && action.icon.startsWith("#icon")}
                       <svg class="preview-svg"
@@ -465,8 +490,12 @@
                             ? "添加到数据库"
                             : "打开设置"}
                   </span>
-                  <span class="badge badge-pos">
-                    {action.position === "navbar" ? "底栏" : "菜单"}
+                  <span class="badge badge-showon">
+                    {action.showOn === "both"
+                      ? "全部"
+                      : action.showOn === "mobile"
+                        ? "仅手机"
+                        : "仅电脑"}
                   </span>
 
                   <div class="action-arrows fn__flex">
@@ -505,12 +534,59 @@
                     </div>
 
                     <div class="form-item">
-                      <label class="form-label">展示位置</label>
-                      <select class="b3-select" bind:value={action.position}>
-                        <option value="navbar">底栏导航</option>
-                        <option value="submenu">子菜单</option>
+                      <label class="form-label">启用</label>
+                      <div class="fn__flex" style="align-items:center;gap:8px;">
+                        <span
+                          class="enable-switch"
+                          class:on={action.enabled}
+                          role="checkbox"
+                          aria-checked={action.enabled}
+                          tabindex="0"
+                          on:click={() => {
+                            action.enabled = !action.enabled;
+                            actions = [...actions];
+                          }}
+                          on:keydown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              action.enabled = !action.enabled;
+                              actions = [...actions];
+                            }
+                          }}
+                        ></span>
+                        <span style="font-size:13px;color:var(--b3-theme-on-surface);"
+                          >{action.enabled ? "已启用" : "已停用"}</span
+                        >
+                      </div>
+                    </div>
+
+                    <div class="form-item">
+                      <label class="form-label">展示于</label>
+                      <select class="b3-select" bind:value={action.showOn}>
+                        <option value="both">全部设备</option>
+                        <option value="mobile">仅手机</option>
+                        <option value="desktop">仅电脑</option>
                       </select>
                     </div>
+
+                    {#if action.showOn !== "desktop"}
+                      <div class="form-item">
+                        <label class="form-label">手机端位置</label>
+                        <select class="b3-select" bind:value={action.mobilePosition}>
+                          <option value="navbar">底栏</option>
+                          <option value="submenu">菜单</option>
+                        </select>
+                      </div>
+                    {/if}
+
+                    {#if action.showOn !== "mobile"}
+                      <div class="form-item">
+                        <label class="form-label">电脑端位置</label>
+                        <select class="b3-select" bind:value={action.desktopPosition}>
+                          <option value="navbar">底栏</option>
+                          <option value="submenu">菜单</option>
+                        </select>
+                      </div>
+                    {/if}
 
                     <div class="form-item">
                       <label class="form-label">动作类型</label>
@@ -796,6 +872,10 @@
     border-color: var(--b3-theme-primary);
   }
 
+  .action-card.disabled {
+    opacity: 0.5;
+  }
+
   .action-card-header {
     display: flex;
     justify-content: space-between;
@@ -871,6 +951,76 @@
     background-color: rgba(65, 184, 131, 0.1);
     color: #41b883;
     border: 1px solid rgba(65, 184, 131, 0.2);
+  }
+
+  .badge-showon {
+    background-color: rgba(64, 128, 255, 0.1);
+    color: #4080ff;
+    border: 1px solid rgba(64, 128, 255, 0.2);
+  }
+
+  .enable-toggle {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid var(--b3-border-color);
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    margin: 0 4px;
+  }
+
+  .enable-toggle.enabled {
+    background: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+    position: relative;
+  }
+
+  .enable-toggle.enabled::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 8px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .enable-switch {
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: var(--b3-border-color);
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .enable-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .enable-switch.on {
+    background: var(--b3-theme-primary);
+  }
+
+  .enable-switch.on::after {
+    transform: translateX(16px);
   }
 
   .action-arrows {

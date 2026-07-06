@@ -3,11 +3,14 @@
  */
 
 export interface CustomAction {
+  enabled: boolean;
   title: string;
   type: "url" | "sql" | "command" | "av-add" | "open-setting";
   value: string;
   icon: string;
-  position: "navbar" | "submenu";
+  showOn: "both" | "mobile" | "desktop";
+  mobilePosition: "navbar" | "submenu";
+  desktopPosition: "navbar" | "submenu";
 }
 
 export interface MobileConfig {

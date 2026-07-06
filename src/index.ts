@@ -166,32 +166,44 @@ export class PandaNavigation extends Plugin {
       ],
       customActions: [
         {
+          enabled: true,
           title: "首页",
           type: "url",
           value: "siyuan://common/dashboard",
           icon: "#iconWorkspace",
-          position: "navbar"
+          showOn: "both",
+          mobilePosition: "navbar",
+          desktopPosition: "submenu"
         },
         {
+          enabled: true,
           title: "全局搜索",
           type: "command",
           value: "globalSearch",
           icon: "#iconSearch",
-          position: "navbar"
+          showOn: "mobile",
+          mobilePosition: "navbar",
+          desktopPosition: "submenu"
         },
         {
+          enabled: true,
           title: "随机漫游",
           type: "sql",
           value: "SELECT id FROM blocks WHERE type = 'd'",
           icon: "#iconRefresh",
-          position: "submenu"
+          showOn: "both",
+          mobilePosition: "submenu",
+          desktopPosition: "submenu"
         },
         {
+          enabled: true,
           title: "作者博客",
           type: "url",
           value: "https://leay.net/",
           icon: "#iconLink",
-          position: "submenu"
+          showOn: "both",
+          mobilePosition: "submenu",
+          desktopPosition: "submenu"
         }
       ]
     };

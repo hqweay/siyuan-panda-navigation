@@ -207,8 +207,23 @@ const log = getLogger("lets-nav-helper");
   });
 
   // 处理自定义动作的位置分发与防溢出回退
-  $: navbarActions = customActions.filter(a => a.position === "navbar");
-  $: submenuActions = customActions.filter(a => a.position === "submenu");
+  $: filteredActions = customActions.filter(a => {
+    if (!a.enabled) return false;
+    if (deviceType === "mobile")
+      return a.showOn === "both" || a.showOn === "mobile";
+    return a.showOn === "both" || a.showOn === "desktop";
+  });
+
+  $: navbarActions = filteredActions.filter(a =>
+    deviceType === "mobile"
+      ? a.mobilePosition === "navbar"
+      : a.desktopPosition === "navbar"
+  );
+  $: submenuActions = filteredActions.filter(a =>
+    deviceType === "mobile"
+      ? a.mobilePosition === "submenu"
+      : a.desktopPosition === "submenu"
+  );
 
   function shouldShowLabel(): boolean {
     const setting = settings.getBySpace(pluginMetadata.name, "showButtonLabels") ?? "both";
