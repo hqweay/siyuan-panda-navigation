@@ -198,14 +198,6 @@ const log = getLogger("lets-nav-helper");
     return buttonOrder.indexOf(a.key) - buttonOrder.indexOf(b.key);
   });
 
-  // 过滤显示的内置按钮
-  $: visibleBuiltInButtons = sortedButtonConfigs.filter((btn) => {
-    if (isMobile && btn.show === "mobile") return true;
-    if (!isMobile && btn.show === "pc") return true;
-    if (btn.show === "both") return true;
-    return false;
-  });
-
   // 处理自定义动作的位置分发与防溢出回退
   $: filteredActions = customActions.filter(a => {
     if (!a.enabled) return false;
@@ -224,6 +216,15 @@ const log = getLogger("lets-nav-helper");
       ? a.mobilePosition === "submenu"
       : a.desktopPosition === "submenu"
   );
+
+  // 过滤显示的内置按钮
+  $: visibleBuiltInButtons = sortedButtonConfigs.filter((btn) => {
+    if (btn.key === "showCustomLinksButton" && filteredActions.length === 0) return false;
+    if (isMobile && btn.show === "mobile") return true;
+    if (!isMobile && btn.show === "pc") return true;
+    if (btn.show === "both") return true;
+    return false;
+  });
 
   function shouldShowLabel(): boolean {
     const setting = settings.getBySpace(pluginMetadata.name, "showButtonLabels") ?? "both";
