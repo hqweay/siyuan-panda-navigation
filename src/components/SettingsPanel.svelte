@@ -237,6 +237,7 @@
     if (type === "sql")
       return "输入 SQL 查询语句，例如 SELECT id FROM blocks WHERE type = 'd'";
     if (type === "av-add") return "选择或输入数据库块 ID";
+    if (type === "open-setting") return "";
     return "";
   }
 
@@ -460,7 +461,9 @@
                         ? "SQL"
                         : action.type === "command"
                           ? "命令"
-                          : "添加到数据库"}
+                          : action.type === "av-add"
+                            ? "添加到数据库"
+                            : "打开设置"}
                   </span>
                   <span class="badge badge-pos">
                     {action.position === "navbar" ? "底栏" : "菜单"}
@@ -523,6 +526,7 @@
                         <option value="sql">随机 SQL</option>
                         <option value="command">内置命令</option>
                         <option value="av-add">添加到数据库</option>
+                        <option value="open-setting">打开插件设置</option>
                       </select>
                     </div>
 
@@ -605,6 +609,10 @@
                               placeholder="输入数据库块 ID"
                             />
                           {/if}
+                        </div>
+                      {:else if action.type === "open-setting"}
+                        <div style="padding: 8px 0; opacity: 0.6; font-size: 13px;">
+                          点击后将打开熊猫导航设置面板
                         </div>
                       {:else if action.type === "sql"}
                         <textarea

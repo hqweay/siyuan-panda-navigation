@@ -4,7 +4,7 @@
 
 export interface CustomAction {
   title: string;
-  type: "url" | "sql" | "command" | "av-add";
+  type: "url" | "sql" | "command" | "av-add" | "open-setting";
   value: string;
   icon: string;
   position: "navbar" | "submenu";

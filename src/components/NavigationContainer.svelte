@@ -185,6 +185,8 @@ const log = getLogger("lets-nav-helper");
         log.error("添加到数据库失败:", err);
         showMessage("添加到属性视图/数据库失败");
       }
+    } else if (type === "open-setting") {
+      plugin.openSetting();
     }
   }
 
