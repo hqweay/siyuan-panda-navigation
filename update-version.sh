@@ -2,6 +2,24 @@
 
 run_release() {
   rel_comment="$1"
+  skip_bump_check="$2"
+
+  if [ "$skip_bump_check" != "true" ]; then
+    has_changeset=0
+    for f in .changeset/*.md; do
+      if [ -f "$f" ] && [ "$(basename "$f")" != "README.md" ]; then
+        has_changeset=1
+        break
+      fi
+    done
+    if [ $has_changeset -eq 1 ]; then
+      read -p "发现未消费的 changeset 变更记录。是否自动运行 changeset version 递增版本？[Y/n]: " opt_bump
+      if [ "$opt_bump" != "n" ] && [ "$opt_bump" != "N" ]; then
+        echo "--> 正在自动递增版本..."
+        npx changeset version
+      fi
+    fi
+  fi
 
   new_version=$(node -p "require('./package.json').version")
   echo "当前最新版本号: $new_version"
@@ -51,32 +69,48 @@ show_menu() {
   echo "========================================"
   echo " 🐼 熊猫导航 - 交互式发版控制台 🐼"
   echo "========================================"
-  echo " 1) 📈 直接递增版本 (npm version)"
-  echo " 2) 🚀 正式发布版本 (release)"
-  echo " 3) 💬 快捷 Git 提交 (commit)"
-  echo " 4) 🔄 重新触发打包 (re-release tag)"
-  echo " 5) 🚪 退出菜单 (exit)"
+  echo " 1) ✍️  添加变更记录 (changeset)"
+  echo " 2) 🔍 预览待发布变更 (status)"
+  echo " 3) 📈 本地递增版本 (changeset version)"
+  echo " 4) 🚀 正式发布版本 (release)"
+  echo " 5) 💬 快捷 Git 提交 (commit)"
+  echo " 6) 🔄 重新触发打包 (re-release tag)"
+  echo " 7) 🚪 退出菜单 (exit)"
   echo "========================================"
 }
 
 run_menu() {
   while true; do
     show_menu
-    read -p "请选择操作 [1-5]: " opt
+    read -p "请选择操作 [1-7]: " opt
     case $opt in
       1)
-        echo "--> 选择递增版本类型..."
-        read -p "请输入版本类型 [patch/minor/major] (默认 patch): " bump_type
-        bump_type=${bump_type:-patch}
-        npm version "$bump_type" --no-git-tag-version
-        new_version=$(node -p "require('./package.json').version")
-        echo "版本已更新至: $new_version"
+        echo "--> 启动 changeset 记录..."
+        npx changeset
         ;;
       2)
+        echo "--> 预览待发布变更内容..."
+        found=0
+        for f in .changeset/*.md; do
+          if [ -f "$f" ] && [ "$(basename "$f")" != "README.md" ]; then
+            found=1
+            echo -e "\n--- 变更文件: $f ---"
+            cat "$f"
+          fi
+        done
+        if [ $found -eq 0 ]; then
+          echo "提示: 当前没有未发布的 changeset 变更记录。"
+        fi
+        ;;
+      3)
+        echo "--> 运行 changeset version..."
+        npx changeset version
+        ;;
+      4)
         echo "--> 执行正式版本发布..."
         run_release
         ;;
-      3)
+      5)
         echo "--> 执行快捷 Git 提交..."
         read -p "请输入 Commit 消息: " commit_msg
         if [ -n "$commit_msg" ]; then
@@ -87,16 +121,16 @@ run_menu() {
           echo "错误: Commit 消息不能为空！"
         fi
         ;;
-      4)
+      6)
         echo "--> 执行重新打包..."
         re_release
         ;;
-      5)
+      7)
         echo "再见！👋"
         exit 0
         ;;
       *)
-        echo "输入无效，请输入 1-5 之间的数字。"
+        echo "输入无效，请输入 1-7 之间的数字。"
         ;;
     esac
   done
@@ -129,5 +163,5 @@ else
     jq --arg v "$new_version" '.version = $v' package.json > tmpfile && mv tmpfile package.json
   fi
 
-  run_release "$comment"
+  run_release "$comment" "true"
 fi
