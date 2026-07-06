@@ -9,7 +9,45 @@ import { openMobileFileById, openTab, showMessage } from "siyuan";
 import { mobileUtils, isMobile, plugin } from "@/utils";
 import { navigation } from "@/navigation";
 import { getLogger } from "@/libs/logger";
+import { settings } from "@/settings";
 const log = getLogger("randomDocCache");
+
+/** 从配置中收集所有已启用的随机 SQL 快捷操作 */
+export function getRandomBlockSqls(): string[] {
+  const actions = settings.getBySpace("nav-helper", "customActions") || [];
+  const sqls = actions
+    .filter(
+      (act: { type?: string; enabled?: boolean; value?: string }) =>
+        act.type === "sql" && act.enabled !== false && act.value?.trim()
+    )
+    .map((act: { value: string }) => act.value.trim());
+  return sqls.length > 0 ? sqls : ["SELECT id FROM blocks WHERE type = 'd'"];
+}
+
+/** 键盘快捷键使用的随机 SQL（取第一个 sql 类型动作） */
+export function getRandomBlockSql(): string {
+  return getRandomBlockSqls()[0];
+}
+
+/** 预加载所有已配置的随机 SQL 缓存 */
+export function preloadAllRandomDocCaches(): void {
+  for (const sql of getRandomBlockSqls()) {
+    preloadRandomDocCache(sql);
+  }
+}
+
+/**
+ * 优化随机漫游 SQL：去掉 RANDOM() 排序、收紧 LIMIT，避免全表扫描/排序
+ */
+export function optimizeRandomSql(sql: string, limit: number): string {
+  let inner = sql.trim().replace(/;\s*$/, "");
+  inner = inner.replace(/select\s+\*/i, "SELECT id");
+  // JS 侧已洗牌，SQL 里的 ORDER BY RANDOM() 只会拖慢查询
+  inner = inner.replace(/\s+ORDER\s+BY\s+RANDOM\s*\(\s*\)(\s+(ASC|DESC))?/gi, "");
+  // 去掉末尾 LIMIT，统一由外层控制采样量
+  inner = inner.replace(/\s+LIMIT\s+\d+(\s+OFFSET\s+\d+)?\s*$/i, "");
+  return `SELECT id FROM (${inner}) LIMIT ${limit}`;
+}
 
 interface CacheEntry {
   ids: string[];
@@ -170,9 +208,7 @@ export class RandomDocCache {
    */
   private async reloadCache(cacheKey: string, sql: string): Promise<void> {
     try {
-      // 避免全表随机排序，改为拉取后 JS 内存洗牌
-      // 如果调用方不慎使用了 SELECT *，尝试替换为 SELECT id 提高网络性能
-      const optimizedSql = sql.replace(/select\s+\*/i, "SELECT id");
+      const optimizedSql = optimizeRandomSql(sql, this.config.cacheSize * 2);
       const result = await executeSql(optimizedSql);
       let ids = result?.map((item: any) => item.id).filter(Boolean) || [];
 
@@ -196,7 +232,7 @@ export class RandomDocCache {
 
       this.cache.set(cacheKey, cacheEntry);
 
-      log.info(`随机文档缓存已更新: ${sql} -> ${ids.length} 条记录`);
+      log.info(`随机文档缓存已更新: ${optimizedSql} -> ${ids.length} 条记录`);
     } catch (error) {
       log.error("重新加载随机文档缓存失败:", error);
 
@@ -215,7 +251,10 @@ export class RandomDocCache {
    * 检查缓存是否过期
    */
   private isCacheExpired(cacheEntry: CacheEntry): boolean {
-    return Date.now() - cacheEntry.lastUpdated > this.config.maxCacheAge;
+    // 空缓存（多为 SQL 失败）缩短过期时间，便于重试
+    const maxAge =
+      cacheEntry.ids.length === 0 ? 30_000 : this.config.maxCacheAge;
+    return Date.now() - cacheEntry.lastUpdated > maxAge;
   }
 
   /**

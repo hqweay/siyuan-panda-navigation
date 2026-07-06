@@ -3,7 +3,7 @@ import { isMobile, setPlugin, mobileUtils } from "./utils";
 import { navigation } from "./navigation";
 import { settings } from "./settings";
 import { getLogger } from "./libs/logger";
-import { goToRandomBlock } from "./myscripts/randomDocCache";
+import { goToRandomBlock, preloadAllRandomDocCaches, getRandomBlockSql } from "./myscripts/randomDocCache";
 import { openBlockByID } from "./myscripts/syUtils";
 import { createDailynote, registerPlugin, unregisterPlugin } from "@frostime/siyuan-plugin-kits";
 
@@ -42,10 +42,7 @@ export class PandaNavigation extends Plugin {
       langKey: "lets-nav-helper.cmdRandom",
       hotkey: "⌥⌘R",
       callback: () => {
-        const actions = settings.getBySpace("nav-helper", "customActions") || [];
-        const sqlAction = actions.find((act: any) => act.type === "sql");
-        const sql = sqlAction?.value || "SELECT id FROM blocks WHERE type = 'd'";
-        goToRandomBlock(sql);
+        goToRandomBlock(getRandomBlockSql());
       }
     });
 
