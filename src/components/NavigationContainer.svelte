@@ -192,8 +192,22 @@ const log = getLogger("lets-nav-helper");
     }
   }
 
+  // 按照用户设置的顺序对内置按钮进行排序
+  $: sortedButtonConfigs = [...buttonConfigs].sort((a, b) => {
+    const defaultOrder = [
+      "showBackButton",
+      "showDailyNoteButton",
+      "showNavigationMenuButton",
+      "showForwardButton",
+      "showCustomLinksButton",
+      "showContextButton"
+    ];
+    const buttonOrder = settings.getBySpace(pluginMetadata.name, "buttonOrder") || defaultOrder;
+    return buttonOrder.indexOf(a.key) - buttonOrder.indexOf(b.key);
+  });
+
   // 过滤显示的内置按钮
-  $: visibleBuiltInButtons = buttonConfigs.filter((btn) => {
+  $: visibleBuiltInButtons = sortedButtonConfigs.filter((btn) => {
     if (isMobile && btn.show === "mobile") return true;
     if (!isMobile && btn.show === "pc") return true;
     if (btn.show === "both") return true;

@@ -80,6 +80,46 @@
   let showContextButton =
     settings.getBySpace("nav-helper", "showContextButton") ?? "both";
 
+  // Button Order Settings
+  const ALL_BUTTONS = [
+    { key: "showBackButton", label: "返回按钮", icon: "#iconLeft" },
+    { key: "showDailyNoteButton", label: "今日日记按钮", icon: "#iconCalendar" },
+    { key: "showNavigationMenuButton", label: "导航菜单按钮", icon: "#iconMenu" },
+    { key: "showForwardButton", label: "前进按钮", icon: "#iconRight" },
+    { key: "showCustomLinksButton", label: "快捷链接按钮", icon: "#iconStar" },
+    { key: "showContextButton", label: "上下文状态按钮 (PC专用)", icon: "#iconUp" }
+  ];
+
+  let defaultButtonOrder = ALL_BUTTONS.map(b => b.key);
+  let buttonOrder = settings.getBySpace("nav-helper", "buttonOrder") || [...defaultButtonOrder];
+
+  // 保证已保存列表中含有所有当前配置键 (防止升级兼容问题)
+  ALL_BUTTONS.forEach(b => {
+    if (!buttonOrder.includes(b.key)) {
+      buttonOrder.push(b.key);
+    }
+  });
+
+  let displayButtons = [...ALL_BUTTONS].sort((a, b) => buttonOrder.indexOf(a.key) - buttonOrder.indexOf(b.key));
+
+  function moveButtonUp(index: number) {
+    if (index === 0) return;
+    const temp = displayButtons[index];
+    displayButtons[index] = displayButtons[index - 1];
+    displayButtons[index - 1] = temp;
+    displayButtons = [...displayButtons];
+    buttonOrder = displayButtons.map(b => b.key);
+  }
+
+  function moveButtonDown(index: number) {
+    if (index === displayButtons.length - 1) return;
+    const temp = displayButtons[index];
+    displayButtons[index] = displayButtons[index + 1];
+    displayButtons[index + 1] = temp;
+    displayButtons = [...displayButtons];
+    buttonOrder = displayButtons.map(b => b.key);
+  }
+
   // Custom Actions
   let customActions = settings.getBySpace("nav-helper", "customActions") || [];
   if (!Array.isArray(customActions)) {
@@ -208,6 +248,7 @@
       showNavigationMenuButton,
     );
     settings.setBySpace("nav-helper", "showContextButton", showContextButton);
+    settings.setBySpace("nav-helper", "buttonOrder", buttonOrder);
     settings.setBySpace("nav-helper", "customActions", actions);
 
     await settings.save();
@@ -304,27 +345,37 @@
 
     {#if activeTab === "buttons"}
       <div class="tab-pane">
-        <h4
-          style="margin: 0 0 12px 0; color: var(--b3-theme-on-surface); font-weight: normal; opacity: 0.8;"
-        >
-          配置各个按钮在移动端/PC端的显示状态：
-        </h4>
+        <div style="margin-bottom: 12px;">
+          <span class="setting-desc" style="margin: 0;">配置各个按钮的显示状态。点击右侧上下箭头可以调整按钮在导航栏的显示顺序。</span>
+        </div>
 
-        {#each [{ key: "showBackButton", label: "返回按钮 (#iconLeft)" }, { key: "showForwardButton", label: "前进按钮 (#iconRight)" }, { key: "showDailyNoteButton", label: "今日日记按钮 (#iconCalendar)" }, { key: "showNavigationMenuButton", label: "导航菜单按钮 (#iconMenu)" }, { key: "showCustomLinksButton", label: "快捷链接按钮 (#iconStar)" }, { key: "showContextButton", label: "上下文状态按钮 (PC专用)" }] as btn}
+        {#each displayButtons as btn, i (btn.key)}
           <div class="setting-row">
-            <div class="setting-info">
-              <span class="setting-title">{btn.label}</span>
+            <div class="setting-info fn__flex align-center" style="gap: 10px;">
+              <div class="action-icon-preview">
+                <svg class="preview-svg"><use xlink:href={btn.icon}></use></svg>
+              </div>
+              <span class="setting-title" style="margin: 0;">{btn.label}</span>
             </div>
-            <select
-              class="b3-select"
-              value={getBtnValue(btn.key)}
-              on:change={(e) => setBtnValue(btn.key, e.currentTarget.value)}
-            >
-              <option value="both">移动端与 PC 端</option>
-              <option value="mobile">仅移动端</option>
-              <option value="pc">仅 PC 端</option>
-              <option value="none">不显示</option>
-            </select>
+            
+            <div class="fn__flex align-center" style="gap: 12px;">
+              <select
+                class="b3-select"
+                style="width: 140px;"
+                value={getBtnValue(btn.key)}
+                on:change={(e) => setBtnValue(btn.key, e.currentTarget.value)}
+              >
+                <option value="both">移动端与 PC 端</option>
+                <option value="mobile">仅移动端</option>
+                <option value="pc">仅 PC 端</option>
+                <option value="none">不显示</option>
+              </select>
+
+              <div class="action-arrows fn__flex">
+                <button class="arrow-btn" disabled={i === 0} on:click={() => moveButtonUp(i)}>▲</button>
+                <button class="arrow-btn" disabled={i === displayButtons.length - 1} on:click={() => moveButtonDown(i)}>▼</button>
+              </div>
+            </div>
           </div>
         {/each}
       </div>
