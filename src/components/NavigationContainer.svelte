@@ -420,6 +420,10 @@ const log = getLogger("lets-nav-helper");
   // 显示快捷动作子菜单
   function showCustomActionsSubmenu(event: MouseEvent) {
     submenuTriggerButton = event.currentTarget as HTMLElement;
+    if (showIconPanel) {
+      hideSubmenu();
+      return;
+    }
     if (finalSubmenuActions.length === 0) {
       showMessage(plugin.i18n["lets-nav-helper.noCustomLinks"]);
       return;
@@ -450,7 +454,7 @@ const log = getLogger("lets-nav-helper");
   function handleIconPanelOutsideClick(event: Event) {
     if (showIconPanel) {
       const target = event.target as HTMLElement;
-      if (!target.closest('.icon-panel') && !target.closest('.navigation-container')) {
+      if (!target.closest('.navigation-container')) {
         hideSubmenu();
       }
     }
@@ -474,12 +478,14 @@ const log = getLogger("lets-nav-helper");
   onMount(() => {
     window.addEventListener("resize", handleResize);
     window.addEventListener("scroll", handleScroll, true); // capture 捕获 protyle 内部滚动
+    document.addEventListener("click", handleIconPanelOutsideClick);
     handleResize();
   });
 
   onDestroy(() => {
     window.removeEventListener("resize", handleResize);
     window.removeEventListener("scroll", handleScroll, true);
+    document.removeEventListener("click", handleIconPanelOutsideClick);
   });
 </script>
 
@@ -489,6 +495,7 @@ const log = getLogger("lets-nav-helper");
   <div
     class="navigation-container {deviceType}"
     class:scrolling-down={isScrollingDown}
+    class:expanded={showIconPanel}
     on:click={(e) => {
       if (isScrollingDown && deviceType === "mobile") {
         isScrollingDown = false;
@@ -496,28 +503,31 @@ const log = getLogger("lets-nav-helper");
       }
     }}
   >
+    {#if showIconPanel}
+      <div class="nav-expansion">
+        <div class="expansion-icons">
+          {#each submenuItems as item, idx (idx)}
+            <button
+              class="expansion-btn"
+              title={item.label}
+              on:click={() => item.action?.()}
+            >
+              {#if item.icon && item.icon.startsWith("#icon")}
+                <svg class="expansion-svg"><use xlink:href={item.icon}></use></svg>
+              {:else}
+                <span class="expansion-emoji">{item.icon || "🔗"}</span>
+              {/if}
+            </button>
+          {/each}
+        </div>
+      </div>
+    {/if}
     {#each visibleButtons as button (button.key)}
       <NavButton {button} {deviceType} {showLabel} />
     {/each}
   </div>
 
-  {#if showIconPanel}
-    <div class="icon-panel" class:is-mobile={deviceType === "mobile"}>
-      {#each submenuItems as item, idx (idx)}
-        <button
-          class="icon-panel-btn"
-          title={item.label}
-          on:click={() => item.action?.()}
-        >
-          {#if item.icon && item.icon.startsWith("#icon")}
-            <svg class="icon-panel-svg"><use xlink:href={item.icon}></use></svg>
-          {:else}
-            <span class="icon-panel-emoji">{item.icon || "🔗"}</span>
-          {/if}
-        </button>
-      {/each}
-    </div>
-  {:else if submenuVisible}
+  {#if !showIconPanel && submenuVisible}
     <Submenu
       type={submenuType}
       items={submenuItems}
@@ -563,7 +573,6 @@ const log = getLogger("lets-nav-helper");
     height: var(--nav-height);
     justify-content: space-around;
     border-radius: 999px;
-    overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -640,39 +649,36 @@ const log = getLogger("lets-nav-helper");
     font-size: 20px;
   }
 
-  /* 图标面板 */
-  .icon-panel {
-    position: fixed;
-    display: flex;
-    gap: 4px;
-    padding: 6px 10px;
-    background: var(--nav-bg);
+  /* 展开层 — 从导航栏顶部生长出来 */
+  .nav-expansion {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    padding: 8px 12px 10px;
+    background: var(--b3-theme-surface);
+    background-image: linear-gradient(var(--nav-bg), var(--nav-bg));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.15));
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-    z-index: 3;
-    animation: iconPanelIn 0.2s ease-out;
+    border-radius: 16px 16px 0 0;
+    border-bottom: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.12));
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+    animation: expansionIn 0.18s ease-out;
+    z-index: 5;
   }
 
-  .icon-panel.is-mobile {
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: calc(env(safe-area-inset-bottom, 16px) + var(--nav-height, 44px) + 12px);
+  .expansion-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    max-width: 240px;
   }
 
-  .icon-panel:not(.is-mobile) {
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: calc(20px + 44px + 12px);
-  }
-
-  .icon-panel-btn {
+  .expansion-btn {
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 8px;
+    padding: 6px;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -682,29 +688,45 @@ const log = getLogger("lets-nav-helper");
     -webkit-tap-highlight-color: transparent;
   }
 
-  .icon-panel-btn:hover {
+  .expansion-btn:hover {
     background-color: var(--b3-theme-background-light, rgba(59, 130, 246, 0.12));
   }
 
-  .icon-panel-btn:active {
+  .expansion-btn:active {
     transform: scale(0.9);
   }
 
-  .icon-panel-svg {
+  .expansion-svg {
     width: 22px;
     height: 22px;
     fill: currentColor;
     display: block;
+    pointer-events: none;
   }
 
-  .icon-panel-emoji {
+  .expansion-emoji {
     font-size: 22px;
     line-height: 1;
+    pointer-events: none;
   }
 
-  @keyframes iconPanelIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  @keyframes expansionIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 展开后导航栏顶部直角，无缝贴合展开层 */
+  .navigation-container.expanded {
+    border-radius: 0 0 999px 999px;
+  }
+
+  /* 非展开状态下限制溢出，保证 pill 过渡干净 */
+  .navigation-container.mobile:not(.expanded) {
+    overflow: hidden;
+  }
+
+  .navigation-container.desktop:not(.expanded) {
+    overflow: visible;
   }
 
   /* 键盘弹出时的样式调整 */
