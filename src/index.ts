@@ -5,7 +5,7 @@ import { settings } from "./settings";
 import { getLogger } from "./libs/logger";
 import { goToRandomBlock } from "./myscripts/randomDocCache";
 import { openBlockByID } from "./myscripts/syUtils";
-import { createDailynote } from "@frostime/siyuan-plugin-kits";
+import { createDailynote, registerPlugin, unregisterPlugin } from "@frostime/siyuan-plugin-kits";
 
 import NavigationContainer from "./components/NavigationContainer.svelte";
 import SettingsPanel from "./components/SettingsPanel.svelte";
@@ -22,6 +22,7 @@ export class PandaNavigation extends Plugin {
 
   async onload() {
     log.info("熊猫导航 - 正在载入插件...");
+    registerPlugin(this);
     setPlugin(this);
     settings.init(this);
 
@@ -73,6 +74,7 @@ export class PandaNavigation extends Plugin {
 
   onunload() {
     log.info("熊猫导航 - 正在卸载插件...");
+    unregisterPlugin();
 
     // 销毁 Svelte 实例
     if (this.mobileNavigationInstance) {

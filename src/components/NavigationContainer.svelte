@@ -11,7 +11,8 @@ const log = getLogger("lets-nav-helper");
   import pluginMetadata from "../plugin";
   import { mobileUtils } from "../utils";
   import { createDailynote } from "@frostime/siyuan-plugin-kits";
-  import { showMessage } from "siyuan";
+  import { showMessage, Dialog } from "siyuan";
+  import { lsNotebooks } from "../api";
   import { createSiyuanAVHelper } from "@/myscripts/dbUtil";
   import { goToRandomBlock } from "@/myscripts/randomDocCache";
   import {
@@ -119,13 +120,31 @@ const log = getLogger("lets-nav-helper");
 
   // 创建今日笔记
   async function createDailyNote() {
+    const noteBookID = settings.getBySpace(pluginMetadata.name, "noteBookID");
+    log.info("createDailyNote clicked, current noteBookID:", noteBookID);
+    if (!noteBookID) {
+      await selectNotebookAndCreateDailyNote();
+    } else {
+      await executeCreateDailyNote(noteBookID);
+    }
+  }
+
+  // 核心创建逻辑
+  async function executeCreateDailyNote(notebookId: string) {
     try {
-      const noteBookID = settings.getBySpace(pluginMetadata.name, "noteBookID");
+      // 校验该笔记本是否存在且未关闭，防止旧的/不存在的 ID 导致直接报错
+      const res = await lsNotebooks();
+      const notebookExists = res?.notebooks?.some((nb: any) => nb.id === notebookId && !nb.closed);
+      if (!notebookExists) {
+        log.warn(`日记笔记本 ${notebookId} 不存在或已关闭，重置配置并重新弹出选择框`);
+        settings.setBySpace(pluginMetadata.name, "noteBookID", "");
+        await settings.save();
+        await selectNotebookAndCreateDailyNote();
+        return;
+      }
+
       const today = new Date();
-      const dailyNoteId = await createDailynote(
-        noteBookID || "20210926105749-l6jquz7",
-        today
-      );
+      const dailyNoteId = await createDailynote(notebookId, today);
 
       if (dailyNoteId) {
         openBlockByID(dailyNoteId);
@@ -139,6 +158,74 @@ const log = getLogger("lets-nav-helper");
       log.error("创建今日笔记失败:", error);
       showMessage(plugin.i18n["lets-nav-helper.dailyNoteFailed"]);
       mobileUtils.vibrate([100, 50, 100]);
+    }
+  }
+
+  // 弹出选择框选择笔记本
+  async function selectNotebookAndCreateDailyNote() {
+    try {
+      const res = await lsNotebooks();
+      if (!res || !res.notebooks) {
+        showMessage("无法获取笔记本列表");
+        return;
+      }
+      const openNotebooks = res.notebooks.filter((nb: any) => !nb.closed);
+      if (openNotebooks.length === 0) {
+        showMessage("没有打开的笔记本，请先创建或打开一个笔记本");
+        return;
+      }
+
+      // 如果只有一个打开的笔记本，直接使用，不需要让用户选择
+      if (openNotebooks.length === 1) {
+        const notebookId = openNotebooks[0].id;
+        settings.setBySpace(pluginMetadata.name, "noteBookID", notebookId);
+        await settings.save();
+        await executeCreateDailyNote(notebookId);
+        return;
+      }
+
+      // 如果有多个笔记本，弹窗让用户选择
+      const dialog = new Dialog({
+        title: "选择日记笔记本",
+        content: `
+          <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto;">
+            <p style="margin: 0 0 4px 0; font-size: 13px; color: var(--b3-theme-on-surface-light);">
+              您尚未配置日记笔记本。请选择一个笔记本，选择后将自动保存：
+            </p>
+            <div id="notebook-select-list" style="display: flex; flex-direction: column; gap: 8px;">
+              ${openNotebooks.map(nb => `
+                <button class="b3-button b3-button--outline" data-id="${nb.id}" style="width: 100%; text-align: left; display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding: 8px 12px; font-size: 14px;">
+                  <span>📁</span>
+                  <span>${nb.name}</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `,
+        width: "320px",
+      });
+
+      // 绑定点击事件
+      const listContainer = dialog.element.querySelector("#notebook-select-list");
+      if (listContainer) {
+        listContainer.addEventListener("click", async (e) => {
+          const btn = (e.target as HTMLElement).closest("button");
+          if (btn) {
+            const notebookId = btn.getAttribute("data-id");
+            if (notebookId) {
+              dialog.destroy();
+              // 保存到配置
+              settings.setBySpace(pluginMetadata.name, "noteBookID", notebookId);
+              await settings.save();
+              // 执行创建日记
+              await executeCreateDailyNote(notebookId);
+            }
+          }
+        });
+      }
+    } catch (err) {
+      log.error("选择笔记本失败:", err);
+      showMessage("获取笔记本列表失败");
     }
   }
 

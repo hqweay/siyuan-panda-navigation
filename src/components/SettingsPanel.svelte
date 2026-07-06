@@ -2,8 +2,22 @@
   import { settings } from "../settings";
   import { plugin } from "../utils";
   import { showMessage } from "siyuan";
+  import { onMount } from "svelte";
+  import { lsNotebooks } from "../api";
 
   export let closeDialog: () => void;
+
+  let notebooks: any[] = [];
+  onMount(async () => {
+    try {
+      const res = await lsNotebooks();
+      if (res && res.notebooks) {
+        notebooks = res.notebooks.filter((nb: any) => !nb.closed);
+      }
+    } catch (e) {
+      console.error("加载笔记本列表失败", e);
+    }
+  });
 
   let activeTab: "general" | "buttons" | "links" = "general";
 
@@ -123,10 +137,15 @@
 
         <div class="setting-row">
           <div class="setting-info">
-            <span class="setting-title">日记笔记本 ID</span>
-            <span class="setting-desc">用于快速创建/打开今日日记的笔记本 ID（可选）</span>
+            <span class="setting-title">日记笔记本</span>
+            <span class="setting-desc">用于快速创建/打开今日日记的笔记本</span>
           </div>
-          <input class="b3-text-field" type="text" style="width: 260px;" placeholder="默认使用首个笔记本" bind:value={noteBookID} />
+          <select class="b3-select" style="width: 260px;" bind:value={noteBookID}>
+            <option value="">（未选择，首次使用时提示）</option>
+            {#each notebooks as notebook}
+              <option value={notebook.id}>{notebook.name}</option>
+            {/each}
+          </select>
         </div>
 
         <div class="setting-row">
