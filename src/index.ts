@@ -156,14 +156,13 @@ export class PandaNavigation extends Plugin {
       showCustomLinksButton: "both",
       showDailyNoteButton: "both",
       showNavigationMenuButton: "both",
-      showContextButton: "both",
+      showButtonLabels: "both",
       buttonOrder: [
         "showBackButton",
         "showDailyNoteButton",
         "showNavigationMenuButton",
         "showForwardButton",
         "showCustomLinksButton",
-        "showContextButton",
       ],
       customActions: [
         {

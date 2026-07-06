@@ -79,6 +79,8 @@
     settings.getBySpace("nav-helper", "showNavigationMenuButton") ?? "both";
   let showContextButton =
     settings.getBySpace("nav-helper", "showContextButton") ?? "both";
+  let showButtonLabels =
+    settings.getBySpace("nav-helper", "showButtonLabels") ?? "both";
 
   // Button Order Settings
   const ALL_BUTTONS = [
@@ -87,7 +89,6 @@
     { key: "showNavigationMenuButton", label: "导航菜单按钮", icon: "#iconMenu" },
     { key: "showForwardButton", label: "前进按钮", icon: "#iconRight" },
     { key: "showCustomLinksButton", label: "快捷链接按钮", icon: "#iconStar" },
-    { key: "showContextButton", label: "上下文状态按钮 (PC专用)", icon: "#iconUp" }
   ];
 
   let defaultButtonOrder = ALL_BUTTONS.map(b => b.key);
@@ -248,6 +249,7 @@
       showNavigationMenuButton,
     );
     settings.setBySpace("nav-helper", "showContextButton", showContextButton);
+    settings.setBySpace("nav-helper", "showButtonLabels", showButtonLabels);
     settings.setBySpace("nav-helper", "buttonOrder", buttonOrder);
     settings.setBySpace("nav-helper", "customActions", actions);
 
@@ -347,6 +349,21 @@
       <div class="tab-pane">
         <div style="margin-bottom: 12px;">
           <span class="setting-desc" style="margin: 0;">配置各个按钮的显示状态。点击右侧上下箭头可以调整按钮在导航栏的显示顺序。</span>
+        </div>
+
+        <div class="setting-row button-setting-row">
+          <div class="button-info">
+            <span class="setting-title">按钮标签文字</span>
+            <span class="setting-desc" style="margin: 0;">控制按钮下方文字标签的显示</span>
+          </div>
+          <div class="button-controls">
+            <select class="b3-select" bind:value={showButtonLabels}>
+              <option value="both">移动端与 PC 端</option>
+              <option value="mobile">仅移动端</option>
+              <option value="pc">仅 PC 端</option>
+              <option value="none">禁用</option>
+            </select>
+          </div>
         </div>
 
         {#each displayButtons as btn, i (btn.key)}

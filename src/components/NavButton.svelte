@@ -7,6 +7,7 @@
     hasSubmenu?: boolean;
   };
   export let deviceType: 'mobile' | 'desktop';
+  export let showLabel: boolean = true;
 
   let isPressed = false;
 
@@ -36,7 +37,7 @@
     --btn-color: var(--b3-theme-on-surface, inherit);
     --btn-active-color: var(--b3-theme-primary, #007aff);
   "
-  title={deviceType === "desktop" ? button.label : undefined}
+  title={!showLabel ? button.label : undefined}
   on:click={handleClick}
   on:touchstart={handleTouchStart}
   on:touchend={handleTouchEnd}
@@ -48,7 +49,7 @@
       {button.icon}
     {/if}
   </span>
-  <span class="label">{button.label}</span>
+  <span class="label" class:visually-hidden={!showLabel}>{button.label}</span>
 </button>
 
 <style>
@@ -119,14 +120,21 @@
     margin-bottom: 0;
   }
 
-  .nav-button.desktop .label {
-    display: none;
-  }
-
   .label {
     pointer-events: none;
     font-size: 10px;
     font-weight: 500;
+  }
+
+  .label.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    padding: 0;
   }
 
   .icon.svg-icon svg {

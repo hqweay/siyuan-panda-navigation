@@ -217,6 +217,17 @@ const log = getLogger("lets-nav-helper");
   $: navbarActions = customActions.filter(a => a.position === "navbar");
   $: submenuActions = customActions.filter(a => a.position === "submenu");
 
+  function shouldShowLabel(): boolean {
+    const setting = settings.getBySpace(pluginMetadata.name, "showButtonLabels") ?? "both";
+    if (setting === "both") return true;
+    if (setting === "mobile") return deviceType === "mobile";
+    if (setting === "pc") return deviceType === "desktop";
+    return false;
+  }
+
+  let showLabel: boolean = true;
+  $: showLabel = shouldShowLabel();
+
   let finalNavbarActions: CustomAction[] = [];
   let finalSubmenuActions: CustomAction[] = [];
 
@@ -465,7 +476,7 @@ const log = getLogger("lets-nav-helper");
     }}
   >
     {#each visibleButtons as button (button.key)}
-      <NavButton {button} {deviceType} />
+      <NavButton {button} {deviceType} {showLabel} />
     {/each}
   </div>
 
@@ -589,11 +600,6 @@ const log = getLogger("lets-nav-helper");
 
   .navigation-container.desktop .nav-button .icon {
     font-size: 20px;
-  }
-
-  .navigation-container.desktop .nav-button .icon svg {
-    width: 20px;
-    height: 20px;
   }
 
   /* 键盘弹出时的样式调整 */
