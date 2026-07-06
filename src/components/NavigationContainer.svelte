@@ -38,18 +38,13 @@ const log = getLogger("lets-nav-helper");
 
   function handleScroll(event: Event) {
     if (deviceType !== "mobile") return;
-    
-    const target = event.target as HTMLElement | Document;
-    let currentScrollTop = 0;
 
-    if (target === document || target === window) {
-      currentScrollTop = window.scrollY || document.documentElement.scrollTop;
-    } else {
-      currentScrollTop = (target as HTMLElement).scrollTop;
-    }
-    
+    const target = event.target as HTMLElement;
+    // 只响应 protyle 主内容区的滚动，忽略弹窗/侧边栏等区域
+    if (!target?.classList?.contains("protyle-content") && !target?.classList?.contains("protyle-scroll")) return;
+
+    const currentScrollTop = target.scrollTop;
     if (currentScrollTop === undefined) return;
-    // 设置一个防抖阈值，避免太敏感
     if (Math.abs(currentScrollTop - lastScrollTop) < 10) return;
 
     if (currentScrollTop > lastScrollTop) {
@@ -58,7 +53,7 @@ const log = getLogger("lets-nav-helper");
     } else {
       isScrollingDown = false;
     }
-    
+
     lastScrollTop = currentScrollTop;
   }
 
@@ -450,7 +445,7 @@ const log = getLogger("lets-nav-helper");
 
   onMount(() => {
     window.addEventListener("resize", handleResize);
-    window.addEventListener("scroll", handleScroll, true); // 使用 capture 捕获内部滚动
+    window.addEventListener("scroll", handleScroll, true); // capture 捕获 protyle 内部滚动
     handleResize();
   });
 
@@ -496,19 +491,19 @@ const log = getLogger("lets-nav-helper");
     -webkit-touch-callout: none;
   }
 
-  .navigation-container.mobile button {
+  .navigation-container.mobile :global(button) {
     -webkit-tap-highlight-color: transparent;
     outline: none;
   }
 
-  .navigation-container.mobile button:active {
+  .navigation-container.mobile :global(button:active) {
     transform: scale(0.95);
   }
 
   .navigation-container {
     touch-action: manipulation;
     position: fixed;
-    z-index: 9999;
+    z-index: 3;
     display: flex;
     align-items: center;
     background-color: var(--nav-bg);
@@ -530,7 +525,8 @@ const log = getLogger("lets-nav-helper");
     -webkit-backdrop-filter: blur(20px);
     transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
-                opacity 0.3s ease;
+                opacity 0.3s ease,
+                transform 0.3s ease;
     cursor: default;
   }
 
@@ -589,14 +585,14 @@ const log = getLogger("lets-nav-helper");
     border: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.15));
   }
 
-  .navigation-container.desktop .nav-button {
+  .navigation-container.desktop :global(.nav-button) {
     min-width: 36px;
     min-height: 36px;
     padding: 6px;
     border-radius: 8px;
   }
 
-  .navigation-container.desktop .nav-button .icon {
+  .navigation-container.desktop :global(.nav-button .icon) {
     font-size: 20px;
   }
 
