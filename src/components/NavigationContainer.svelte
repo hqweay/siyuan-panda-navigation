@@ -126,6 +126,53 @@ const log = getLogger("lets-nav-helper");
           navigation.goBack();
         } else if (value === "goForward") {
           navigation.goForward();
+        } else if (value === "globalSearch") {
+          // Desktop check
+          const searchDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
+            item.element?.querySelector("#searchList")
+          );
+          // Mobile check
+          const mobileModel = document.getElementById("model");
+          const isMobileSearchOpen = mobileModel &&
+            mobileModel.style.transform === "translateY(0px)" &&
+            mobileModel.querySelector("#searchList");
+
+          if (searchDialog) {
+            searchDialog.destroy();
+          } else if (isMobileSearchOpen) {
+            mobileModel.style.transform = "";
+          } else {
+            globalCommand(value, plugin.app);
+          }
+        } else if (value === "recentDocs") {
+          // Desktop check
+          const recentDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
+            item.element?.getAttribute("data-key") === "dialog-recentdocs" ||
+            (item.element?.querySelector(".b3-list") && item.element?.innerHTML.includes((window as any).siyuan?.languages?.recentDocs))
+          );
+          // Mobile check
+          const mobileModel = document.getElementById("model");
+          const isMobileRecentOpen = mobileModel &&
+            mobileModel.style.transform === "translateY(0px)" &&
+            mobileModel.querySelector(".toolbar__text")?.innerHTML.includes((window as any).siyuan?.languages?.recentDocs);
+
+          if (recentDialog) {
+            recentDialog.destroy();
+          } else if (isMobileRecentOpen) {
+            mobileModel.style.transform = "";
+          } else {
+            globalCommand(value, plugin.app);
+          }
+        } else if (value === "config") {
+          // 若思源设置窗口已打开，则再次点击时关闭它
+          const configDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
+            item.element?.querySelector(".config__panel")
+          );
+          if (configDialog) {
+            configDialog.destroy();
+          } else {
+            globalCommand(value, plugin.app);
+          }
         } else {
           globalCommand(value, plugin.app);
         }
