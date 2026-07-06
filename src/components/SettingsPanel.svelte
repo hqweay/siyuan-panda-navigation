@@ -142,7 +142,7 @@
   let actions = [...customActions];
 
   // 折叠与选择相关的状态
-  let expandedIndex: number | null = actions.length > 0 ? 0 : null;
+  let expandedIndex: number | null = null;
 
   const COMMON_ICONS = [
     "#iconWorkspace",
