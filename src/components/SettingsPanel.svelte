@@ -3,12 +3,14 @@
   import { plugin } from "../utils";
   import { showMessage } from "siyuan";
   import { onMount } from "svelte";
-  import { lsNotebooks } from "../api";
+  import { lsNotebooks, request } from "../api";
   import IconPicker from "./IconPicker.svelte";
 
   export let closeDialog: () => void;
 
   let notebooks: any[] = [];
+
+  let avDatabases: { id: string; name: string }[] = [];
 
   // 图标选择弹窗相关的状态
   let showIconPicker = false;
@@ -43,6 +45,17 @@
     } catch (e) {
       console.error("抓取思源系统图标失败，使用经典图标兜底:", e);
       allSiyuanIcons = [...COMMON_ICONS];
+    }
+
+    try {
+      const res = await request("/api/av/searchAttributeView", { keyword: "", excludes: [] });
+      const results = res?.results || [];
+      avDatabases = results.map((b: any) => ({
+        id: b.blockID,
+        name: b.avName || "未命名数据库",
+      }));
+    } catch (e) {
+      console.error("加载数据库列表失败", e);
     }
   });
 
@@ -223,7 +236,7 @@
     if (type === "url") return "输入 https:// 、 siyuan:// 链接或文档 ID";
     if (type === "sql")
       return "输入 SQL 查询语句，例如 SELECT id FROM blocks WHERE type = 'd'";
-    if (type === "av-add") return "输入属性视图/数据库的关联链接";
+    if (type === "av-add") return "选择或输入数据库块 ID";
     return "";
   }
 
@@ -447,7 +460,7 @@
                         ? "SQL"
                         : action.type === "command"
                           ? "命令"
-                          : "数据库"}
+                          : "添加到数据库"}
                   </span>
                   <span class="badge badge-pos">
                     {action.position === "navbar" ? "底栏" : "菜单"}
@@ -509,7 +522,7 @@
                         <option value="url">链接 / 文档ID</option>
                         <option value="sql">随机 SQL</option>
                         <option value="command">内置命令</option>
-                        <option value="av-add">AV 属性视图</option>
+                        <option value="av-add">添加到数据库</option>
                       </select>
                     </div>
 
@@ -563,22 +576,49 @@
                             />
                           {/if}
                         </div>
+                      {:else if action.type === "av-add"}
+                        <div class="fn__flex-column" style="gap: 6px;">
+                          <select
+                            class="b3-select"
+                            on:change={(e) => {
+                              if (e.currentTarget.value !== "custom") {
+                                action.value = e.currentTarget.value;
+                              }
+                            }}
+                            value={avDatabases.some(
+                              (db) => db.id === action.value,
+                            )
+                              ? action.value
+                              : "custom"}
+                          >
+                            <option value="">-- 请选择数据库 --</option>
+                            {#each avDatabases as db}
+                              <option value={db.id}>{db.name}</option>
+                            {/each}
+                            <option value="custom">✍️ 输入自定义 ID</option>
+                          </select>
+                          {#if !avDatabases.some((db) => db.id === action.value) || action.value === ""}
+                            <input
+                              class="b3-text-field"
+                              type="text"
+                              bind:value={action.value}
+                              placeholder="输入数据库块 ID"
+                            />
+                          {/if}
+                        </div>
+                      {:else if action.type === "sql"}
+                        <textarea
+                          class="b3-text-field action-sql-textarea"
+                          bind:value={action.value}
+                          placeholder={getPlaceholder(action.type)}
+                        ></textarea>
                       {:else}
-                        <!-- 普通文本/SQL输入 -->
-                        {#if action.type === "sql"}
-                          <textarea
-                            class="b3-text-field action-sql-textarea"
-                            bind:value={action.value}
-                            placeholder={getPlaceholder(action.type)}
-                          ></textarea>
-                        {:else}
-                          <input
-                            class="b3-text-field"
-                            type="text"
-                            bind:value={action.value}
-                            placeholder={getPlaceholder(action.type)}
-                          />
-                        {/if}
+                        <input
+                          class="b3-text-field"
+                          type="text"
+                          bind:value={action.value}
+                          placeholder={getPlaceholder(action.type)}
+                        />
                       {/if}
                     </div>
                   </div>
