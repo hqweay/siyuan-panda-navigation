@@ -111,18 +111,18 @@
 
   const NATIVE_COMMANDS = [
     { value: "globalSearch", label: "全局搜索 🔍" },
+    { value: "recentDocs", label: "最近文档 🕒" },
     { value: "fileTree", label: "切换文件树 📁" },
     { value: "outline", label: "切换大纲 📑" },
     { value: "bookmark", label: "打开书签 🔖" },
     { value: "tag", label: "打开标签 🏷️" },
     { value: "backlinks", label: "打开反向链接 🔗" },
     { value: "graphView", label: "打开关系图 🕸️" },
-    { value: "openCard", label: "打开闪卡复习 🎴" },
+    { value: "syncNow", label: "立即同步 🔄" },
+    { value: "riffCard", label: "闪卡复习 🎴" },
     { value: "lockScreen", label: "锁屏 🔒" },
     { value: "config", label: "打开思源设置 ⚙️" },
     { value: "newFile", label: "新建文档 📄" },
-    { value: "goBack", label: "后退 ◀️" },
-    { value: "goForward", label: "前进 ▶️" },
   ];
 
   function addAction() {
