@@ -495,7 +495,6 @@ const log = getLogger("lets-nav-helper");
   <div
     class="navigation-container {deviceType}"
     class:scrolling-down={isScrollingDown}
-    class:expanded={showIconPanel}
     on:click={(e) => {
       if (isScrollingDown && deviceType === "mobile") {
         isScrollingDown = false;
@@ -522,9 +521,11 @@ const log = getLogger("lets-nav-helper");
         </div>
       </div>
     {/if}
-    {#each visibleButtons as button (button.key)}
-      <NavButton {button} {deviceType} {showLabel} />
-    {/each}
+    <div class="buttons-wrapper">
+      {#each visibleButtons as button (button.key)}
+        <NavButton {button} {deviceType} {showLabel} />
+      {/each}
+    </div>
   </div>
 
   {#if !showIconPanel && submenuVisible}
@@ -715,18 +716,23 @@ const log = getLogger("lets-nav-helper");
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* 展开后导航栏顶部直角，无缝贴合展开层 */
-  .navigation-container.expanded {
-    border-radius: 0 0 999px 999px;
-  }
-
-  /* 非展开状态下限制溢出，保证 pill 过渡干净 */
-  .navigation-container.mobile:not(.expanded) {
+  /* 按钮包裹层 — 独立裁剪 hover 背景，不干涉展开层 */
+  .buttons-wrapper {
+    display: flex;
+    align-items: center;
     overflow: hidden;
+    border-radius: inherit;
+    gap: inherit;
   }
 
-  .navigation-container.desktop:not(.expanded) {
-    overflow: visible;
+  .navigation-container.mobile .buttons-wrapper {
+    flex: 1;
+    justify-content: space-around;
+    height: 100%;
+  }
+
+  .navigation-container.desktop .buttons-wrapper {
+    justify-content: center;
   }
 
   /* 键盘弹出时的样式调整 */
