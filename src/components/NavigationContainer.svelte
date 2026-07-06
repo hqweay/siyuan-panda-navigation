@@ -382,8 +382,12 @@ const log = getLogger("lets-nav-helper");
 
   // 显示导航子菜单
   function showNavigationSubmenu(event: MouseEvent) {
-    submenuType = "navigation";
     submenuTriggerButton = event.currentTarget as HTMLElement;
+    if (showIconPanel) {
+      hideSubmenu();
+      return;
+    }
+    submenuType = "navigation";
     submenuItems = [
       {
         icon: "#iconUp",
@@ -449,7 +453,7 @@ const log = getLogger("lets-nav-helper");
     submenuTriggerButton = null;
   }
 
-  $: showIconPanel = submenuVisible && submenuType === "customLinks" && submenuDisplayMode === "iconPanel";
+  $: showIconPanel = submenuVisible && (submenuType === "customLinks" || submenuType === "navigation") && submenuDisplayMode === "iconPanel";
 
   function handleIconPanelOutsideClick(event: Event) {
     if (showIconPanel) {
@@ -670,6 +674,8 @@ const log = getLogger("lets-nav-helper");
   .expansion-icons {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
+    margin: 0 auto;
     gap: 2px;
     max-width: 240px;
   }
