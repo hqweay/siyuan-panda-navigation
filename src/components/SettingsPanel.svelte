@@ -23,52 +23,50 @@
 
   // General Settings
   let enableBottomNav = settings.getBySpace("nav-helper", "enableBottomNav") ?? "both";
-
   let noteBookID = settings.getBySpace("nav-helper", "noteBookID") ?? "";
-  let dashBoardLink = settings.getBySpace("nav-helper", "dashBoardLink") ?? "";
-  let randomSql = settings.getBySpace("nav-helper", "randomSql") ?? "SELECT id FROM blocks WHERE type = 'd'";
 
   // Button Visibility Settings
   let showBackButton = settings.getBySpace("nav-helper", "showBackButton") ?? "both";
   let showForwardButton = settings.getBySpace("nav-helper", "showForwardButton") ?? "both";
-  let showDashBoard = settings.getBySpace("nav-helper", "showDashBoard") ?? "both";
-  let showRandomButton = settings.getBySpace("nav-helper", "showRandomButton") ?? "both";
   let showCustomLinksButton = settings.getBySpace("nav-helper", "showCustomLinksButton") ?? "both";
   let showDailyNoteButton = settings.getBySpace("nav-helper", "showDailyNoteButton") ?? "both";
   let showNavigationMenuButton = settings.getBySpace("nav-helper", "showNavigationMenuButton") ?? "both";
   let showContextButton = settings.getBySpace("nav-helper", "showContextButton") ?? "both";
 
-  // Custom Links
-  let customLinks = settings.getBySpace("nav-helper", "customLinks") || [];
-  if (!Array.isArray(customLinks)) {
-    customLinks = [];
+  // Custom Actions
+  let customActions = settings.getBySpace("nav-helper", "customActions") || [];
+  if (!Array.isArray(customActions)) {
+    customActions = [];
   }
-  let links = [...customLinks];
+  let actions = [...customActions];
 
-  function addLink() {
-    links = [...links, { title: "新动作", url: "", icon: "#iconLink" }];
+  function addAction() {
+    actions = [...actions, { title: "新动作", type: "url", value: "", icon: "#iconLink", position: "submenu" }];
   }
 
-  function removeLink(index: number) {
-    links = links.filter((_, i) => i !== index);
+  function removeAction(index: number) {
+    actions = actions.filter((_, i) => i !== index);
+  }
+
+  function getPlaceholder(type: string) {
+    if (type === "url") return "https:// 或 siyuan:// 或 文档 ID";
+    if (type === "sql") return "SELECT id FROM blocks WHERE ...";
+    if (type === "command") return "如 globalSearch, fileTree, outline 等";
+    if (type === "av-add") return "属性视图/数据库的 URL/链接";
+    return "";
   }
 
   async function handleSave() {
     settings.setBySpace("nav-helper", "enableBottomNav", enableBottomNav);
-
     settings.setBySpace("nav-helper", "noteBookID", noteBookID);
-    settings.setBySpace("nav-helper", "dashBoardLink", dashBoardLink);
-    settings.setBySpace("nav-helper", "randomSql", randomSql);
 
     settings.setBySpace("nav-helper", "showBackButton", showBackButton);
     settings.setBySpace("nav-helper", "showForwardButton", showForwardButton);
-    settings.setBySpace("nav-helper", "showDashBoard", showDashBoard);
-    settings.setBySpace("nav-helper", "showRandomButton", showRandomButton);
     settings.setBySpace("nav-helper", "showCustomLinksButton", showCustomLinksButton);
     settings.setBySpace("nav-helper", "showDailyNoteButton", showDailyNoteButton);
     settings.setBySpace("nav-helper", "showNavigationMenuButton", showNavigationMenuButton);
     settings.setBySpace("nav-helper", "showContextButton", showContextButton);
-    settings.setBySpace("nav-helper", "customLinks", links);
+    settings.setBySpace("nav-helper", "customActions", actions);
 
     await settings.save();
     showMessage("熊猫导航配置已保存");
@@ -83,8 +81,6 @@
   function getBtnValue(key: string) {
     if (key === "showBackButton") return showBackButton;
     if (key === "showForwardButton") return showForwardButton;
-    if (key === "showDashBoard") return showDashBoard;
-    if (key === "showRandomButton") return showRandomButton;
     if (key === "showDailyNoteButton") return showDailyNoteButton;
     if (key === "showNavigationMenuButton") return showNavigationMenuButton;
     if (key === "showCustomLinksButton") return showCustomLinksButton;
@@ -94,8 +90,6 @@
   function setBtnValue(key: string, value: string) {
     if (key === "showBackButton") showBackButton = value;
     else if (key === "showForwardButton") showForwardButton = value;
-    else if (key === "showDashBoard") showDashBoard = value;
-    else if (key === "showRandomButton") showRandomButton = value;
     else if (key === "showDailyNoteButton") showDailyNoteButton = value;
     else if (key === "showNavigationMenuButton") showNavigationMenuButton = value;
     else if (key === "showCustomLinksButton") showCustomLinksButton = value;
@@ -147,22 +141,6 @@
             {/each}
           </select>
         </div>
-
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-title">首页/仪表盘链接</span>
-            <span class="setting-desc">点击导航栏首页图标时打开的链接/视图</span>
-          </div>
-          <input class="b3-text-field" type="text" style="width: 260px;" placeholder="siyuan://..." bind:value={dashBoardLink} />
-        </div>
-
-        <div class="setting-row fn__flex-column align-stretch">
-          <div class="setting-info">
-            <span class="setting-title">随机漫游 SQL 语句</span>
-            <span class="setting-desc">配置自定义的 SQL 语句过滤规则，用于随机文档查找</span>
-          </div>
-          <textarea class="b3-text-field fn__block" style="height: 80px; margin-top: 8px; font-family: monospace;" bind:value={randomSql}></textarea>
-        </div>
       </div>
     {/if}
 
@@ -173,8 +151,6 @@
         {#each [
           { key: "showBackButton", label: "返回按钮 (#iconLeft)" },
           { key: "showForwardButton", label: "前进按钮 (#iconRight)" },
-          { key: "showDashBoard", label: "首页按钮 (#iconWorkspace)" },
-          { key: "showRandomButton", label: "随机漫游按钮 (#iconRefresh)" },
           { key: "showDailyNoteButton", label: "今日日记按钮 (#iconCalendar)" },
           { key: "showNavigationMenuButton", label: "导航菜单按钮 (#iconMenu)" },
           { key: "showCustomLinksButton", label: "快捷链接按钮 (#iconStar)" },
@@ -201,42 +177,58 @@
     {#if activeTab === "links"}
       <div class="tab-pane fn__flex-column fn__flex-1 align-stretch">
         <div class="fn__flex align-center justify-between" style="margin-bottom: 12px;">
-          <span class="setting-desc" style="margin: 0;">配置在「快捷动作」菜单中显示的动作，支持外部链接、文档 ID，或 SQL。</span>
-          <button class="b3-button b3-button--outline" on:click={addLink}>添加动作</button>
+          <span class="setting-desc" style="margin: 0;">配置自定义快捷动作。你可以选择将它们展示在底栏导航还是操作子菜单。</span>
+          <button class="b3-button b3-button--outline" on:click={addAction}>添加动作</button>
         </div>
 
         <div class="links-list fn__flex-1">
           <table class="links-table">
             <thead>
               <tr>
-                <th style="width: 60px;">图标</th>
-                <th style="width: 120px;">显示标题</th>
-                <th>链接 / SQL / 数据库ID</th>
-                <th style="width: 60px;">操作</th>
+                <th style="width: 70px;">图标</th>
+                <th style="width: 110px;">显示标题</th>
+                <th style="width: 105px;">动作类型</th>
+                <th>动作内容 / 值</th>
+                <th style="width: 105px;">展示位置</th>
+                <th style="width: 50px;">操作</th>
               </tr>
             </thead>
             <tbody>
-              {#each links as link, i}
+              {#each actions as action, i}
                 <tr>
                   <td>
-                    <input class="b3-text-field input-center" type="text" bind:value={link.icon} placeholder="#iconLink" />
+                    <input class="b3-text-field input-center" type="text" bind:value={action.icon} placeholder="#iconLink" />
                   </td>
                   <td>
-                    <input class="b3-text-field" type="text" bind:value={link.title} placeholder="标题" />
+                    <input class="b3-text-field" type="text" bind:value={action.title} placeholder="标题" />
                   </td>
                   <td>
-                    <input class="b3-text-field" type="text" bind:value={link.url} placeholder="https:// 或 SELECT id FROM..." />
+                    <select class="b3-select" style="padding: 2px 4px; font-size: 12px; height: 28px; width: 100%;" bind:value={action.type}>
+                      <option value="url">链接/ID</option>
+                      <option value="sql">随机 SQL</option>
+                      <option value="command">内置命令</option>
+                      <option value="av-add">AV 属性视图</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input class="b3-text-field" type="text" bind:value={action.value} placeholder={getPlaceholder(action.type)} />
+                  </td>
+                  <td>
+                    <select class="b3-select" style="padding: 2px 4px; font-size: 12px; height: 28px; width: 100%;" bind:value={action.position}>
+                      <option value="navbar">底栏导航</option>
+                      <option value="submenu">子菜单</option>
+                    </select>
                   </td>
                   <td style="text-align: center;">
-                    <button class="delete-btn" on:click={() => removeLink(i)}>
+                    <button class="delete-btn" on:click={() => removeAction(i)}>
                       <svg style="width: 16px; height: 16px; fill: var(--b3-theme-error);"><use xlink:href="#iconTrashcan"></use></svg>
                     </button>
                   </td>
                 </tr>
               {/each}
-              {#if links.length === 0}
+              {#if actions.length === 0}
                 <tr>
-                  <td colspan="4" style="text-align: center; color: var(--b3-theme-on-surface); opacity: 0.5; padding: 24px;">
+                  <td colspan="6" style="text-align: center; color: var(--b3-theme-on-surface); opacity: 0.5; padding: 24px;">
                     点击“添加动作”开始配置快捷操作
                   </td>
                 </tr>
@@ -309,10 +301,6 @@
     background-color: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: 6px;
-  }
-
-  .setting-row.align-stretch {
-    align-items: stretch;
   }
 
   .setting-info {

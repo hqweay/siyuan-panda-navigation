@@ -11,7 +11,8 @@ const log = getLogger("lets-nav-helper");
   import pluginMetadata from "../plugin";
   import { mobileUtils } from "../utils";
   import { createDailynote } from "@frostime/siyuan-plugin-kits";
-  import { showMessage, Dialog } from "siyuan";
+  import { showMessage, Dialog, globalCommand } from "siyuan";
+  import type { CustomAction } from "@/types";
   import { lsNotebooks } from "../api";
   import { createSiyuanAVHelper } from "@/myscripts/dbUtil";
   import { goToRandomBlock } from "@/myscripts/randomDocCache";
@@ -100,20 +101,83 @@ const log = getLogger("lets-nav-helper");
       action: () => navigation.goForward(),
     },
     {
-      key: "showDashBoard",
-      icon: "#iconWorkspace",
-      label: plugin.i18n["lets-nav-helper.home"],
-      show: settings.getBySpace(pluginMetadata.name, "showDashBoard"),
-      action: () => navigation.goToHome(),
-    },
-    {
       key: "showCustomLinksButton",
       icon: "#iconStar",
       label: plugin.i18n["lets-nav-helper.links"],
       show: settings.getBySpace(pluginMetadata.name, "showCustomLinksButton"),
-      action: (event) => showCustomLinksSubmenu(event),
+      action: (event) => showCustomActionsSubmenu(event),
       hasSubmenu: true,
     },
+  ];
+
+  // 加载自定义动作
+  let customActions: CustomAction[] = settings.getBySpace(pluginMetadata.name, "customActions") || [];
+
+  // 动作执行分发
+  async function executeCustomAction(action: CustomAction) {
+    const { type, value, title } = action;
+    if (type === "url") {
+      openByUrl(value);
+    } else if (type === "sql") {
+      await goToRandomBlock(value);
+    } else if (type === "command") {
+      try {
+        globalCommand(value, plugin.app);
+      } catch (err) {
+        log.error("执行内置命令失败:", err);
+        showMessage("执行内置命令失败");
+      }
+    } else if (type === "av-add") {
+      try {
+        const avHelper = await createSiyuanAVHelper(value);
+        await avHelper.addBlocks([getCurrentDocId()]);
+        showMessage("已成功添加到属性视图/数据库");
+      } catch (err) {
+        log.error("添加到数据库失败:", err);
+        showMessage("添加到属性视图/数据库失败");
+      }
+    }
+  }
+
+  // 过滤显示的内置按钮
+  $: visibleBuiltInButtons = buttonConfigs.filter((btn) => {
+    if (isMobile && btn.show === "mobile") return true;
+    if (!isMobile && btn.show === "pc") return true;
+    if (btn.show === "both") return true;
+    return false;
+  });
+
+  // 处理自定义动作的位置分发与防溢出回退
+  $: navbarActions = customActions.filter(a => a.position === "navbar");
+  $: submenuActions = customActions.filter(a => a.position === "submenu");
+
+  let finalNavbarActions: CustomAction[] = [];
+  let finalSubmenuActions: CustomAction[] = [];
+
+  $: {
+    finalNavbarActions = [...navbarActions];
+    finalSubmenuActions = [...submenuActions];
+
+    if (isMobile && deviceType === "mobile") {
+      const totalBuiltIn = visibleBuiltInButtons.length;
+      const limit = 7;
+      if (totalBuiltIn + finalNavbarActions.length > limit) {
+        const allowedNavbarCount = Math.max(0, limit - totalBuiltIn);
+        const overflowActions = finalNavbarActions.slice(allowedNavbarCount);
+        finalNavbarActions = finalNavbarActions.slice(0, allowedNavbarCount);
+        finalSubmenuActions = [...overflowActions, ...finalSubmenuActions];
+      }
+    }
+  }
+
+  $: allNavbarButtons = [
+    ...visibleBuiltInButtons,
+    ...finalNavbarActions.map((action, idx) => ({
+      key: `custom-nav-${idx}`,
+      icon: action.icon || "#iconLink",
+      label: action.title,
+      action: () => executeCustomAction(action),
+    }))
   ];
 
 
@@ -249,13 +313,6 @@ const log = getLogger("lets-nav-helper");
         },
       },
       {
-        icon: "#iconRefresh",
-        label: plugin.i18n["lets-nav-helper.random"],
-        action: async () => {
-          await goToRandomBlock("SELECT id FROM blocks WHERE type = 'd'");
-        },
-      },
-      {
         icon: "#iconRight",
         label: plugin.i18n["lets-nav-helper.jumpToNextSibling"],
         action: async () => {
@@ -273,42 +330,22 @@ const log = getLogger("lets-nav-helper");
     submenuVisible = true;
   }
 
-  // 显示自定义链接子菜单
-  function showCustomLinksSubmenu(event: MouseEvent) {
+  // 显示快捷动作子菜单
+  function showCustomActionsSubmenu(event: MouseEvent) {
     submenuTriggerButton = event.currentTarget as HTMLElement;
-    const links = settings.getBySpace(pluginMetadata.name, "customLinks") || [];
-
-    if (!Array.isArray(links) || links.length === 0) {
+    if (finalSubmenuActions.length === 0) {
       showMessage(plugin.i18n["lets-nav-helper.noCustomLinks"]);
       return;
     }
 
     submenuType = "customLinks";
-    submenuItems = links
-      .map((item: any) => {
-        const { title, url, icon } = item;
-        if (title && url) {
-          return {
-            icon: icon ? icon : "#iconLink",
-            title: title.trim(),
-            url: url.trim(),
-            action: async () => {
-              if (icon == "#iconDatabase" || title.includes("添加到")) {
-                try {
-                  const avHelper = await createSiyuanAVHelper(url);
-                  await avHelper.addBlocks([getCurrentDocId()]);
-                } catch (error) {
-                  log.error("初始化或操作失败:", error);
-                }
-              } else {
-                openByUrl(url);
-              }
-            },
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
+    submenuItems = finalSubmenuActions.map((action: any) => {
+      return {
+        icon: action.icon || "#iconLink",
+        label: action.title,
+        action: () => executeCustomAction(action),
+      };
+    });
 
     submenuVisible = true;
   }
@@ -318,29 +355,6 @@ const log = getLogger("lets-nav-helper");
     submenuType = "navigation"; // 复用基本样式
     submenuTriggerButton = event.currentTarget as HTMLElement;
     submenuItems = [];
-
-    // 随机漫游
-    if (settings.getBySpace(pluginMetadata.name, "showRandomButton")) {
-      submenuItems.push({
-        icon: "#iconRefresh",
-        label: plugin.i18n["lets-nav-helper.random"],
-        action: async () => {
-          let sql = settings.getBySpace(pluginMetadata.name, "randomSql") || "SELECT id FROM blocks WHERE type = 'd'";
-          await goToRandomBlock(sql);
-        }
-      });
-    }
-
-    // 今日笔记
-    if (settings.getBySpace(pluginMetadata.name, "showDailyNoteButton")) {
-      submenuItems.push({
-        icon: "#iconCalendar",
-        label: plugin.i18n["lets-nav-helper.dailyNote"],
-        action: async () => {
-          await createDailyNote();
-        }
-      });
-    }
 
     // 上下级导航
     if (settings.getBySpace(pluginMetadata.name, "showContextButton")) {
@@ -362,32 +376,15 @@ const log = getLogger("lets-nav-helper");
       );
     }
 
-    // 自定义链接
-    if (settings.getBySpace(pluginMetadata.name, "showCustomLinksButton")) {
-      const links = settings.getBySpace(pluginMetadata.name, "customLinks") || [];
-      if (Array.isArray(links)) {
-        links.forEach((item: any) => {
-          const { title, url, icon } = item;
-          if (title && url) {
-          submenuItems.push({
-            icon: icon ? icon : "🔗",
-            label: title.trim(),
-            action: async () => {
-              if (icon == "💾" || title.includes("添加到")) {
-                try {
-                  const avHelper = await createSiyuanAVHelper(url);
-                  await avHelper.addBlocks([getCurrentDocId()]);
-                } catch (error) {
-                  log.error("初始化或操作失败:", error);
-                }
-              } else {
-                openByUrl(url);
-              }
-            }
-          });
-        }
+    // 快捷动作 (合并 position === "submenu" 以及可能的回退动作)
+    if (finalSubmenuActions.length > 0) {
+      finalSubmenuActions.forEach((action) => {
+        submenuItems.push({
+          icon: action.icon || "🔗",
+          label: action.title,
+          action: () => executeCustomAction(action)
+        });
       });
-      }
     }
 
     submenuVisible = true;
@@ -402,12 +399,7 @@ const log = getLogger("lets-nav-helper");
   }
 
   // 过滤显示的按钮
-  $: visibleButtons = buttonConfigs.filter((btn) => {
-    if (isMobile && btn.show === "mobile") return true;
-    if (!isMobile && btn.show === "pc") return true;
-    if (btn.show === "both") return true;
-    return false;
-  });
+  $: visibleButtons = allNavbarButtons;
 
   // 响应式调整
   function handleResize() {

@@ -2,14 +2,20 @@
  * 移动端助手相关类型定义
  */
 
+export interface CustomAction {
+  title: string;
+  type: "url" | "sql" | "command" | "av-add";
+  value: string;
+  icon: string;
+  position: "navbar" | "submenu";
+}
+
 export interface MobileConfig {
   enabled: boolean;
   enableBottomNav: string;
   showBackButton: boolean;
   noteBookID: string;
   showForwardButton: boolean;
-  showDashBoard: boolean;
-  showRandomButton: boolean;
   showCustomLinksButton: boolean;
   showDailyNoteButton: boolean;
   showNavigationMenuButton: boolean;
@@ -18,8 +24,7 @@ export interface MobileConfig {
   backgroundColor: string;
   buttonColor: string;
   activeButtonColor: string;
-  randomSql: string;
-  customLinks: string;
+  customActions: CustomAction[];
 }
 
 export interface NavigationButtonConfig {

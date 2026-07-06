@@ -42,7 +42,9 @@ export class PandaNavigation extends Plugin {
       langKey: "lets-nav-helper.cmdRandom",
       hotkey: "⌥⌘R",
       callback: () => {
-        let sql = settings.getBySpace("nav-helper", "randomSql") || "SELECT id FROM blocks WHERE type = 'd'";
+        const actions = settings.getBySpace("nav-helper", "customActions") || [];
+        const sqlAction = actions.find((act: any) => act.type === "sql");
+        const sql = sqlAction?.value || "SELECT id FROM blocks WHERE type = 'd'";
         goToRandomBlock(sql);
       }
     });
@@ -130,25 +132,18 @@ export class PandaNavigation extends Plugin {
     const shouldShowDesktop = !isMobile && this.showInPC();
 
     if (shouldShowMobile) {
-      if (this.mobileNavigationInstance) {
-        this.mobileNavigationInstance.$set({
-          deviceType: "mobile",
-          isVisible: true,
-        });
-      } else {
-        this.createMobileNavigation();
-      }
+      this.createMobileNavigation();
     } else if (shouldShowDesktop) {
-      if (this.desktopNavigationInstance) {
-        this.desktopNavigationInstance.$set({
-          deviceType: "desktop",
-          isVisible: true,
-        });
-      } else {
-        this.createDesktopNavigation();
-      }
+      this.createDesktopNavigation();
     } else {
-      this.hideNavigation();
+      if (this.mobileNavigationInstance) {
+        this.mobileNavigationInstance.$destroy();
+        this.mobileNavigationInstance = null;
+      }
+      if (this.desktopNavigationInstance) {
+        this.desktopNavigationInstance.$destroy();
+        this.desktopNavigationInstance = null;
+      }
     }
   }
 
@@ -158,16 +153,39 @@ export class PandaNavigation extends Plugin {
       showBackButton: "both",
       noteBookID: "",
       showForwardButton: "both",
-      showDashBoard: "both",
-      dashBoardLink: "",
-      showRandomButton: "both",
       showCustomLinksButton: "both",
       showDailyNoteButton: "both",
       showNavigationMenuButton: "both",
       showContextButton: "both",
-      randomSql: "SELECT id FROM blocks WHERE type = 'd'",
-      customLinks: [
-        { title: "作者博客", url: "https://leay.net/", icon: "#iconLink" }
+      customActions: [
+        {
+          title: "首页",
+          type: "url",
+          value: "siyuan://common/dashboard",
+          icon: "#iconWorkspace",
+          position: "navbar"
+        },
+        {
+          title: "全局搜索",
+          type: "command",
+          value: "globalSearch",
+          icon: "#iconSearch",
+          position: "navbar"
+        },
+        {
+          title: "随机漫游",
+          type: "sql",
+          value: "SELECT id FROM blocks WHERE type = 'd'",
+          icon: "#iconRefresh",
+          position: "submenu"
+        },
+        {
+          title: "作者博客",
+          type: "url",
+          value: "https://leay.net/",
+          icon: "#iconLink",
+          position: "submenu"
+        }
       ]
     };
 
