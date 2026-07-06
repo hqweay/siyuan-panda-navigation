@@ -574,7 +574,7 @@ const log = getLogger("lets-nav-helper");
     max-width: 500px;
     height: var(--nav-height);
     justify-content: space-around;
-    border-radius: 999px;
+    border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -633,7 +633,7 @@ const log = getLogger("lets-nav-helper");
     padding: 4px;
     gap: 2px;
     justify-content: center;
-    border-radius: 999px;
+    border-radius: 20px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -663,7 +663,7 @@ const log = getLogger("lets-nav-helper");
     background-image: linear-gradient(var(--nav-bg), var(--nav-bg));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 999px 999px 0 0;
+    border-radius: 20px 20px 0 0;
     animation: expansionIn 0.18s ease-out;
   }
 
@@ -736,7 +736,7 @@ const log = getLogger("lets-nav-helper");
 
   /* 展开时导航栏只保留底部圆角，与二级栏合体成一个完整胶囊 */
   .navigation-container.expanded {
-    border-radius: 0 0 999px 999px;
+    border-radius: 0 0 20px 20px;
   }
 
   /* 键盘弹出时的样式调整 */
