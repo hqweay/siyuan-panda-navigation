@@ -40,6 +40,10 @@ export default defineConfig({
           dest: "./",
         },
         {
+          src: "./screenshots/**",
+          dest: "./screenshots",
+        },
+        {
           src: "./icon.png",
           dest: "./",
         },

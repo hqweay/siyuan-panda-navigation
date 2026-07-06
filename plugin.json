@@ -1,23 +1,19 @@
 {
   "name": "siyuan-panda-navigation",
-  "author": "hqweay",
+  "author": "养恐龙",
   "url": "https://github.com/hqweay/siyuan-panda-navigation",
   "version": "0.1.0",
   "minAppVersion": "3.7.0",
   "disabledInPublish": false,
-  "backends": [
-    "all"
-  ],
-  "frontends": [
-    "all"
-  ],
+  "backends": ["all"],
+  "frontends": ["all"],
   "displayName": {
     "default": "熊猫导航",
     "zh-CN": "熊猫导航"
   },
   "description": {
     "default": "Sleek and adaptive floating navigation bar for SiYuan Note mobile and desktop.",
-    "zh-CN": "专为思源笔记打造的移动端/PC端自适应悬浮导航栏与快捷操作工具。"
+    "zh-CN": "熊猫总能带你回家～"
   },
   "readme": {
     "default": "README.md",
@@ -26,9 +22,5 @@
   "funding": {
     "custom": []
   },
-  "keywords": [
-    "plugin",
-    "navigation",
-    "mobile"
-  ]
+  "keywords": ["plugin", "navigation", "mobile"]
 }

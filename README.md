@@ -2,8 +2,8 @@
 
 专为思源笔记打造的移动端/桌面端自适应导航栏，让你在思源中浏览文档时操作更顺手。
 
-![桌面端效果](screenshots/pc.png)
-![移动端效果](screenshots/mobile.png)
+![桌面端效果](./screenshots/pc.png)
+![移动端效果](./screenshots/mobile.png)
 
 ## 功能亮点
 
