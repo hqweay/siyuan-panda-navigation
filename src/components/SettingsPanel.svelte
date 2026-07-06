@@ -37,12 +37,12 @@
       });
       // 降级兜底方案
       if (iconsSet.size === 0) {
-        COMMON_ICONS.forEach((i) => iconsSet.add(i.value));
+        COMMON_ICONS.forEach((i) => iconsSet.add(i));
       }
       allSiyuanIcons = Array.from(iconsSet).sort();
     } catch (e) {
       console.error("抓取思源系统图标失败，使用经典图标兜底:", e);
-      allSiyuanIcons = COMMON_ICONS.map((i) => i.value);
+      allSiyuanIcons = [...COMMON_ICONS];
     }
   });
 
@@ -91,22 +91,22 @@
   let expandedIndex: number | null = actions.length > 0 ? 0 : null;
 
   const COMMON_ICONS = [
-    { value: "#iconWorkspace", label: "工作区/首页 🏠" },
-    { value: "#iconSearch", label: "搜索 🔍" },
-    { value: "#iconRefresh", label: "刷新/随机 🔄" },
-    { value: "#iconCalendar", label: "日历/今日 📅" },
-    { value: "#iconMenu", label: "菜单/导航 ☰" },
-    { value: "#iconStar", label: "收藏/星标 ⭐" },
-    { value: "#iconLink", label: "链接 🔗" },
-    { value: "#iconDatabase", label: "数据库/表格 📊" },
-    { value: "#iconUp", label: "向上 ⬆️" },
-    { value: "#iconDown", label: "向下 ⬇️" },
-    { value: "#iconLeft", label: "向左 ⬅️" },
-    { value: "#iconRight", label: "向右 ➡️" },
-    { value: "#iconSettings", label: "设置 ⚙️" },
-    { value: "#iconInfo", label: "信息 ℹ️" },
-    { value: "#iconHelp", label: "帮助 ❓" },
-    { value: "#iconTrashcan", label: "垃圾桶 🗑️" },
+    "#iconWorkspace",
+    "#iconSearch",
+    "#iconRefresh",
+    "#iconCalendar",
+    "#iconMenu",
+    "#iconStar",
+    "#iconLink",
+    "#iconDatabase",
+    "#iconUp",
+    "#iconDown",
+    "#iconLeft",
+    "#iconRight",
+    "#iconSettings",
+    "#iconInfo",
+    "#iconHelp",
+    "#iconTrashcan",
   ];
 
   const NATIVE_COMMANDS = [
