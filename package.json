@@ -1,0 +1,39 @@
+{
+  "name": "siyuan-panda-navigation",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "熊猫导航 - 思源笔记自适应导航栏与快捷工具",
+  "author": "hqweay",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.1.0",
+    "@tsconfig/svelte": "^4.0.1",
+    "@types/node": "^20.3.0",
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.28.1",
+    "fast-glob": "^3.2.12",
+    "glob": "^10.0.0",
+    "minimist": "^1.2.8",
+    "rollup-plugin-livereload": "^2.0.5",
+    "sass": "^1.63.3",
+    "siyuan": "1.1.8",
+    "svelte": "^4.2.19",
+    "typescript": "^5.1.3",
+    "vite": "^5.2.9",
+    "vite-plugin-static-copy": "^1.0.2",
+    "vite-plugin-zip-pack": "^1.0.5"
+  },
+  "dependencies": {
+    "@frostime/siyuan-plugin-kits": "^1.5.14"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@parcel/watcher"
+    ]
+  }
+}
