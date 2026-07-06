@@ -6,7 +6,6 @@ export interface MobileConfig {
   enabled: boolean;
   enableBottomNav: string;
   showBackButton: boolean;
-  navJustInMain: boolean;
   noteBookID: string;
   showForwardButton: boolean;
   showDashBoard: boolean;

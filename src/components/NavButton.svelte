@@ -7,7 +7,6 @@
     hasSubmenu?: boolean;
   };
   export let deviceType: 'mobile' | 'desktop';
-  export let config: any;
 
   let isPressed = false;
 

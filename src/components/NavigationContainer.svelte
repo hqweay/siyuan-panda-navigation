@@ -115,12 +115,7 @@ const log = getLogger("lets-nav-helper");
     },
   ];
 
-  // 获取配置
-  function getConfig() {
-    return {
-      navJustInMain: settings.getBySpace(pluginMetadata.name, "navJustInMain"),
-    };
-  }
+
 
   // 创建今日笔记
   async function createDailyNote() {
@@ -157,9 +152,6 @@ const log = getLogger("lets-nav-helper");
         label: plugin.i18n["lets-nav-helper.jumpToParent"],
         action: async () => {
           await navigation.goToParent();
-          if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) {
-            hideSubmenu();
-          }
         },
       },
       {
@@ -167,9 +159,6 @@ const log = getLogger("lets-nav-helper");
         label: plugin.i18n["lets-nav-helper.jumpToPrevSibling"],
         action: async () => {
           await navigation.goToSibling(-1);
-          if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) {
-            hideSubmenu();
-          }
         },
       },
       {
@@ -177,9 +166,6 @@ const log = getLogger("lets-nav-helper");
         label: plugin.i18n["lets-nav-helper.random"],
         action: async () => {
           await goToRandomBlock("SELECT id FROM blocks WHERE type = 'd'");
-          if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) {
-            hideSubmenu();
-          }
         },
       },
       {
@@ -187,9 +173,6 @@ const log = getLogger("lets-nav-helper");
         label: plugin.i18n["lets-nav-helper.jumpToNextSibling"],
         action: async () => {
           await navigation.goToSibling(1);
-          if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) {
-            hideSubmenu();
-          }
         },
       },
       {
@@ -197,9 +180,6 @@ const log = getLogger("lets-nav-helper");
         label: plugin.i18n["lets-nav-helper.jumpToChild"],
         action: async () => {
           await navigation.goToChild();
-          if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) {
-            hideSubmenu();
-          }
         },
       },
     ];
@@ -236,9 +216,6 @@ const log = getLogger("lets-nav-helper");
               } else {
                 openByUrl(url);
               }
-              if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) {
-                hideSubmenu();
-              }
             },
           };
         }
@@ -263,7 +240,6 @@ const log = getLogger("lets-nav-helper");
         action: async () => {
           let sql = settings.getBySpace(pluginMetadata.name, "randomSql") || "SELECT id FROM blocks WHERE type = 'd'";
           await goToRandomBlock(sql);
-          if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) hideSubmenu();
         }
       });
     }
@@ -275,7 +251,6 @@ const log = getLogger("lets-nav-helper");
         label: plugin.i18n["lets-nav-helper.dailyNote"],
         action: async () => {
           await createDailyNote();
-          if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) hideSubmenu();
         }
       });
     }
@@ -288,7 +263,6 @@ const log = getLogger("lets-nav-helper");
           label: plugin.i18n["lets-nav-helper.jumpToParent"],
           action: async () => {
             await navigation.goToParent();
-            if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) hideSubmenu();
           }
         },
         {
@@ -296,7 +270,6 @@ const log = getLogger("lets-nav-helper");
           label: plugin.i18n["lets-nav-helper.jumpToChild"],
           action: async () => {
             await navigation.goToChild();
-            if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) hideSubmenu();
           }
         }
       );
@@ -323,7 +296,6 @@ const log = getLogger("lets-nav-helper");
               } else {
                 openByUrl(url);
               }
-              if (settings.getBySpace(pluginMetadata.name, "hideSubmenu")) hideSubmenu();
             }
           });
         }
@@ -380,9 +352,6 @@ const log = getLogger("lets-nav-helper");
   <div
     class="navigation-container {deviceType}"
     class:scrolling-down={isScrollingDown}
-    style="
-      --nav-zindex: {getConfig().navJustInMain ? 3 : 9999};
-    "
     on:click={(e) => {
       if (isScrollingDown && deviceType === "mobile") {
         isScrollingDown = false;
@@ -398,7 +367,7 @@ const log = getLogger("lets-nav-helper");
 
     {#if deviceType === "mobile"}
       {#each visibleButtons as button (button.key)}
-        <NavButton {button} {deviceType} config={getConfig()} />
+        <NavButton {button} {deviceType} />
       {/each}
     {/if}
   </div>
@@ -433,7 +402,7 @@ const log = getLogger("lets-nav-helper");
   .navigation-container {
     touch-action: manipulation;
     position: fixed;
-    z-index: var(--nav-zindex);
+    z-index: 9999;
     display: flex;
     align-items: center;
     background-color: var(--nav-bg);

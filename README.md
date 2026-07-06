@@ -98,7 +98,6 @@ src/lets-mobile-helper/
 - `showNavigationMenuButton`: 显示导航菜单按钮
 - `showCustomLinksButton`: 显示自定义链接按钮
 - `showContextButton`: 显示上下文导航按钮
-- `navJustInMain`: 仅在主界面显示导航
 - `noteBookID`: 指定默认笔记本ID（用于今日笔记功能）
 
 #### 界面定制

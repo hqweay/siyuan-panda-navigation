@@ -153,8 +153,6 @@ export class PandaNavigation extends Plugin {
   private initDefaultSettings() {
     const defaultSettings: Record<string, any> = {
       enableBottomNav: "both",
-      navJustInMain: false,
-      hideSubmenu: false,
       showBackButton: "both",
       noteBookID: "",
       showForwardButton: "both",

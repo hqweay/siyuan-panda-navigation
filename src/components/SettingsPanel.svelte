@@ -9,8 +9,7 @@
 
   // General Settings
   let enableBottomNav = settings.getBySpace("nav-helper", "enableBottomNav") ?? "both";
-  let navJustInMain = settings.getBySpace("nav-helper", "navJustInMain") ?? false;
-  let hideSubmenu = settings.getBySpace("nav-helper", "hideSubmenu") ?? false;
+
   let noteBookID = settings.getBySpace("nav-helper", "noteBookID") ?? "";
   let dashBoardLink = settings.getBySpace("nav-helper", "dashBoardLink") ?? "";
   let randomSql = settings.getBySpace("nav-helper", "randomSql") ?? "SELECT id FROM blocks WHERE type = 'd'";
@@ -42,8 +41,7 @@
 
   async function handleSave() {
     settings.setBySpace("nav-helper", "enableBottomNav", enableBottomNav);
-    settings.setBySpace("nav-helper", "navJustInMain", navJustInMain);
-    settings.setBySpace("nav-helper", "hideSubmenu", hideSubmenu);
+
     settings.setBySpace("nav-helper", "noteBookID", noteBookID);
     settings.setBySpace("nav-helper", "dashBoardLink", dashBoardLink);
     settings.setBySpace("nav-helper", "randomSql", randomSql);
@@ -122,21 +120,6 @@
           </select>
         </div>
 
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-title">仅在主界面显示导航</span>
-            <span class="setting-desc">进入思源设置页或弹窗时，导航栏会自动隐藏</span>
-          </div>
-          <input class="b3-switch fn__flex-center" type="checkbox" bind:checked={navJustInMain} />
-        </div>
-
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-title">点击后隐藏子菜单</span>
-            <span class="setting-desc">在导航栏子菜单中点击动作（如跳转到父文档）后自动收起菜单</span>
-          </div>
-          <input class="b3-switch fn__flex-center" type="checkbox" bind:checked={hideSubmenu} />
-        </div>
 
         <div class="setting-row">
           <div class="setting-info">
