@@ -76,16 +76,7 @@ export const builtinCommands: Record<string, BuiltinCommand> = {
             navigation.goForward();
         }
     },
-    navigationMenu: {
-        id: "navigationMenu",
-        title: "导航菜单",
-        requiresParam: false,
-        execute: () => {
-            // This is special, we might need to handle it in the UI layer 
-            // since it opens a popup relative to the button event.
-            // For now, we leave it here and let the UI layer intercept it.
-        }
-    },
+
     "open-setting": {
         id: "open-setting",
         title: "打开设置",

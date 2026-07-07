@@ -28,7 +28,7 @@ const log = getLogger("lets-nav-helper");
   export let isVisible: boolean = true;
 
   let submenuVisible = false;
-  let submenuType: "navigation" | "customLinks" | null = null;
+  let submenuType: "customLinks" | null = null;
   let submenuItems: any[] = [];
   let submenuTriggerButton: HTMLElement | null = null;
   let submenuLayout: "list" | "grid" = "list";
@@ -77,10 +77,6 @@ const log = getLogger("lets-nav-helper");
       let cmdId = item.value;
       if (type !== "builtin" && type !== "internal") {
           cmdId = type; // url, sql, av-add, open-setting
-      }
-      
-      if (cmdId === "navigationMenu") {
-          return;
       }
 
       const cmd = builtinCommands[cmdId];
@@ -147,8 +143,6 @@ const log = getLogger("lets-nav-helper");
   function handleActionClick(item: any, event: Event) {
      if (item.type === "group") {
         showGroupSubmenu(item, event);
-     } else if ((item.type === "internal" || item.type === "builtin") && item.value === "navigationMenu") {
-        showNavigationSubmenu(event as MouseEvent);
      } else {
         executeCustomAction(item);
      }
@@ -159,7 +153,7 @@ const log = getLogger("lets-nav-helper");
     icon: item.icon,
     label: item.title,
     action: (e: Event) => handleActionClick(item, e),
-    hasSubmenu: item.type === "group" || ((item.type === "internal" || item.type === "builtin") && item.value === "navigationMenu")
+    hasSubmenu: item.type === "group"
   }));
 
   $: visibleButtons = allNavbarButtons;
@@ -177,48 +171,6 @@ const log = getLogger("lets-nav-helper");
 
 
 
-  // 显示导航子菜单
-  function showNavigationSubmenu(event: MouseEvent) {
-    if (submenuVisible && submenuType === "navigation") {
-      hideSubmenu();
-      return;
-    }
-    submenuType = "navigation";
-    submenuLayout = "list";
-    submenuTriggerButton = event.currentTarget as HTMLElement;
-    
-    submenuItems = [
-      {
-        icon: "#iconUp",
-        label: plugin.i18n["lets-nav-helper.jumpToParent"],
-        action: async () => {
-          await navigation.goToParent();
-        },
-      },
-      {
-        icon: "#iconLeft",
-        label: plugin.i18n["lets-nav-helper.jumpToPrevSibling"],
-        action: async () => {
-          await navigation.goToSibling(-1);
-        },
-      },
-      {
-        icon: "#iconRight",
-        label: plugin.i18n["lets-nav-helper.jumpToNextSibling"],
-        action: async () => {
-          await navigation.goToSibling(1);
-        },
-      },
-      {
-        icon: "#iconDown",
-        label: plugin.i18n["lets-nav-helper.jumpToChild"],
-        action: async () => {
-          await navigation.goToChild();
-        },
-      },
-    ];
-    submenuVisible = true;
-  }
 
   function showGroupSubmenu(group: any, event: Event) {
     if (submenuVisible && submenuType === "customLinks") {
@@ -266,7 +218,7 @@ const log = getLogger("lets-nav-helper");
     submenuLayout = "list";
   }
 
-  $: showIconPanel = submenuVisible && (submenuType === "customLinks" || submenuType === "navigation") && submenuLayout === "grid" && deviceType === "mobile";
+  $: showIconPanel = submenuVisible && submenuType === "customLinks" && submenuLayout === "grid" && deviceType === "mobile";
 
   function handleIconPanelOutsideClick(event: Event) {
     if (showIconPanel) {

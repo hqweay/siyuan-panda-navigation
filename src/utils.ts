@@ -244,3 +244,10 @@ export const openByMobile = (uri: string) => {
     window.open(uri);
   }
 };
+
+/**
+ * 生成唯一ID
+ */
+export function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+}

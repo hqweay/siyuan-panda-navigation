@@ -1,11 +1,12 @@
 <script lang="ts">
   import { settings } from "../settings";
-  import { plugin } from "../utils";
+  import { plugin, generateId } from "../utils";
   import { showMessage } from "siyuan";
   import { onMount } from "svelte";
   import { lsNotebooks, request } from "../api";
   import { builtinCommands, builtinCommandList } from "../builtins";
   import IconPicker from "./IconPicker.svelte";
+  import { PRESET_GROUPS } from "../config/presets";
 
   export let closeDialog: () => void;
 
@@ -168,9 +169,6 @@
     "#iconTrashcan",
   ];
 
-  function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
-  }
 
   function addMenuItem(parentGroup?: any) {
     const newItem = {
@@ -319,6 +317,26 @@
         <div class="fn__flex align-center justify-between" style="margin-bottom: 12px;">
           <span class="setting-desc" style="margin: 0;">配置您的导航菜单。支持动作和分组（最多2层）。</span>
           <div class="fn__flex" style="gap: 8px;">
+            <select 
+              class="b3-select b3-button--outline" 
+              style="padding-right: 28px; background-color: var(--b3-theme-surface); cursor: pointer;"
+              on:change={(e) => {
+                const presetId = e.currentTarget.value;
+                if (!presetId) return;
+                const preset = PRESET_GROUPS.find(p => p.id === presetId);
+                if (preset) {
+                  const newItem = preset.generate();
+                  menuItems = [...menuItems, newItem];
+                  expandedIndex = newItem.id;
+                }
+                e.currentTarget.value = ""; // Reset
+              }}
+            >
+              <option value="">导入预设...</option>
+              {#each PRESET_GROUPS as preset}
+                <option value={preset.id}>{preset.name}</option>
+              {/each}
+            </select>
             <button class="b3-button b3-button--outline" on:click={() => addGroup()}>添加分组</button>
             <button class="b3-button b3-button--outline" on:click={() => addMenuItem()}>添加动作</button>
           </div>
