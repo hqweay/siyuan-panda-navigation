@@ -3,7 +3,7 @@ import { getBlockByID, listDocsByPath } from "@/api";
 import { getCurrentDocId, openBlockByID } from "@/myscripts/syUtils";
 import { settings } from "@/settings";
 import { plugin } from "@/utils";
-import { showMessage } from "siyuan";
+import { showMessage, globalCommand } from "siyuan";
 import pluginMetadata from "./plugin";
 import { isMobile, mobileUtils } from "./utils";
 import { getLogger } from "@/libs/logger";
@@ -197,7 +197,11 @@ class MobileNavigation {
       return;
     }
     this.forwardStack.push(getCurrentDocId());
-    (window as any).goBack();
+    if (typeof (window as any).goBack === 'function') {
+      (window as any).goBack();
+    } else {
+      globalCommand("goBack", plugin.app);
+    }
     showMessage(plugin.i18n["lets-nav-helper.backToPrev"]);
     mobileUtils.vibrate(50);
   }
@@ -206,6 +210,14 @@ class MobileNavigation {
    * 前进到下一个文档
    */
   goForward(): void {
+    if (typeof (window as any).goBack !== 'function') {
+      // PC environment, use Siyuan's native command
+      globalCommand("goForward", plugin.app);
+      showMessage(plugin.i18n["lets-nav-helper.forwardToNext"]);
+      return;
+    }
+
+    // Mobile environment, use plugin's internal stack
     if (this.forwardStack.length <= 0) {
       showMessage(plugin.i18n["lets-nav-helper.atLatest"]);
       mobileUtils.vibrate([100, 50, 100]);
