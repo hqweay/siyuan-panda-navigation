@@ -2,7 +2,7 @@
   "name": "siyuan-panda-navigation",
   "author": "养恐龙",
   "url": "https://github.com/hqweay/siyuan-panda-navigation",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "minAppVersion": "3.7.0",
   "disabledInPublish": false,
   "backends": [
