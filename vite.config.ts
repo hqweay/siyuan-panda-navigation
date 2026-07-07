@@ -36,6 +36,10 @@ export default defineConfig({
           dest: "./",
         },
         {
+          src: "./kernel.js",
+          dest: "./",
+        },
+        {
           src: "./preview.png",
           dest: "./",
         },

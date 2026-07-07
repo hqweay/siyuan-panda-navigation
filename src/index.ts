@@ -38,6 +38,8 @@ export class PandaNavigation extends Plugin {
     mobileUtils.init();
     navigation.init();
 
+    this.setupKernelRpcListener();
+
     this.addTab({
       type: "panda_settings_tab",
       init() {
@@ -79,9 +81,16 @@ export class PandaNavigation extends Plugin {
     this.registerEventListeners();
   }
 
-  onunload() {
+  async onunload() {
     log.info("熊猫导航 - 正在卸载插件...");
     unregisterPlugin();
+
+    // 注销 MCP 工具
+    const siyuan = (globalThis as any).siyuan;
+    if (siyuan?.mcp?.unregisterTool) {
+      await siyuan.mcp.unregisterTool("panda-nav:navigate");
+      await siyuan.mcp.unregisterTool("panda-nav:random");
+    }
 
     // 销毁 Svelte 实例
     if (this.mobileNavigationInstance) {
@@ -162,6 +171,27 @@ export class PandaNavigation extends Plugin {
         this.desktopNavigationInstance = null;
       }
     }
+  }
+
+  private setupKernelRpcListener() {
+    const kernel = (this as any).kernel;
+    if (!kernel?.rpc?.bind) {
+      log.warn("内核 RPC 不可用，MCP 配置热重载不生效");
+      return;
+    }
+
+    kernel.rpc.bind("panda-nav:config-changed", async (params: { action: string; menuItems: any[] }) => {
+      log.info("收到内核配置变更通知:", params.action);
+
+      if (!params.menuItems) return;
+
+      const oldItems = settings.getBySpace("nav-helper", "menuItems");
+      if (JSON.stringify(oldItems) !== JSON.stringify(params.menuItems)) {
+        settings.setBySpace("nav-helper", "menuItems", params.menuItems);
+        settings.save();
+        this.handleSettingsChange();
+      }
+    });
   }
 
   private initDefaultSettings() {
