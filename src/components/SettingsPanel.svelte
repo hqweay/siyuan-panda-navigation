@@ -9,8 +9,6 @@
 
   export let closeDialog: () => void;
 
-  let notebooks: any[] = [];
-
   let avDatabases: { id: string; name: string }[] = [];
 
   // 图标选择弹窗相关的状态
@@ -20,15 +18,6 @@
   let pluginCommandsGroups: { pluginName: string; commands: { value: string; label: string }[] }[] = [];
 
   onMount(async () => {
-    try {
-      const res = await lsNotebooks();
-      if (res && res.notebooks) {
-        notebooks = res.notebooks.filter((nb: any) => !nb.closed);
-      }
-    } catch (e) {
-      console.error("加载笔记本列表失败", e);
-    }
-
     try {
       // 动态抓取当前思源中注册的所有 SVG symbol 图标 (比如 litheness 主题图标精灵)
       const symbols = document.querySelectorAll("svg symbol");
@@ -154,7 +143,6 @@
   // General Settings
   let enableBottomNav =
     settings.getBySpace("nav-helper", "enableBottomNav") ?? "both";
-  let noteBookID = settings.getBySpace("nav-helper", "noteBookID") ?? "";
   let showButtonLabels = settings.getBySpace("nav-helper", "showButtonLabels") ?? "both";
 
   // Menu Builder Variables
@@ -273,9 +261,8 @@
 
   async function handleSave() {
     settings.setBySpace("nav-helper", "enableBottomNav", enableBottomNav);
-    settings.setBySpace("nav-helper", "noteBookID", noteBookID);
-    settings.setBySpace("nav-helper", "showButtonLabels", showButtonLabels);
     settings.setBySpace("nav-helper", "menuItems", menuItems);
+    settings.setBySpace("nav-helper", "showButtonLabels", showButtonLabels);
 
     await settings.save();
     showMessage("熊猫导航配置已保存");
@@ -321,23 +308,6 @@
             <option value="mobile">仅移动端</option>
             <option value="pc">仅 PC 端</option>
             <option value="none">禁用</option>
-          </select>
-        </div>
-
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-title">日记笔记本</span>
-            <span class="setting-desc">用于快速创建/打开今日日记的笔记本</span>
-          </div>
-          <select
-            class="b3-select"
-            style="width: 260px;"
-            bind:value={noteBookID}
-          >
-            <option value="">（未选择，首次使用时提示）</option>
-            {#each notebooks as notebook}
-              <option value={notebook.id}>{notebook.name}</option>
-            {/each}
           </select>
         </div>
       </div>

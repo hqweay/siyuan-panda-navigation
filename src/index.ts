@@ -5,7 +5,7 @@ import { settings } from "./settings";
 import { getLogger } from "./libs/logger";
 import { goToRandomBlock, preloadAllRandomDocCaches, getRandomBlockSql } from "./myscripts/randomDocCache";
 import { openBlockByID } from "./myscripts/syUtils";
-import { createDailynote, registerPlugin, unregisterPlugin } from "@frostime/siyuan-plugin-kits";
+import { registerPlugin, unregisterPlugin } from "@frostime/siyuan-plugin-kits";
 
 import NavigationContainer from "./components/NavigationContainer.svelte";
 import SettingsPanel from "./components/SettingsPanel.svelte";
@@ -66,19 +66,6 @@ export class PandaNavigation extends Plugin {
       }
     });
 
-    this.addCommand({
-      langKey: "lets-nav-helper.cmdDaily",
-      hotkey: "⌥⌘D",
-      callback: () => {
-        const noteBookID = settings.getBySpace("nav-helper", "noteBookID");
-        const today = new Date();
-        createDailynote(noteBookID || "", today).then((id) => {
-          if (id) {
-            openBlockByID(id);
-          }
-        });
-      }
-    });
   }
 
   async onLayoutReady() {
