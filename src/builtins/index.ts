@@ -5,13 +5,7 @@ import { getCurrentDocId, openBlockByID } from "../myscripts/syUtils";
 import { navigation } from "../navigation";
 import { createSiyuanAVHelper } from "../myscripts/dbUtil";
 
-// For daily note we'll import it from wherever it is or reimplement.
-// Since createDailyNote uses UI flow in NavigationContainer, we might just re-export it from utils,
-// or we can implement it cleanly here. For now, let's keep it simple.
-import { createDailynote } from "@frostime/siyuan-plugin-kits";
-import { lsNotebooks } from "../api";
-import { settings } from "../settings";
-import { mobileUtils } from "../utils";
+// 移除了针对 dailyNote 的引用，因为该功能已交由系统原生命令处理
 
 export const builtinCommands: Record<string, BuiltinCommand> = {
     url: {
@@ -100,44 +94,7 @@ export const builtinCommands: Record<string, BuiltinCommand> = {
             plugin.openSetting();
         }
     },
-    dailyNote: {
-        id: "dailyNote",
-        title: "今日日记",
-        requiresParam: false,
-        execute: async (plugin) => {
-            // Simplified execution, falls back to the old logic or we just execute it directly.
-            // It's better to implement the core logic here.
-            const noteBookID = settings.getBySpace(plugin.name, "noteBookID");
-            if (!noteBookID) {
-                showMessage("请先在设置中选择日记笔记本");
-                plugin.openSetting();
-                return;
-            }
-            try {
-                const res = await lsNotebooks();
-                const notebookExists = res?.notebooks?.some((nb: any) => nb.id === noteBookID && !nb.closed);
-                if (!notebookExists) {
-                    showMessage(`日记笔记本不存在或已关闭，请重新设置`);
-                    settings.setBySpace(plugin.name, "noteBookID", "");
-                    await settings.save();
-                    plugin.openSetting();
-                    return;
-                }
-                const today = new Date();
-                const dailyNoteId = await createDailynote(noteBookID, today);
-                if (dailyNoteId) {
-                    openBlockByID(dailyNoteId);
-                    showMessage(plugin.i18n["lets-nav-helper.dailyNoteCreated"]);
-                    mobileUtils.vibrate(50);
-                } else {
-                    showMessage(plugin.i18n["lets-nav-helper.dailyNoteFailed"]);
-                }
-            } catch (error) {
-                console.error("创建今日笔记失败:", error);
-                showMessage(plugin.i18n["lets-nav-helper.dailyNoteFailed"]);
-            }
-        }
-    },
+
     goParent: {
         id: "goParent",
         title: "跳转父文档",
@@ -201,6 +158,38 @@ export const builtinCommands: Record<string, BuiltinCommand> = {
                     openBlockByID(siblingsRes[0].id);
                 } else {
                     showMessage("当前文档没有下一个相邻文档");
+                }
+            }
+        }
+    },
+    goPrev: {
+        id: "goPrev",
+        title: "跳转上一个文档",
+        requiresParam: false,
+        execute: async (plugin) => {
+            const currentDocId = getCurrentDocId();
+            if (!currentDocId) return;
+            // Get current doc info
+            const res = await sql(`SELECT * FROM blocks WHERE id = '${currentDocId}' LIMIT 1`);
+            if (res && res.length > 0) {
+                const parentId = res[0].parent_id;
+                const sort = res[0].sort;
+                
+                // Get prev sibling document
+                let query = '';
+                if (parentId) {
+                    query = `SELECT * FROM blocks WHERE type = 'd' AND parent_id = '${parentId}' AND sort < ${sort} ORDER BY sort DESC LIMIT 1`;
+                } else {
+                    // Top level documents in the same notebook
+                    const box = res[0].box;
+                    // For top level documents, parent_id is empty. We look for docs with empty parent_id in the same box.
+                    query = `SELECT * FROM blocks WHERE type = 'd' AND box = '${box}' AND parent_id = '' AND sort < ${sort} ORDER BY sort DESC LIMIT 1`;
+                }
+                const siblingsRes = await sql(query);
+                if (siblingsRes && siblingsRes.length > 0) {
+                    openBlockByID(siblingsRes[0].id);
+                } else {
+                    showMessage("当前文档没有上一个相邻文档");
                 }
             }
         }

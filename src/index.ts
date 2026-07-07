@@ -184,7 +184,7 @@ export class PandaNavigation extends Plugin {
       // First install or reset, new defaults
       menuItems = [
         { id: generateId(), type: "builtin", value: "goBack", title: "返回", icon: "#iconLeft", showOn: "both" },
-        { id: generateId(), type: "builtin", value: "dailyNote", title: "今日日记", icon: "#iconCalendar", showOn: "both" },
+        { id: generateId(), type: "command", value: "dailyNote", title: "今日日记", icon: "#iconCalendar", showOn: "both" },
         { id: generateId(), type: "builtin", value: "navigationMenu", title: "导航菜单", icon: "#iconMenu", showOn: "both" },
         { id: generateId(), type: "builtin", value: "goForward", title: "前进", icon: "#iconRight", showOn: "both" },
         {
