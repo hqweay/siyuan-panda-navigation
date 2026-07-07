@@ -450,7 +450,16 @@
                             {/each}
                           </select>
                           {#if builtinCommands[item.value]?.requiresParam}
-                             <input class="b3-text-field fn__flex-1" type="text" bind:value={item.param} placeholder={builtinCommands[item.value]?.paramPlaceholder || ""} />
+                             {#if item.value === "av-add"}
+                               <select class="b3-select fn__flex-1" bind:value={item.param}>
+                                 <option value="">请选择数据库</option>
+                                 {#each avDatabases as db}
+                                   <option value={db.id}>{db.name}</option>
+                                 {/each}
+                               </select>
+                             {:else}
+                               <input class="b3-text-field fn__flex-1" type="text" bind:value={item.param} placeholder={builtinCommands[item.value]?.paramPlaceholder || ""} />
+                             {/if}
                           {/if}
                         {:else if item.type === "command"}
                           <select class="b3-select fn__flex-1" bind:value={item.value}>
@@ -535,7 +544,16 @@
                                             {/each}
                                           </select>
                                           {#if builtinCommands[child.value]?.requiresParam}
-                                             <input class="b3-text-field fn__flex-1" type="text" bind:value={child.param} placeholder={builtinCommands[child.value]?.paramPlaceholder || ""} />
+                                            {#if child.value === "av-add"}
+                                              <select class="b3-select fn__flex-1" bind:value={child.param}>
+                                                <option value="">请选择数据库</option>
+                                                {#each avDatabases as db}
+                                                  <option value={db.id}>{db.name}</option>
+                                                {/each}
+                                              </select>
+                                            {:else}
+                                              <input class="b3-text-field fn__flex-1" type="text" bind:value={child.param} placeholder={builtinCommands[child.value]?.paramPlaceholder || ""} />
+                                            {/if}
                                           {/if}
                                         {:else if child.type === "command"}
                                           <select class="b3-select fn__flex-1" bind:value={child.value}>
