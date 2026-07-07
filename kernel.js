@@ -41,7 +41,7 @@ class KernelPlugin {
       "panda-nav:add-action",
       {
         title: "熊猫导航 - 添加快捷动作",
-        description: "在导航栏添加一个动作按钮。type 为 builtin 时 value 可选：script（自定义脚本）/ sql（随机漫游 SQL）/ url（链接）/ goBack / goForward / dailyNote / random / scrollToTop / search。脚本内容放在 param 中",
+        description: "在导航栏添加一个动作按钮。type=builtin 且 value=script 时在 param 中填写 JS 代码，脚本内可使用 plugin（插件实例，如 plugin.app）和 siyuan（SDK，如 siyuan.showMessage/siyuan.fetchSyncPost/siyuan.openTab）两个变量，支持顶层 await。也可添加 sql/url/goBack/goForward/dailyNote/random/scrollToTop/search 等内置动作",
         inputSchema: {
           type: "object",
           properties: {
@@ -50,7 +50,7 @@ class KernelPlugin {
             value: { type: "string", description: "动作值：内置功能ID（如 script/sql/url/goBack）/ 命令名等" },
             icon: { type: "string", description: "图标，如 #iconStar 或 #iconHeart" },
             showOn: { type: "string", enum: ["both", "mobile", "desktop"], description: "在哪些设备上显示" },
-            param: { type: "string", description: "参数内容：当 type=builtin 且 value=script 时为 JS 脚本代码；value=sql 时为 SQL 语句；value=url 时为链接地址" },
+            param: { type: "string", description: "参数内容。当 type=builtin 且 value=script 时为 JS 脚本代码，脚本内可直接使用 plugin（插件实例，如 plugin.app）和 siyuan（SDK 模块，如 siyuan.showMessage/siyuan.fetchSyncPost/siyuan.openTab）两个变量，支持顶层 await。value=sql 时为 SQL 语句。value=url 时为链接地址" },
           },
           required: ["title", "type"],
         },
