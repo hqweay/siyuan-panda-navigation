@@ -6,8 +6,10 @@
   "author": "hqweay",
   "license": "MIT",
   "scripts": {
-    "dev": "vite build --watch",
-    "build": "vite build",
+    "dev": "vite build --watch & pnpm build:kernel:dev --watch",
+    "build": "vite build && pnpm build:kernel",
+    "build:kernel": "esbuild src/kernel.ts --bundle --outfile=dist/kernel.js --external:siyuan --platform=node",
+    "build:kernel:dev": "esbuild src/kernel.ts --bundle --outfile=\"/Users/hqweay/SiYuan/data/plugins/siyuan-panda-navigation/kernel.js\" --external:siyuan --platform=node",
     "release": "bash ./update-version.sh"
   },
   "devDependencies": {

@@ -61,6 +61,7 @@ export const PRESET_GROUPS = [
       showOn: "both",
       param: `// 这是一个在 Siyuan 环境执行的脚本示例
 // 你可以直接使用 siyuan 和 plugin 变量
+// utils 为熊猫导航提供的工具函数（目前为空，后续版本会添加）
 siyuan.showMessage("Hello World! 🐼 熊猫导航脚本执行成功");
 
 // 支持顶层 await 进行网络请求

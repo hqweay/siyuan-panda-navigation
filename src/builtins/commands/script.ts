@@ -1,5 +1,7 @@
 import { BuiltinCommand } from "../types";
 import * as siyuan from "siyuan";
+import { builtinCommands } from "../index";
+import { pandaUtils } from "../../utils/panda-utils";
 
 export const scriptCommand: BuiltinCommand = {
   id: "script",
@@ -7,14 +9,28 @@ export const scriptCommand: BuiltinCommand = {
   requiresParam: true,
   inputType: "textarea",
   paramPlaceholder:
-    "可使用顶层 await，支持调用 plugin 和 siyuan 等变量\n例如: await siyuan.fetchSyncPost(...)",
+    "可使用顶层 await，支持调用 plugin、siyuan、utils 等变量，也可用 utils 下的内置命令和自定义工具函数\n例如: await utils.sql(\"SELECT * FROM blocks LIMIT 5\")",
   execute: async (plugin, param) => {
     if (!param) return;
     try {
-      // 包裹为异步函数以支持顶层 await
+      const utils: Record<string, any> = {};
+
+      for (const [k, v] of Object.entries(pandaUtils)) {
+        utils[k] = (...args: any[]) => v.fn(siyuan, ...args);
+      }
+
+      for (const [id, cmd] of Object.entries(builtinCommands)) {
+        if (id === "script") continue;
+        if (cmd.requiresParam) {
+          utils[id] = (param?: string) => cmd.execute(plugin, param);
+        } else {
+          utils[id] = () => cmd.execute(plugin);
+        }
+      }
+
       const asyncScript = `return (async () => { \n${param}\n })();`;
-      const runner = new Function("plugin", "siyuan", asyncScript);
-      await runner(plugin, siyuan);
+      const runner = new Function("plugin", "siyuan", "utils", asyncScript);
+      await runner(plugin, siyuan, utils);
     } catch (err) {
       console.error("自定义脚本执行报错:", err);
       siyuan.showMessage(
