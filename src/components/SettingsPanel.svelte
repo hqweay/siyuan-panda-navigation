@@ -113,6 +113,23 @@
 
 
 
+
+
+
+  let showIconPicker = false;
+  let onIconSelect: (icon: string) => void = () => {};
+
+  function openIconPicker(callback: (icon: string) => void) {
+    onIconSelect = callback;
+    showIconPicker = true;
+  }
+
+  function handleSelectIcon(icon: string) {
+    onIconSelect(icon);
+    showIconPicker = false;
+    menuItems = [...menuItems]; // trigger reactivity
+  }
+
   let activeTab: "general" | "buttons" | "links" = "general";
 
   // General Settings
@@ -358,7 +375,7 @@
                     <button class="arrow-btn" disabled={i === menuItems.length - 1} on:click={() => moveMenuItemDown(i, menuItems)}>▼</button>
                   </div>
                   
-                  <button class="remove-btn b3-tooltips b3-tooltips__w" aria-label="删除" on:click={() => removeMenuItem(item.id)}>
+                  <button class="remove-btn b3-tooltips b3-tooltips__w" style="padding: 4px; opacity: 0.7; font-size: 14px;" aria-label="删除" on:click={() => removeMenuItem(item.id)}>
                     <svg><use xlink:href="#iconTrashcan"></use></svg>
                   </button>
                 </div>
@@ -454,10 +471,15 @@
                                <!-- child body edit -->
                                {#if child.type !== "internal"}
                                  <div style="padding: 0 12px 12px 12px;">
-                                     <div class="fn__flex" style="gap: 8px; margin-bottom: 8px;">
-                                       <input class="b3-text-field" style="width: 80px;" type="text" bind:value={child.title} placeholder="标题" />
-                                       <input class="b3-text-field" style="width: 80px;" type="text" bind:value={child.icon} placeholder="图标" />
-                                       <select class="b3-select" bind:value={child.type} style="width: 100px;">
+                                     
+                                     <div class="fn__flex" style="gap: 8px; margin-bottom: 8px; width: 100%;">
+                                       <input class="b3-text-field" style="flex: 1;" type="text" bind:value={child.title} placeholder="标题" />
+                                       <div class="fn__flex" style="flex: 1; gap: 4px;">
+                                         <input class="b3-text-field" style="flex: 1;" type="text" bind:value={child.icon} placeholder="图标/Emoji" />
+                                         <button class="b3-button b3-button--outline" style="padding: 0 4px;" on:click={() => openIconPicker(icon => { child.icon = icon; menuItems = [...menuItems]; })}>🎨</button>
+                                       </div>
+                                       <select class="b3-select" bind:value={child.type} style="width: 120px;">
+
                                           <option value="url">URL 链接</option>
                                           <option value="sql">随机 SQL</option>
                                           <option value="command">系统命令</option>
