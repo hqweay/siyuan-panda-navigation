@@ -2,6 +2,7 @@
 import { getLogger } from "@/libs/logger";
 const log = getLogger("lets-nav-helper");
   import { onMount, onDestroy } from "svelte";
+  import { fly } from "svelte/transition";
   import { isMobile } from "../utils";
   import NavButton from "./NavButton.svelte";
   import Submenu from "./Submenu.svelte";
@@ -320,7 +321,7 @@ const log = getLogger("lets-nav-helper");
     }}
   >
     {#if showIconPanel}
-      <div class="nav-expansion">
+      <div class="nav-expansion" transition:fly={{ y: 15, duration: 200, opacity: 0 }}>
         <div class="expansion-icons">
           {#each submenuItems as item, idx (idx)}
             <button
@@ -475,13 +476,12 @@ const log = getLogger("lets-nav-helper");
     bottom: 100%;
     left: 0;
     right: 0;
-    padding: 8px 12px 10px;
+    padding: 8px 12px;
     background: var(--b3-theme-surface);
     background-image: linear-gradient(var(--nav-bg), var(--nav-bg));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 20px 20px 0 0;
-    animation: expansionIn 0.18s ease-out;
   }
 
   .expansion-icons {
@@ -497,9 +497,8 @@ const log = getLogger("lets-nav-helper");
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 0;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -518,23 +517,20 @@ const log = getLogger("lets-nav-helper");
   }
 
   .expansion-svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     fill: currentColor;
     display: block;
     pointer-events: none;
   }
 
   .expansion-emoji {
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1;
     pointer-events: none;
   }
 
-  @keyframes expansionIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+
 
   /* 按钮包裹层 — 独立裁剪 hover 背景，不干涉展开层 */
   .buttons-wrapper {

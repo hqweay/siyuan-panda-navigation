@@ -95,7 +95,7 @@
     }
   }}
 >
-  <div class="submenu-content" style="padding: 10px; {layout === 'grid' ? 'display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;' : ''}">
+  <div class="submenu-content" style="padding: 6px; {layout === 'grid' ? 'display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;' : ''}">
     {#each items as item, index (index)}
       {#if layout === 'grid'}
         <button
@@ -109,8 +109,8 @@
             align-items: center;
             justify-content: center;
             transition: background 0.2s;
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: 8px;
             padding: 0;
           "
@@ -119,11 +119,11 @@
           on:mouseleave={(e) => (e.target.style.backgroundColor = "transparent")}
           role="menuitem"
         >
-          <span style="font-size: 20px; display: inline-flex; align-items: center; justify-content: center;">
+          <span style="font-size: 18px; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; line-height: 1;">
             {#if item.icon && item.icon.startsWith("#icon")}
-              <svg style="width: 20px; height: 20px; fill: currentColor;"><use xlink:href={item.icon}></use></svg>
+              <svg style="width: 18px; height: 18px; fill: currentColor; display: block;"><use xlink:href={item.icon}></use></svg>
             {:else}
-              {item.icon ? item.icon : ""}
+              <span style="display: block; line-height: 1;">{item.icon ? item.icon : ""}</span>
             {/if}
           </span>
         </button>
