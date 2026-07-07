@@ -54,6 +54,7 @@ interface CacheEntry {
   currentIndex: number;
   lastUpdated: number;
   sql: string;
+  offset: number;
 }
 
 interface CacheConfig {
@@ -104,7 +105,7 @@ export class RandomDocCache {
     const docId = cacheEntry.ids[cacheEntry.currentIndex];
     cacheEntry.currentIndex++;
 
-    // 如果缓存用完了，重新加载
+    // 如果缓存用完了，重新加载 (异步，不阻塞当前返回)
     if (cacheEntry.currentIndex >= cacheEntry.ids.length) {
       this.reloadCache(cacheKey, sql).catch(err => log.error(err));
     }
@@ -150,6 +151,7 @@ export class RandomDocCache {
       currentIndex: number;
       lastUpdated: number;
       remainingIds: number;
+      offset: number;
     }>;
   } {
     const details = Array.from(this.cache.entries()).map(([key, entry]) => ({
@@ -158,6 +160,7 @@ export class RandomDocCache {
       currentIndex: entry.currentIndex,
       lastUpdated: entry.lastUpdated,
       remainingIds: entry.ids.length - entry.currentIndex,
+      offset: entry.offset,
     }));
 
     return {
@@ -208,8 +211,30 @@ export class RandomDocCache {
    */
   private async reloadCache(cacheKey: string, sql: string): Promise<void> {
     try {
-      const optimizedSql = optimizeRandomSql(sql, this.config.cacheSize * 2);
-      const result = await executeSql(optimizedSql);
+      const existingEntry = this.cache.get(cacheKey);
+      let nextOffset = 0;
+      
+      // 如果存在旧缓存且正常遍历完，则继续往后查
+      if (existingEntry && existingEntry.ids.length > 0) {
+        nextOffset = existingEntry.offset + existingEntry.ids.length;
+      }
+
+      // 优化 SQL，加上 offset
+      let optimizedSql = optimizeRandomSql(sql, this.config.cacheSize * 2);
+      // optimizeRandomSql 返回的是形如: SELECT id FROM (...) LIMIT 40
+      // 我们在末尾拼接 OFFSET
+      optimizedSql = `${optimizedSql} OFFSET ${nextOffset}`;
+
+      let result = await executeSql(optimizedSql);
+      
+      // 如果查询结果为空，说明到底了，重置 offset 为 0 重新循环
+      if (!result || result.length === 0) {
+        log.info(`SQL 查询到底，重置 offset 为 0: ${sql}`);
+        nextOffset = 0;
+        optimizedSql = `${optimizeRandomSql(sql, this.config.cacheSize * 2)} OFFSET 0`;
+        result = await executeSql(optimizedSql);
+      }
+
       let ids = result?.map((item: any) => item.id).filter(Boolean) || [];
 
       // Fisher-Yates 洗牌算法
@@ -228,6 +253,7 @@ export class RandomDocCache {
         currentIndex: 0,
         lastUpdated: Date.now(),
         sql,
+        offset: nextOffset,
       };
 
       this.cache.set(cacheKey, cacheEntry);
@@ -242,6 +268,7 @@ export class RandomDocCache {
         currentIndex: 0,
         lastUpdated: Date.now(),
         sql,
+        offset: 0,
       };
       this.cache.set(cacheKey, cacheEntry);
     }
