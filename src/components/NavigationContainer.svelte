@@ -16,6 +16,7 @@ const log = getLogger("lets-nav-helper");
   import { lsNotebooks } from "../api";
   import { createSiyuanAVHelper } from "@/myscripts/dbUtil";
   import { goToRandomBlock } from "@/myscripts/randomDocCache";
+  import { builtinCommands } from "../builtins";
   import {
     getCurrentDocId,
     openBlockByID,
@@ -67,64 +68,60 @@ const log = getLogger("lets-nav-helper");
     return item.showOn === "both" || item.showOn === "desktop";
   });
 
-  // 动作执行分发
-  async function executeCustomAction(action: any) {
-    const { type, value, title } = action;
-    if (type === "url") {
-      openByUrl(value);
-    } else if (type === "sql") {
-      await goToRandomBlock(value);
-    } else if (type === "command") {
+  async function executeCustomAction(item: any) {
+    const type = item.type;
+    // Fallback logic for legacy configs, map internal/url/sql/av-add/open-setting to builtin
+    const isBuiltin = type === "builtin" || ["internal", "url", "sql", "av-add", "open-setting"].includes(type);
+    
+    if (isBuiltin) {
+      let cmdId = item.value;
+      if (type !== "builtin" && type !== "internal") {
+          cmdId = type; // url, sql, av-add, open-setting
+      }
+      
+      if (cmdId === "navigationMenu") {
+          return;
+      }
+
+      const cmd = builtinCommands[cmdId];
+      if (cmd) {
+         const param = type === "builtin" ? item.param : item.value;
+         await cmd.execute(plugin, param);
+      } else {
+         showMessage("未知的内置功能: " + cmdId);
+      }
+      return;
+    }
+
+    const value = item.value;
+    if (type === "command" || type === "pluginCommand") {
       try {
         if (value.startsWith("plugin::")) {
-          const [, pName, cmdKey] = value.split("::");
-          const targetPlugin = plugin.app.plugins.find((p: any) => p.name === pName);
-          if (targetPlugin) {
-            const cmd = targetPlugin.commands.find((c: any) => c.customHotkey === cmdKey || c.langKey === cmdKey);
-            if (cmd) {
-              if (cmd.callback) cmd.callback();
-              else if (cmd.globalCallback) cmd.globalCallback();
-              else showMessage("该插件命令不支持在快捷动作执行", 3000, "error");
-            } else {
-              showMessage("未找到该插件命令", 3000, "error");
-            }
-          } else {
-            showMessage("该命令对应的插件未加载", 3000, "error");
-          }
-        } else if (value === "goBack") {
-          navigation.goBack();
-        } else if (value === "goForward") {
-          navigation.goForward();
-        } else if (value === "globalSearch") {
+          // Trigger plugin command
+          const evt = new CustomEvent("click");
+          const target = document.createElement("div");
+          target.setAttribute("data-id", value);
+          Object.defineProperty(evt, "target", { value: target, enumerable: true });
+          (window as any).siyuan?.ws?.request("main", "getSysCommands", {}, (res: any) => {
+            console.log("sys commands loaded, dispatching", value);
+          });
+          // This relies on Siyuan's internal dispatching.
+          globalCommand(value, plugin.app);
+        } else if (value === "search") {
           const searchDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
             item.element?.querySelector("#searchList")
           );
-          const mobileModel = document.getElementById("model");
-          const isMobileSearchOpen = mobileModel &&
-            mobileModel.style.transform === "translateY(0px)" &&
-            mobileModel.querySelector("#searchList");
-
           if (searchDialog) {
             searchDialog.destroy();
-          } else if (isMobileSearchOpen) {
-            mobileModel.style.transform = "";
           } else {
             globalCommand(value, plugin.app);
           }
         } else if (value === "recentDocs") {
           const recentDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
-            item.element?.getAttribute("data-key") === "dialog-recentdocs" ||
-            (item.element?.querySelector(".b3-list") && item.element?.innerHTML.includes((window as any).siyuan?.languages?.recentDocs))
+            item.element?.getAttribute("data-key") === "dialog-recentdocs"
           );
-          const mobileModel = document.getElementById("model");
-          const isMobileRecentOpen = mobileModel &&
-            mobileModel.style.transform === "translateY(0px)" &&
-            mobileModel.querySelector(".toolbar__text")?.innerHTML.includes((window as any).siyuan?.languages?.recentDocs);
-
           if (recentDialog) {
             recentDialog.destroy();
-          } else if (isMobileRecentOpen) {
-            mobileModel.style.transform = "";
           } else {
             globalCommand(value, plugin.app);
           }
@@ -144,28 +141,14 @@ const log = getLogger("lets-nav-helper");
         log.error("执行命令失败:", err);
         showMessage("执行命令失败");
       }
-    } else if (type === "av-add") {
-      try {
-        const avHelper = await createSiyuanAVHelper(value);
-        await avHelper.addBlocks([getCurrentDocId()]);
-        showMessage("已成功添加到属性视图/数据库");
-      } catch (err) {
-        log.error("添加到数据库失败:", err);
-        showMessage("添加到属性视图/数据库失败");
-      }
-    } else if (type === "open-setting") {
-      plugin.openSetting();
     }
   }
 
   function handleActionClick(item: any, event: Event) {
      if (item.type === "group") {
         showGroupSubmenu(item, event);
-     } else if (item.type === "internal") {
-        if (item.value === "goBack") navigation.goBack();
-        else if (item.value === "goForward") navigation.goForward();
-        else if (item.value === "dailyNote") createDailyNote();
-        else if (item.value === "navigationMenu") showNavigationSubmenu(event as MouseEvent);
+     } else if ((item.type === "internal" || item.type === "builtin") && item.value === "navigationMenu") {
+        showNavigationSubmenu(event as MouseEvent);
      } else {
         executeCustomAction(item);
      }
@@ -176,7 +159,7 @@ const log = getLogger("lets-nav-helper");
     icon: item.icon,
     label: item.title,
     action: (e: Event) => handleActionClick(item, e),
-    hasSubmenu: item.type === "group" || (item.type === "internal" && item.value === "navigationMenu")
+    hasSubmenu: item.type === "group" || ((item.type === "internal" || item.type === "builtin") && item.value === "navigationMenu")
   }));
 
   $: visibleButtons = allNavbarButtons;
