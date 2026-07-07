@@ -60,7 +60,6 @@ const log = getLogger("lets-nav-helper");
 
   // 加载菜单配置
   let menuItems: any[] = settings.getBySpace(pluginMetadata.name, "menuItems") || [];
-  let submenuDisplayMode = settings.getBySpace(pluginMetadata.name, "submenuDisplayMode") || "list";
 
   $: visibleMenuItems = menuItems.filter(item => {
     if (item.showOn === "none") return false;
@@ -248,10 +247,12 @@ const log = getLogger("lets-nav-helper");
 
     submenuTriggerButton = (event.currentTarget as HTMLElement).closest(".nav-button");
 
-    if (deviceType === "mobile" && submenuDisplayMode === "iconPanel") {
+    if (deviceType === "mobile" && submenuLayout === "grid") {
+      submenuVisible = true;
       showIconPanel = true;
     } else {
       submenuVisible = true;
+      showIconPanel = false;
     }
   }
 
@@ -264,7 +265,7 @@ const log = getLogger("lets-nav-helper");
     submenuLayout = "list";
   }
 
-  $: showIconPanel = submenuVisible && (submenuType === "customLinks" || submenuType === "navigation") && submenuDisplayMode === "iconPanel";
+  $: showIconPanel = submenuVisible && (submenuType === "customLinks" || submenuType === "navigation") && submenuLayout === "grid" && deviceType === "mobile";
 
   function handleIconPanelOutsideClick(event: Event) {
     if (showIconPanel) {
@@ -496,7 +497,9 @@ const log = getLogger("lets-nav-helper");
     background: transparent;
     border: none;
     cursor: pointer;
-    padding: 6px;
+    padding: 0;
+    width: 44px;
+    height: 44px;
     border-radius: 8px;
     display: flex;
     align-items: center;
