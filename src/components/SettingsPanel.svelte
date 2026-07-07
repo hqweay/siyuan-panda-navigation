@@ -372,7 +372,7 @@
           {#each menuItems as item, i (item.id)}
             <div class="action-card" class:expanded={expandedIndex === item.id} class:disabled={item.showOn === 'none'} style={item.type === 'group' ? 'border-left: 3px solid var(--b3-theme-primary);' : ''}>
               <!-- Header -->
-              <div class="action-card-header" on:click={() => toggleExpand(item.id)}>
+              <div class="action-card-header" role="button" tabindex="0" on:click={() => toggleExpand(item.id)} on:keydown={(e) => e.key === 'Enter' && toggleExpand(item.id)}>
                 <div class="header-left fn__flex align-center">
                   <span class="arrow-indicator">{expandedIndex === item.id ? "▼" : "▶"}</span>
                   <div class="action-icon-preview">
@@ -385,7 +385,7 @@
                   <span class="action-title-text">{item.title || "未命名"}</span>
                 </div>
 
-                <div class="header-right fn__flex align-center" on:click|stopPropagation>
+                <div class="header-right fn__flex align-center" role="button" tabindex="0" on:click|stopPropagation on:keydown|stopPropagation>
                   <span class="badge badge-type">
                     {item.type === "group" ? "分组" : item.type === "internal" ? "内置" : "动作"}
                   </span>
