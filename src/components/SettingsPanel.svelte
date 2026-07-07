@@ -4,6 +4,7 @@
   import { showMessage } from "siyuan";
   import { onMount } from "svelte";
   import { lsNotebooks, request } from "../api";
+  import { builtinCommands, builtinCommandList } from "../builtins";
   import IconPicker from "./IconPicker.svelte";
 
   export let closeDialog: () => void;
@@ -118,6 +119,22 @@
 
   let showIconPicker = false;
   let onIconSelect: (icon: string) => void = () => {};
+
+  
+  function handleTypeChange(item: any) {
+    if (item.type === "builtin") {
+        if (!builtinCommands[item.value]) {
+            item.value = "goBack";
+        }
+    } else if (item.type === "command") {
+        if (sysCommands.length > 0) item.value = sysCommands[0].value;
+    } else if (item.type === "pluginCommand") {
+        if (pluginCommandsGroups.length > 0 && pluginCommandsGroups[0].commands.length > 0) {
+            item.value = pluginCommandsGroups[0].commands[0].value;
+        }
+    }
+    menuItems = [...menuItems];
+  }
 
   function openIconPicker(callback: (icon: string) => void) {
     onIconSelect = callback;
@@ -408,29 +425,52 @@
                     </select>
                   </div>
 
-                  {#if item.type !== "group" && item.type !== "internal"}
+                  
+                  {#if item.type !== "group"}
                     <div class="form-row">
                       <div class="form-item">
                         <span class="form-label">动作类型</span>
-                        <select class="b3-select" bind:value={item.type}>
-                          <option value="url">URL 链接</option>
-                          <option value="sql">随机 SQL</option>
+                        <select class="b3-select" bind:value={item.type} on:change={() => handleTypeChange(item)}>
+                          <option value="builtin">内置功能</option>
                           <option value="command">思源系统命令</option>
-                          <option value="av-add">添加到数据库</option>
-                          <option value="open-setting">打开设置</option>
+                          <option value="pluginCommand">第三方插件命令</option>
                         </select>
                       </div>
                     </div>
 
-                    {#if item.type !== "open-setting"}
-                      <div class="form-item">
-                        <span class="form-label">参数值</span>
-                        <input class="b3-text-field" type="text" bind:value={item.value} placeholder={getPlaceholder(item.type)} />
+                    <div class="form-item">
+                      <span class="form-label">执行内容</span>
+                      <div class="fn__flex" style="gap: 8px;">
+                        {#if item.type === "builtin"}
+                          <select class="b3-select" bind:value={item.value} style="width: 200px;" on:change={() => handleTypeChange(item)}>
+                            {#each builtinCommandList as cmd}
+                               <option value={cmd.id}>{cmd.title}</option>
+                            {/each}
+                          </select>
+                          {#if builtinCommands[item.value]?.requiresParam}
+                             <input class="b3-text-field fn__flex-1" type="text" bind:value={item.param} placeholder={builtinCommands[item.value]?.paramPlaceholder || ""} />
+                          {/if}
+                        {:else if item.type === "command"}
+                          <select class="b3-select fn__flex-1" bind:value={item.value}>
+                            {#each sysCommands as cmd}
+                              <option value={cmd.value}>{cmd.label}</option>
+                            {/each}
+                          </select>
+                        {:else if item.type === "pluginCommand"}
+                          <select class="b3-select fn__flex-1" bind:value={item.value}>
+                            {#each pluginCommandsGroups as group}
+                              <optgroup label={group.pluginName}>
+                                {#each group.commands as cmd}
+                                  <option value={cmd.value}>{cmd.label}</option>
+                                {/each}
+                              </optgroup>
+                            {/each}
+                          </select>
+                        {/if}
                       </div>
-                    {/if}
+                    </div>
                   {/if}
-                  
-                  {#if item.type === "group"}
+{#if item.type === "group"}
                     <div class="group-children-container" style="margin-top: 16px; padding: 12px; background-color: var(--b3-theme-background-light); border-radius: 4px;">
                        <div class="fn__flex align-center justify-between" style="margin-bottom: 8px;">
                           <strong>组内动作</strong>
@@ -470,8 +510,7 @@
                                   </div>
                                </div>
                                <!-- child body edit -->
-                               {#if child.type !== "internal"}
-                                 <div style="padding: 0 12px 12px 12px;">
+                                                                <div style="padding: 0 12px 12px 12px;">
                                      
                                      <div class="fn__flex" style="gap: 8px; margin-bottom: 8px; width: 100%;">
                                        <input class="b3-text-field" style="flex: 1;" type="text" bind:value={child.title} placeholder="标题" />
@@ -479,20 +518,42 @@
                                          <input class="b3-text-field" style="flex: 1;" type="text" bind:value={child.icon} placeholder="图标/Emoji" />
                                          <button class="b3-button b3-button--outline" style="padding: 0 4px;" on:click={() => openIconPicker(icon => { child.icon = icon; menuItems = [...menuItems]; })}>🎨</button>
                                        </div>
-                                       <select class="b3-select" bind:value={child.type} style="width: 120px;">
-
-                                          <option value="url">URL 链接</option>
-                                          <option value="sql">随机 SQL</option>
+                                       <select class="b3-select" bind:value={child.type} style="width: 120px;" on:change={() => handleTypeChange(child)}>
+                                          <option value="builtin">内置功能</option>
                                           <option value="command">系统命令</option>
-                                          <option value="av-add">添加数据库</option>
-                                          <option value="open-setting">打开设置</option>
+                                          <option value="pluginCommand">第三方命令</option>
                                        </select>
                                      </div>
-                                     {#if child.type !== "open-setting"}
-                                       <input class="b3-text-field" type="text" bind:value={child.value} placeholder={getPlaceholder(child.type)} />
-                                     {/if}
+                                     
+                                     <div class="fn__flex" style="gap: 8px; width: 100%;">
+                                        {#if child.type === "builtin"}
+                                          <select class="b3-select" bind:value={child.value} style="width: 160px;" on:change={() => handleTypeChange(child)}>
+                                            {#each builtinCommandList as cmd}
+                                               <option value={cmd.id}>{cmd.title}</option>
+                                            {/each}
+                                          </select>
+                                          {#if builtinCommands[child.value]?.requiresParam}
+                                             <input class="b3-text-field fn__flex-1" type="text" bind:value={child.param} placeholder={builtinCommands[child.value]?.paramPlaceholder || ""} />
+                                          {/if}
+                                        {:else if child.type === "command"}
+                                          <select class="b3-select fn__flex-1" bind:value={child.value}>
+                                            {#each sysCommands as cmd}
+                                              <option value={cmd.value}>{cmd.label}</option>
+                                            {/each}
+                                          </select>
+                                        {:else if child.type === "pluginCommand"}
+                                          <select class="b3-select fn__flex-1" bind:value={child.value}>
+                                            {#each pluginCommandsGroups as group}
+                                              <optgroup label={group.pluginName}>
+                                                {#each group.commands as cmd}
+                                                  <option value={cmd.value}>{cmd.label}</option>
+                                                {/each}
+                                              </optgroup>
+                                            {/each}
+                                          </select>
+                                        {/if}
+                                     </div>
                                  </div>
-                               {/if}
                             </div>
                          {/each}
                        {/if}

@@ -183,17 +183,17 @@ export class PandaNavigation extends Plugin {
 
       // First install or reset, new defaults
       menuItems = [
-        { id: generateId(), type: "internal", value: "goBack", title: "返回", icon: "#iconLeft", showOn: "both" },
-        { id: generateId(), type: "internal", value: "dailyNote", title: "今日日记", icon: "#iconCalendar", showOn: "both" },
-        { id: generateId(), type: "internal", value: "navigationMenu", title: "导航菜单", icon: "#iconMenu", showOn: "both" },
-        { id: generateId(), type: "internal", value: "goForward", title: "前进", icon: "#iconRight", showOn: "both" },
+        { id: generateId(), type: "builtin", value: "goBack", title: "返回", icon: "#iconLeft", showOn: "both" },
+        { id: generateId(), type: "builtin", value: "dailyNote", title: "今日日记", icon: "#iconCalendar", showOn: "both" },
+        { id: generateId(), type: "builtin", value: "navigationMenu", title: "导航菜单", icon: "#iconMenu", showOn: "both" },
+        { id: generateId(), type: "builtin", value: "goForward", title: "前进", icon: "#iconRight", showOn: "both" },
         {
           id: generateId(), type: "group", value: "", title: "快捷动作", icon: "#iconStar", showOn: "both",
           children: [
-             { id: generateId(), type: "url", title: "首页", value: "siyuan://common/dashboard", icon: "#iconWorkspace", showOn: "both" },
+             { id: generateId(), type: "builtin", title: "首页", value: "url", param: "siyuan://common/dashboard", icon: "#iconWorkspace", showOn: "both" },
              { id: generateId(), type: "command", title: "全局搜索", value: "globalSearch", icon: "#iconSearch", showOn: "mobile" },
-             { id: generateId(), type: "sql", title: "随机漫游", value: "SELECT id FROM blocks WHERE type = 'd'", icon: "#iconRefresh", showOn: "both" },
-             { id: generateId(), type: "url", title: "作者博客", value: "https://leay.net/", icon: "#iconLink", showOn: "both" }
+             { id: generateId(), type: "builtin", title: "随机漫游", value: "sql", param: "SELECT id FROM blocks WHERE type = 'd'", icon: "#iconRefresh", showOn: "both" },
+             { id: generateId(), type: "builtin", title: "作者博客", value: "url", param: "https://leay.net/", icon: "#iconLink", showOn: "both" }
           ]
         }
       ];
