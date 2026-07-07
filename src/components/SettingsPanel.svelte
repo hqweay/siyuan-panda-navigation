@@ -393,6 +393,7 @@
                       <span class="form-label">图标 (Emoji或图标ID)</span>
                       <div class="fn__flex" style="gap: 8px;">
                         <input class="b3-text-field fn__flex-1" type="text" bind:value={item.icon} />
+                        <button class="b3-button b3-button--outline" style="padding: 0 8px;" on:click={() => openIconPicker(icon => { item.icon = icon; menuItems = [...menuItems]; })}>🎨 选择图标</button>
                       </div>
                     </div>
                   </div>
@@ -517,6 +518,14 @@
     <div class="fn__space"></div>
     <button class="b3-button" on:click={handleSave}>保存配置</button>
   </div>
+
+  <IconPicker
+    active={showIconPicker}
+    currentIcon=""
+    allIcons={allSiyuanIcons}
+    onSelect={handleSelectIcon}
+    onClose={() => showIconPicker = false}
+  />
 </div>
 
 
@@ -799,4 +808,28 @@
   }
 
 
+
+  .remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .remove-btn:hover {
+    background-color: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+    opacity: 1;
+  }
+
+  .remove-btn svg {
+    width: 12px;
+    height: 12px;
+  }
 </style>

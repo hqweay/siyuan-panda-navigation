@@ -181,84 +181,22 @@ export class PandaNavigation extends Plugin {
       let menuItems: any[] = [];
       const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
 
-      const oldButtonOrder = settings.getBySpace("nav-helper", "buttonOrder");
-      
-      if (oldButtonOrder && Array.isArray(oldButtonOrder)) {
-        // Run migration
-        const defaultSubmenuGroup = {
-          id: generateId(),
-          type: "group",
-          value: "",
-          title: "快捷动作",
-          icon: "#iconStar",
-          showOn: "both",
-          children: [] as any[]
-        };
-
-        const internalMap: Record<string, any> = {
-          "showBackButton": { value: "goBack", title: "返回", icon: "#iconLeft" },
-          "showForwardButton": { value: "goForward", title: "前进", icon: "#iconRight" },
-          "showDailyNoteButton": { value: "dailyNote", title: "今日日记", icon: "#iconCalendar" },
-          "showNavigationMenuButton": { value: "navigationMenu", title: "导航菜单", icon: "#iconMenu" }
-        };
-
-        oldButtonOrder.forEach((key: string) => {
-          if (internalMap[key]) {
-            const showOn = settings.getBySpace("nav-helper", key) || "both";
-            menuItems.push({
-              id: generateId(),
-              type: "internal",
-              ...internalMap[key],
-              showOn
-            });
-          } else if (key === "showCustomLinksButton") {
-            const showOn = settings.getBySpace("nav-helper", key) || "both";
-            defaultSubmenuGroup.showOn = showOn;
-            menuItems.push(defaultSubmenuGroup);
-          }
-        });
-
-        // Migrate customActions
-        const oldActions = settings.getBySpace("nav-helper", "customActions") || [];
-        oldActions.forEach((a: any) => {
-           const showOn = a.enabled === false ? "none" : (a.showOn || "both");
-           const item = {
-             id: generateId(),
-             type: a.type,
-             value: a.value,
-             title: a.title,
-             icon: a.icon,
-             showOn
-           };
-           if (a.desktopPosition === "submenu" || a.mobilePosition === "submenu") {
-             defaultSubmenuGroup.children.push(item);
-           } else {
-             menuItems.push(item);
-           }
-        });
-
-        // If defaultSubmenuGroup wasn't in oldButtonOrder but has children, add it
-        if (defaultSubmenuGroup.children.length > 0 && !menuItems.includes(defaultSubmenuGroup)) {
-           menuItems.push(defaultSubmenuGroup);
+      // First install or reset, new defaults
+      menuItems = [
+        { id: generateId(), type: "internal", value: "goBack", title: "返回", icon: "#iconLeft", showOn: "both" },
+        { id: generateId(), type: "internal", value: "dailyNote", title: "今日日记", icon: "#iconCalendar", showOn: "both" },
+        { id: generateId(), type: "internal", value: "navigationMenu", title: "导航菜单", icon: "#iconMenu", showOn: "both" },
+        { id: generateId(), type: "internal", value: "goForward", title: "前进", icon: "#iconRight", showOn: "both" },
+        {
+          id: generateId(), type: "group", value: "", title: "快捷动作", icon: "#iconStar", showOn: "both",
+          children: [
+             { id: generateId(), type: "url", title: "首页", value: "siyuan://common/dashboard", icon: "#iconWorkspace", showOn: "both" },
+             { id: generateId(), type: "command", title: "全局搜索", value: "globalSearch", icon: "#iconSearch", showOn: "mobile" },
+             { id: generateId(), type: "sql", title: "随机漫游", value: "SELECT id FROM blocks WHERE type = 'd'", icon: "#iconRefresh", showOn: "both" },
+             { id: generateId(), type: "url", title: "作者博客", value: "https://leay.net/", icon: "#iconLink", showOn: "both" }
+          ]
         }
-      } else {
-        // First install, new defaults
-        menuItems = [
-          { id: generateId(), type: "internal", value: "goBack", title: "返回", icon: "#iconLeft", showOn: "both" },
-          { id: generateId(), type: "internal", value: "dailyNote", title: "今日日记", icon: "#iconCalendar", showOn: "both" },
-          { id: generateId(), type: "internal", value: "navigationMenu", title: "导航菜单", icon: "#iconMenu", showOn: "both" },
-          { id: generateId(), type: "internal", value: "goForward", title: "前进", icon: "#iconRight", showOn: "both" },
-          {
-            id: generateId(), type: "group", value: "", title: "快捷动作", icon: "#iconStar", showOn: "both",
-            children: [
-               { id: generateId(), type: "url", title: "首页", value: "siyuan://common/dashboard", icon: "#iconWorkspace", showOn: "both" },
-               { id: generateId(), type: "command", title: "全局搜索", value: "globalSearch", icon: "#iconSearch", showOn: "mobile" },
-               { id: generateId(), type: "sql", title: "随机漫游", value: "SELECT id FROM blocks WHERE type = 'd'", icon: "#iconRefresh", showOn: "both" },
-               { id: generateId(), type: "url", title: "作者博客", value: "https://leay.net/", icon: "#iconLink", showOn: "both" }
-            ]
-          }
-        ];
-      }
+      ];
 
       // Cleanup old settings to avoid saving legacy bloat (optional, but good practice)
       const keysToRemove = [
