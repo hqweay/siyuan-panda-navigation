@@ -314,9 +314,9 @@
 
     {#if activeTab === "buttons"}
       <div class="tab-pane align-stretch">
-        <div class="fn__flex align-center justify-between" style="margin-bottom: 12px;">
-          <span class="setting-desc" style="margin: 0;">配置您的导航菜单。支持动作和分组（最多2层）。</span>
-          <div class="fn__flex" style="gap: 8px;">
+        <div class="fn__flex align-center justify-between" style="margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <span class="setting-desc" style="margin: 0; min-width: 200px;">配置您的导航菜单。支持动作和分组（最多2层）。</span>
+          <div class="fn__flex" style="gap: 8px; flex-wrap: wrap;">
             <select 
               class="b3-select b3-button--outline" 
               style="padding-right: 28px; background-color: var(--b3-theme-surface); cursor: pointer;"

@@ -16,7 +16,10 @@
 
 ## 快速开始
 
-在思源笔记集市中搜索「熊猫导航」安装即可。第一次安装时，插件会自动为您应用一套精美的 **默认配置**，包含日常最高频的导航功能，开箱即用！
+集市上架审核中，你可以通过以下方式安装：
+
+- 使用[安装集市包插件](https://github.com/TCOTC/install-package)，输入 `hqweay/siyuan-panda-navigation` 安装
+- 或[直接下载 package.zip](https://github.com/hqweay/siyuan-panda-navigation/releases/download/0.2.0/package.zip)，解压后放入思源笔记插件目录
 
 ## 轻松配置
 
