@@ -49,3 +49,26 @@ export const PRESET_GROUPS = [
     }),
   },
 ];
+
+/**
+ * 默认出厂配置
+ */
+export function generateDefaultMenuItems() {
+  const basicNavPreset = PRESET_GROUPS.find(p => p.id === "preset-nav-basic");
+  
+  return [
+    { id: generateId(), type: "builtin", value: "goBack", title: "返回", icon: "#iconLeft", showOn: "both" },
+    { id: generateId(), type: "command", value: "dailyNote", title: "今日日记", icon: "#iconCalendar", showOn: "both" },
+    basicNavPreset ? basicNavPreset.generate() : null,
+    { id: generateId(), type: "builtin", value: "goForward", title: "前进", icon: "#iconRight", showOn: "both" },
+    {
+      id: generateId(), type: "group", value: "", title: "快捷动作", icon: "#iconStar", showOn: "both",
+      children: [
+         { id: generateId(), type: "builtin", title: "首页", value: "url", param: "siyuan://common/dashboard", icon: "#iconWorkspace", showOn: "both" },
+         { id: generateId(), type: "command", title: "全局搜索", value: "globalSearch", icon: "#iconSearch", showOn: "mobile" },
+         { id: generateId(), type: "builtin", title: "随机漫游", value: "sql", param: "SELECT id FROM blocks WHERE type = 'd'", icon: "#iconRefresh", showOn: "both" },
+         { id: generateId(), type: "builtin", title: "作者博客", value: "url", param: "https://leay.net/", icon: "#iconLink", showOn: "both" }
+      ]
+    }
+  ].filter(Boolean);
+}

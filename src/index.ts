@@ -1,4 +1,5 @@
 import { Plugin, Dialog, openTab } from "siyuan";
+import { generateDefaultMenuItems } from "./config/presets";
 import { isMobile, setPlugin, mobileUtils } from "./utils";
 import { navigation } from "./navigation";
 import { settings } from "./settings";
@@ -165,25 +166,7 @@ export class PandaNavigation extends Plugin {
 
   private initDefaultSettings() {
     if (settings.getBySpace("nav-helper", "menuItems") === undefined) {
-      let menuItems: any[] = [];
-      const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
-
-      // First install or reset, new defaults
-      menuItems = [
-        { id: generateId(), type: "builtin", value: "goBack", title: "返回", icon: "#iconLeft", showOn: "both" },
-        { id: generateId(), type: "command", value: "dailyNote", title: "今日日记", icon: "#iconCalendar", showOn: "both" },
-        { id: generateId(), type: "builtin", value: "navigationMenu", title: "导航菜单", icon: "#iconMenu", showOn: "both" },
-        { id: generateId(), type: "builtin", value: "goForward", title: "前进", icon: "#iconRight", showOn: "both" },
-        {
-          id: generateId(), type: "group", value: "", title: "快捷动作", icon: "#iconStar", showOn: "both",
-          children: [
-             { id: generateId(), type: "builtin", title: "首页", value: "url", param: "siyuan://common/dashboard", icon: "#iconWorkspace", showOn: "both" },
-             { id: generateId(), type: "command", title: "全局搜索", value: "globalSearch", icon: "#iconSearch", showOn: "mobile" },
-             { id: generateId(), type: "builtin", title: "随机漫游", value: "sql", param: "SELECT id FROM blocks WHERE type = 'd'", icon: "#iconRefresh", showOn: "both" },
-             { id: generateId(), type: "builtin", title: "作者博客", value: "url", param: "https://leay.net/", icon: "#iconLink", showOn: "both" }
-          ]
-        }
-      ];
+      let menuItems: any[] = generateDefaultMenuItems();
 
       // Cleanup old settings to avoid saving legacy bloat (optional, but good practice)
       const keysToRemove = [

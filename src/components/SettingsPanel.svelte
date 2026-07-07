@@ -6,7 +6,7 @@
   import { lsNotebooks, request } from "../api";
   import { builtinCommands, builtinCommandList } from "../builtins";
   import IconPicker from "./IconPicker.svelte";
-  import { PRESET_GROUPS } from "../config/presets";
+  import { PRESET_GROUPS, generateDefaultMenuItems } from "../config/presets";
 
   export let closeDialog: () => void;
 
@@ -323,6 +323,15 @@
               on:change={(e) => {
                 const presetId = e.currentTarget.value;
                 if (!presetId) return;
+                
+                if (presetId === "RESTORE_DEFAULT") {
+                  if (window.confirm("⚠️ 确定要恢复出厂默认配置吗？这将会覆盖您当前的所有导航配置，并且无法撤销！")) {
+                    menuItems = generateDefaultMenuItems();
+                  }
+                  e.currentTarget.value = ""; // Reset
+                  return;
+                }
+                
                 const preset = PRESET_GROUPS.find(p => p.id === presetId);
                 if (preset) {
                   const newItem = preset.generate();
@@ -336,6 +345,8 @@
               {#each PRESET_GROUPS as preset}
                 <option value={preset.id}>{preset.name}</option>
               {/each}
+              <option disabled>──────────</option>
+              <option value="RESTORE_DEFAULT" style="color: var(--b3-theme-error);">⚠️ 恢复默认配置 (覆盖)</option>
             </select>
             <button class="b3-button b3-button--outline" on:click={() => addGroup()}>添加分组</button>
             <button class="b3-button b3-button--outline" on:click={() => addMenuItem()}>添加动作</button>
