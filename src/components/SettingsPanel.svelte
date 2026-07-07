@@ -458,7 +458,7 @@
                                    <option value={db.id}>{db.name}</option>
                                  {/each}
                                </select>
-                             {:else if item.value === "sql"}
+                             {:else if builtinCommands[item.value]?.inputType === "textarea"}
                                <textarea class="b3-text-field fn__flex-1" bind:value={item.param} placeholder={builtinCommands[item.value]?.paramPlaceholder || ""} style="height: 60px; resize: vertical; font-family: monospace;"></textarea>
                              {:else}
                                <input class="b3-text-field fn__flex-1" type="text" bind:value={item.param} placeholder={builtinCommands[item.value]?.paramPlaceholder || ""} />

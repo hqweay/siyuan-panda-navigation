@@ -48,6 +48,40 @@ export const PRESET_GROUPS = [
       ],
     }),
   },
+  {
+    id: "preset-script-example",
+    name: "自定义脚本示例 (高级)",
+    description: "演示如何使用内置脚本引擎执行原生 JS 代码",
+    generate: () => ({
+      id: generateId(),
+      type: "builtin",
+      value: "script",
+      title: "弹出问候语",
+      icon: "#iconInfo",
+      showOn: "both",
+      param: `// 这是一个在 Siyuan 环境执行的脚本示例
+// 你可以直接使用 siyuan 和 plugin 变量
+siyuan.showMessage("Hello World! 🐼 熊猫导航脚本执行成功");
+
+// 支持顶层 await 进行网络请求
+const res = await siyuan.fetchSyncPost('/api/query/sql', {
+    stmt: "SELECT id, content FROM blocks WHERE type='d' LIMIT 1"
+});
+
+if (res && res.data && res.data.length > 0) {
+    const docId = res.data[0].id;
+    console.log("随机查询到文档:", docId);
+    
+    // 打开文档
+    if (window.siyuan.config.system.os === "ios" || window.siyuan.config.system.os === "android") {
+        siyuan.openMobileFileById(plugin.app, docId);
+    } else {
+        siyuan.openTab({ app: plugin.app, doc: { id: docId, action: ["cb-get-focus", "cb-get-scroll"] } });
+    }
+}
+`,
+    }),
+  },
 ];
 
 /**

@@ -5,8 +5,9 @@ import { openBlockByID } from "../../myscripts/syUtils";
 
 export const sqlCommand: BuiltinCommand = {
     id: "sql",
-    title: "随机 SQL",
+    title: "高级随机漫游 (SQL)",
     requiresParam: true,
+    inputType: "textarea",
     paramPlaceholder: "SELECT id FROM blocks...",
     execute: async (plugin, param) => {
         if (!param) return;
