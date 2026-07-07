@@ -2,6 +2,7 @@
   import { createEventDispatcher, onMount, onDestroy } from "svelte";
 
   export let type: "navigation" | "customLinks" | null = null;
+  export let layout: "list" | "grid" = "list";
   export let items: any[] = [];
   export let deviceType: "mobile" | "desktop";
   export let triggerButton: HTMLElement | null = null;
@@ -94,43 +95,75 @@
     }
   }}
 >
-  <div class="submenu-content" style="padding: 10px;">
+  <div class="submenu-content" style="padding: 10px; {layout === 'grid' ? 'display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;' : ''}">
     {#each items as item, index (index)}
-      <button
-        class="submenu-item"
-        style="
-          padding: 12px 15px;
-          border-bottom: {index === items.length - 1
-          ? 'none'
-          : '1px solid var(--b3-border-color, #f0f0f0)'};
-          border: none;
-          background: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          transition: background 0.2s;
-          width: 100%;
-          text-align: left;
-        "
-        on:click={() => handleItemClick(item)}
-        on:mouseenter={(e) => (e.target.style.backgroundColor = "var(--b3-theme-background-light, #f8f9fa)")}
-        on:mouseleave={(e) => (e.target.style.backgroundColor = "transparent")}
-        role="menuitem"
-      >
-        <span style="margin-right: 10px; font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center;">
-          {#if item.icon && item.icon.startsWith("#icon")}
-            <svg style="width: 14px; height: 14px; fill: currentColor;"><use xlink:href={item.icon}></use></svg>
-          {:else}
-            {item.icon ? item.icon : ""}
+      {#if layout === 'grid'}
+        <button
+          class="submenu-item"
+          title={item.title || item.label}
+          style="
+            border: none;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            padding: 0;
+          "
+          on:click={() => handleItemClick(item)}
+          on:mouseenter={(e) => (e.target.style.backgroundColor = "var(--b3-theme-background-light, #f8f9fa)")}
+          on:mouseleave={(e) => (e.target.style.backgroundColor = "transparent")}
+          role="menuitem"
+        >
+          <span style="font-size: 20px; display: inline-flex; align-items: center; justify-content: center;">
+            {#if item.icon && item.icon.startsWith("#icon")}
+              <svg style="width: 20px; height: 20px; fill: currentColor;"><use xlink:href={item.icon}></use></svg>
+            {:else}
+              {item.icon ? item.icon : ""}
+            {/if}
+          </span>
+        </button>
+      {:else}
+        <button
+          class="submenu-item"
+          style="
+            padding: 12px 15px;
+            border-bottom: {index === items.length - 1
+            ? 'none'
+            : '1px solid var(--b3-border-color, #f0f0f0)'};
+            border: none;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s;
+            width: 100%;
+            text-align: left;
+          "
+          on:click={() => handleItemClick(item)}
+          on:mouseenter={(e) => (e.target.style.backgroundColor = "var(--b3-theme-background-light, #f8f9fa)")}
+          on:mouseleave={(e) => (e.target.style.backgroundColor = "transparent")}
+          role="menuitem"
+        >
+          <span style="margin-right: 10px; font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center;">
+            {#if item.icon && item.icon.startsWith("#icon")}
+              <svg style="width: 14px; height: 14px; fill: currentColor;"><use xlink:href={item.icon}></use></svg>
+            {:else}
+              {item.icon ? item.icon : ""}
+            {/if}
+          </span>
+          <span style="flex: 1; color: var(--b3-theme-on-surface, #333); font-size: 13px;">
+            {item.title || item.label}
+          </span>
+          {#if type === "customLinks"}
+            <span style="font-size: 12px; color: var(--b3-theme-on-surface-light, #666);">→</span>
           {/if}
-        </span>
-        <span style="flex: 1; color: var(--b3-theme-on-surface, #333); font-size: 13px;">
-          {item.title || item.label}
-        </span>
-        {#if type === "customLinks"}
-          <span style="font-size: 12px; color: var(--b3-theme-on-surface-light, #666);">→</span>
-        {/if}
-      </button>
+        </button>
+      {/if}
     {/each}
   </div>
 </div>

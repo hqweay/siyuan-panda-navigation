@@ -30,8 +30,8 @@ const log = getLogger("lets-nav-helper");
   let submenuType: "navigation" | "customLinks" | null = null;
   let submenuItems: any[] = [];
   let submenuTriggerButton: HTMLElement | null = null;
-
-
+  let submenuLayout: "list" | "grid" = "list";
+  let showIconPanel = false;
 
   // 滚动隐藏逻辑
   let isScrollingDown = false;
@@ -288,12 +288,14 @@ const log = getLogger("lets-nav-helper");
 
   // 显示导航子菜单
   function showNavigationSubmenu(event: MouseEvent) {
-    submenuTriggerButton = event.currentTarget as HTMLElement;
-    if (showIconPanel) {
+    if (submenuVisible && submenuType === "navigation") {
       hideSubmenu();
       return;
     }
     submenuType = "navigation";
+    submenuLayout = "list";
+    submenuTriggerButton = event.currentTarget as HTMLElement;
+    
     submenuItems = [
       {
         icon: "#iconUp",
@@ -346,6 +348,7 @@ const log = getLogger("lets-nav-helper");
     }
 
     submenuType = "customLinks"; // Reuse customLinks CSS
+    submenuLayout = group.submenuLayout || "list";
     submenuItems = validChildren.map((child: any) => ({
       icon: child.icon || "#iconLink",
       label: child.title,
@@ -367,6 +370,7 @@ const log = getLogger("lets-nav-helper");
     submenuType = null;
     submenuItems = [];
     submenuTriggerButton = null;
+    submenuLayout = "list";
   }
 
   $: showIconPanel = submenuVisible && (submenuType === "customLinks" || submenuType === "navigation") && submenuDisplayMode === "iconPanel";
@@ -452,6 +456,7 @@ const log = getLogger("lets-nav-helper");
   {#if !showIconPanel && submenuVisible}
     <Submenu
       type={submenuType}
+      layout={submenuLayout}
       items={submenuItems}
       {deviceType}
       triggerButton={submenuTriggerButton}

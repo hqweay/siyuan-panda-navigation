@@ -196,6 +196,7 @@
     if (parentGroup) {
       if (!parentGroup.children) parentGroup.children = [];
       parentGroup.children = [...parentGroup.children, newItem];
+      menuItems = [...menuItems]; // Trigger reactivity
     } else {
       menuItems = [...menuItems, newItem];
     }
@@ -209,6 +210,7 @@
       value: "",
       icon: "#iconMenu",
       showOn: "both",
+      submenuLayout: "list",
       children: []
     };
     menuItems = [...menuItems, newGroup];
@@ -403,12 +405,12 @@
               <!-- Body -->
               {#if expandedIndex === item.id}
                 <div class="action-card-body" role="none" on:click|stopPropagation on:keydown={null}>
-                  <div class="form-row">
-                    <div class="form-item">
+                  <div class="form-row fn__flex" style="gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <div class="form-item fn__flex-1" style="min-width: 180px;">
                       <span class="form-label">标题</span>
                       <input class="b3-text-field" type="text" bind:value={item.title} />
                     </div>
-                    <div class="form-item">
+                    <div class="form-item fn__flex-1" style="min-width: 180px;">
                       <span class="form-label">图标 (Emoji或图标ID)</span>
                       <div class="fn__flex" style="gap: 8px;">
                         <input class="b3-text-field fn__flex-1" type="text" bind:value={item.icon} />
@@ -417,20 +419,19 @@
                     </div>
                   </div>
 
-                  <div class="form-item">
-                    <span class="form-label">显示位置 (设备)</span>
-                    <select class="b3-select" bind:value={item.showOn}>
-                      <option value="both">全部设备</option>
-                      <option value="desktop">仅桌面端</option>
-                      <option value="mobile">仅移动端</option>
-                      <option value="none">隐藏 (禁用)</option>
-                    </select>
-                  </div>
+                  <div class="form-row fn__flex" style="gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <div class="form-item fn__flex-1" style="min-width: 180px;">
+                      <span class="form-label">显示位置 (设备)</span>
+                      <select class="b3-select" bind:value={item.showOn}>
+                        <option value="both">全部设备</option>
+                        <option value="desktop">仅桌面端</option>
+                        <option value="mobile">仅移动端</option>
+                        <option value="none">隐藏 (禁用)</option>
+                      </select>
+                    </div>
 
-                  
-                  {#if item.type !== "group"}
-                    <div class="form-row">
-                      <div class="form-item">
+                    {#if item.type !== "group"}
+                      <div class="form-item fn__flex-1" style="min-width: 180px;">
                         <span class="form-label">动作类型</span>
                         <select class="b3-select" bind:value={item.type} on:change={() => handleTypeChange(item)}>
                           <option value="builtin">内置功能</option>
@@ -438,8 +439,9 @@
                           <option value="pluginCommand">第三方插件命令</option>
                         </select>
                       </div>
-                    </div>
-
+                    {/if}
+                  </div>
+                  {#if item.type !== "group"}
                     <div class="form-item">
                       <span class="form-label">执行内容</span>
                       <div class="fn__flex" style="gap: 8px;">
@@ -483,8 +485,18 @@
                       </div>
                     </div>
                   {/if}
-{#if item.type === "group"}
-                    <div class="group-children-container" style="margin-top: 16px; padding: 12px; background-color: var(--b3-theme-background-light); border-radius: 4px;">
+                  {#if item.type === "group"}
+                    <div class="form-row fn__flex" style="gap: 12px; margin-bottom: 12px; padding: 12px; background-color: var(--b3-theme-background-light); border-radius: 4px;">
+                      <div class="form-item fn__flex-1">
+                        <span class="form-label">二级菜单布局</span>
+                        <select class="b3-select" bind:value={item.submenuLayout}>
+                          <option value="list">纵向列表 (显示文字)</option>
+                          <option value="grid">图标网格 (隐藏文字)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="group-children-container" style="padding: 12px; background-color: var(--b3-theme-background-light); border-radius: 4px;">
                        <div class="fn__flex align-center justify-between" style="margin-bottom: 8px;">
                           <strong>组内动作</strong>
                           <button class="b3-button b3-button--small b3-button--outline" on:click={() => addMenuItem(item)}>添加子动作</button>
@@ -525,20 +537,20 @@
                                <!-- child body edit -->
                                                                 <div style="padding: 0 12px 12px 12px;">
                                      
-                                     <div class="fn__flex" style="gap: 8px; margin-bottom: 8px; width: 100%;">
-                                       <input class="b3-text-field" style="flex: 1;" type="text" bind:value={child.title} placeholder="标题" />
-                                       <div class="fn__flex" style="flex: 1; gap: 4px;">
-                                         <input class="b3-text-field" style="flex: 1;" type="text" bind:value={child.icon} placeholder="图标/Emoji" />
+                                     <div class="fn__flex" style="gap: 8px; margin-bottom: 8px; width: 100%; flex-wrap: wrap;">
+                                       <input class="b3-text-field fn__flex-1" style="min-width: 120px;" type="text" bind:value={child.title} placeholder="标题" />
+                                       <div class="fn__flex fn__flex-1" style="gap: 4px; min-width: 140px;">
+                                         <input class="b3-text-field fn__flex-1" type="text" bind:value={child.icon} placeholder="图标/Emoji" />
                                          <button class="b3-button b3-button--outline" style="padding: 0 4px;" on:click={() => openIconPicker(icon => { child.icon = icon; menuItems = [...menuItems]; })}>🎨</button>
                                        </div>
-                                       <select class="b3-select" bind:value={child.type} style="width: 120px;" on:change={() => handleTypeChange(child)}>
+                                       <select class="b3-select fn__flex-1" style="min-width: 100px; max-width: 140px;" bind:value={child.type} on:change={() => handleTypeChange(child)}>
                                           <option value="builtin">内置功能</option>
                                           <option value="command">系统命令</option>
                                           <option value="pluginCommand">第三方命令</option>
                                        </select>
                                      </div>
                                      
-                                     <div class="fn__flex" style="gap: 8px; width: 100%;">
+                                     <div class="fn__flex" style="gap: 8px; width: 100%; flex-wrap: wrap;">
                                         {#if child.type === "builtin"}
                                           <select class="b3-select" bind:value={child.value} style="width: 160px;" on:change={() => { child.param = ""; handleTypeChange(child); }}>
                                             {#each builtinCommandList as cmd}
