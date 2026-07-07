@@ -49,18 +49,9 @@ export const myCustomCommand: BuiltinCommand = {
 };
 ```
 
-2. 在 `src/utils/builtin-metas.ts` 中添加对应元数据（用于 MCP get-capabilities 发现）：
+（无需第二步，不再需要手动维护元数据！）
 
-```ts
-myCustomCommand: {
-  name: "myCustomCommand",
-  description: "自定义功能描述",
-  parameters: [],                  // 无参数时留空数组
-  example: "utils.myCustomCommand()",
-},
-```
-
-**改 2 处文件**：`builtins/commands/*.ts` + `builtin-metas.ts`
+**改 1 处文件**：`builtins/commands/*.ts`（新增功能后运行 `pnpm dev` 或 `pnpm build` 时，系统会自动提取 AST 生成对应的 `builtin-metas.ts`）
 
 ## 场景二：向 utils 暴露工具方法
 
@@ -91,13 +82,35 @@ getNotebooks: {
 
 ### AI 发现机制
 
-AI 智能体调用 MCP 工具 `panda-nav:get-capabilities` 即可查询当前 `utils` 支持的所有函数名、参数签名和示例代码。该工具的描述由 `src/kernel.ts` 在构建时从 `pandaUtils` + `builtinMetas` 自动生成，新增函数后无需修改任何 MCP 注册代码。
+AI 智能体调用 MCP 工具 `panda-nav:get-capabilities` 即可查询当前 `utils` 支持的所有函数名、参数签名和示例代码。该工具的描述由 `src/kernel.ts` 结合 `pandaUtils` + 自动提取构建的 `builtinMetas` 生成。
+
+**开发者只要在 `commands` 下新增内置命令，或者在 `panda-utils.ts` 中新增工具，AI 就能全自动通过 MCP 认识它们，无需手动同步文档或修改注册代码！**
 
 ### 约束
 
 - `meta` 字段必须是纯数据对象（不要引用外部变量），供 kernel 编译内联
 - `fn` 的第一个参数固定为 `siyuan` SDK 模块，其余参数自定义
 - `fn` 内部可使用 `siyuan.fetchSyncPost`、`siyuan.showMessage`、`siyuan.openTab` 等 SDK API
+
+# MCP 工具参考 (AI 智能体使用)
+
+## 配置管理
+
+| 工具 | 用途 |
+|------|------|
+| `get-action-schema` | 返回所有合法字段值（type 枚举、builtinValues、icons、positions 等），**构造 action 前先调此工具** |
+| `get-full-config` | 返回完整 config.json（含 menuItems + 所有设置项） |
+| `list-actions` | 返回 menuItems 列表及其索引 |
+| `add-action` | 添加单个 action |
+| `batch-add-actions` | 批量添加 / 替换全部 actions（mode=append/replace） |
+| `update-action` | 按索引更新 action |
+| `remove-action` | 按索引删除 action |
+
+## 脚本工具发现
+
+| 工具 | 用途 |
+|------|------|
+| `get-capabilities` | 返回 utils 对象中所有可用函数（含自定义工具 + 内置命令），含参数签名和示例 |
 
 ## 构建命令
 

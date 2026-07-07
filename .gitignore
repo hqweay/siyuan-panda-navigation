@@ -9,3 +9,4 @@ rewrite_settings.js
 rewrite_ui.py
 update_nav_exec.py
 update_settings.py
+src/utils/builtin-metas.ts

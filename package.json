@@ -6,6 +6,8 @@
   "author": "hqweay",
   "license": "MIT",
   "scripts": {
+    "prebuild": "node scripts/gen-builtin-metas.js",
+    "predev": "node scripts/gen-builtin-metas.js",
     "dev": "vite build --watch & pnpm build:kernel:dev --watch",
     "build": "vite build && pnpm build:kernel",
     "build:kernel": "esbuild src/kernel.ts --bundle --outfile=dist/kernel.js --external:siyuan --platform=node",
