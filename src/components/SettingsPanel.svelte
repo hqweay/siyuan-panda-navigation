@@ -17,6 +17,9 @@
   let iconEditingIndex: number | null = null;
   let allSiyuanIcons: string[] = [];
 
+  let sysCommands: { value: string; label: string }[] = [];
+  let pluginCommandsGroups: { pluginName: string; commands: { value: string; label: string }[] }[] = [];
+
   onMount(async () => {
     try {
       const res = await lsNotebooks();
@@ -56,6 +59,57 @@
       }));
     } catch (e) {
       console.error("加载数据库列表失败", e);
+    }
+
+    try {
+      if ((window as any).siyuan?.config?.keymap?.general) {
+        const general = (window as any).siyuan.config.keymap.general;
+        const langs = (window as any).siyuan.languages || {};
+        for (const key in general) {
+          sysCommands.push({
+            value: key,
+            label: langs[key] || key
+          });
+        }
+      } else {
+        sysCommands = [
+          { value: "globalSearch", label: "全局搜索 🔍" },
+          { value: "recentDocs", label: "最近文档 🕒" },
+          { value: "fileTree", label: "切换文件树 📁" },
+          { value: "outline", label: "切换大纲 📑" },
+          { value: "bookmark", label: "打开书签 🔖" },
+          { value: "tag", label: "打开标签 🏷️" },
+          { value: "backlinks", label: "打开反向链接 🔗" },
+          { value: "graphView", label: "打开关系图 🕸️" },
+          { value: "syncNow", label: "立即同步 🔄" },
+          { value: "riffCard", label: "闪卡复习 🎴" },
+          { value: "lockScreen", label: "锁屏 🔒" },
+          { value: "config", label: "打开思源设置 ⚙️" },
+          { value: "newFile", label: "新建文档 📄" },
+        ];
+      }
+      sysCommands = sysCommands;
+
+      if (plugin?.app?.plugins) {
+        plugin.app.plugins.forEach(p => {
+          if (p.commands && p.commands.length > 0) {
+            const cmds = p.commands.map(c => {
+              const label = c.langText || (p.i18n && p.i18n[c.langKey]) || c.langKey;
+              return {
+                value: `plugin::${p.name}::${c.customHotkey || c.langKey}`,
+                label: label
+              };
+            });
+            pluginCommandsGroups.push({
+              pluginName: p.displayName || p.name,
+              commands: cmds
+            });
+          }
+        });
+        pluginCommandsGroups = pluginCommandsGroups;
+      }
+    } catch (e) {
+      console.error("加载命令列表失败", e);
     }
   });
 
@@ -172,22 +226,6 @@
     "#iconInfo",
     "#iconHelp",
     "#iconTrashcan",
-  ];
-
-  const NATIVE_COMMANDS = [
-    { value: "globalSearch", label: "全局搜索 🔍" },
-    { value: "recentDocs", label: "最近文档 🕒" },
-    { value: "fileTree", label: "切换文件树 📁" },
-    { value: "outline", label: "切换大纲 📑" },
-    { value: "bookmark", label: "打开书签 🔖" },
-    { value: "tag", label: "打开标签 🏷️" },
-    { value: "backlinks", label: "打开反向链接 🔗" },
-    { value: "graphView", label: "打开关系图 🕸️" },
-    { value: "syncNow", label: "立即同步 🔄" },
-    { value: "riffCard", label: "闪卡复习 🎴" },
-    { value: "lockScreen", label: "锁屏 🔒" },
-    { value: "config", label: "打开思源设置 ⚙️" },
-    { value: "newFile", label: "新建文档 📄" },
   ];
 
   function addAction() {
@@ -637,35 +675,26 @@
                       <label class="form-label">动作内容 / 值</label>
 
                       {#if action.type === "command"}
-                        <!-- 常用命令选择器 -->
+                        <!-- 命令选择器 -->
                         <div class="fn__flex-column" style="gap: 6px;">
                           <select
                             class="b3-select"
-                            on:change={(e) => {
-                              if (e.currentTarget.value !== "custom") {
-                                action.value = e.currentTarget.value;
-                              }
-                            }}
-                            value={NATIVE_COMMANDS.some(
-                              (cmd) => cmd.value === action.value,
-                            )
-                              ? action.value
-                              : "custom"}
+                            bind:value={action.value}
                           >
-                            <option value="">-- 请选择预设内置命令 --</option>
-                            {#each NATIVE_COMMANDS as cmd}
-                              <option value={cmd.value}>{cmd.label}</option>
+                            <option value="">-- 请选择命令 --</option>
+                            <optgroup label="👑 思源内置命令">
+                              {#each sysCommands as cmd}
+                                <option value={cmd.value}>{cmd.label}</option>
+                              {/each}
+                            </optgroup>
+                            {#each pluginCommandsGroups as group}
+                              <optgroup label={`🧩 插件：${group.pluginName}`}>
+                                {#each group.commands as cmd}
+                                  <option value={cmd.value}>{cmd.label}</option>
+                                {/each}
+                              </optgroup>
                             {/each}
-                            <option value="custom">✍️ 自定义命令 ID</option>
                           </select>
-                          {#if !NATIVE_COMMANDS.some((cmd) => cmd.value === action.value) || action.value === ""}
-                            <input
-                              class="b3-text-field"
-                              type="text"
-                              bind:value={action.value}
-                              placeholder="输入思源命令 ID (如 splitLR)"
-                            />
-                          {/if}
                         </div>
                       {:else if action.type === "av-add"}
                         <div class="fn__flex-column" style="gap: 6px;">

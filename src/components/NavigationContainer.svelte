@@ -114,7 +114,22 @@ const log = getLogger("lets-nav-helper");
       await goToRandomBlock(value);
     } else if (type === "command") {
       try {
-        if (value === "goBack") {
+        if (value.startsWith("plugin::")) {
+          const [, pName, cmdKey] = value.split("::");
+          const targetPlugin = plugin.app.plugins.find((p: any) => p.name === pName);
+          if (targetPlugin) {
+            const cmd = targetPlugin.commands.find((c: any) => c.customHotkey === cmdKey || c.langKey === cmdKey);
+            if (cmd) {
+              if (cmd.callback) cmd.callback();
+              else if (cmd.globalCallback) cmd.globalCallback();
+              else showMessage("该插件命令不支持在快捷动作执行", 3000, "error");
+            } else {
+              showMessage("未找到该插件命令", 3000, "error");
+            }
+          } else {
+            showMessage("该命令对应的插件未加载", 3000, "error");
+          }
+        } else if (value === "goBack") {
           navigation.goBack();
         } else if (value === "goForward") {
           navigation.goForward();
