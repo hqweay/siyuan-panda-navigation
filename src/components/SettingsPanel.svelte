@@ -64,7 +64,9 @@
       if ((window as any).siyuan?.config?.keymap?.general) {
         const general = (window as any).siyuan.config.keymap.general;
         const langs = (window as any).siyuan.languages || {};
+        const COMMAND_BLACKLIST = ["goBack", "goForward"];
         for (const key in general) {
+          if (COMMAND_BLACKLIST.includes(key)) continue;
           sysCommands.push({
             value: key,
             label: langs[key] || key
