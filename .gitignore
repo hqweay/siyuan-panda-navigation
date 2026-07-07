@@ -2,3 +2,8 @@ node_modules/
 dist/
 package.zip
 .DS_Store
+fix_svelte.py
+rewrite_nav.py
+rewrite_panes.py
+rewrite_settings.js
+rewrite_ui.py

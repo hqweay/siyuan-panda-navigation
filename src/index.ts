@@ -145,75 +145,112 @@ export class PandaNavigation extends Plugin {
   }
 
   private initDefaultSettings() {
-    const defaultSettings: Record<string, any> = {
-      enableBottomNav: "both",
-      showBackButton: "mobile",
-      noteBookID: "",
-      showForwardButton: "mobile",
-      showCustomLinksButton: "both",
-      showDailyNoteButton: "both",
-      showNavigationMenuButton: "both",
-      showButtonLabels: "both",
-      buttonOrder: [
-        "showBackButton",
-        "showDailyNoteButton",
-        "showNavigationMenuButton",
-        "showForwardButton",
-        "showCustomLinksButton",
-      ],
-      customActions: [
-        {
-          enabled: true,
-          title: "首页",
-          type: "url",
-          value: "siyuan://common/dashboard",
-          icon: "#iconWorkspace",
-          showOn: "both",
-          mobilePosition: "navbar",
-          desktopPosition: "submenu"
-        },
-        {
-          enabled: true,
-          title: "全局搜索",
-          type: "command",
-          value: "globalSearch",
-          icon: "#iconSearch",
-          showOn: "mobile",
-          mobilePosition: "navbar",
-          desktopPosition: "submenu"
-        },
-        {
-          enabled: true,
-          title: "随机漫游",
-          type: "sql",
-          value: "SELECT id FROM blocks WHERE type = 'd'",
-          icon: "#iconRefresh",
-          showOn: "both",
-          mobilePosition: "submenu",
-          desktopPosition: "submenu"
-        },
-        {
-          enabled: true,
-          title: "作者博客",
-          type: "url",
-          value: "https://leay.net/",
-          icon: "#iconLink",
-          showOn: "both",
-          mobilePosition: "submenu",
-          desktopPosition: "submenu"
-        }
-      ]
-    };
+    if (settings.getBySpace("nav-helper", "menuItems") === undefined) {
+      let menuItems: any[] = [];
+      const generateId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
 
-    let modified = false;
-    for (const key in defaultSettings) {
-      if (settings.getBySpace("nav-helper", key) === undefined) {
-        settings.setBySpace("nav-helper", key, defaultSettings[key]);
-        modified = true;
+      const oldButtonOrder = settings.getBySpace("nav-helper", "buttonOrder");
+      
+      if (oldButtonOrder && Array.isArray(oldButtonOrder)) {
+        // Run migration
+        const defaultSubmenuGroup = {
+          id: generateId(),
+          type: "group",
+          value: "",
+          title: "快捷动作",
+          icon: "#iconStar",
+          showOn: "both",
+          children: [] as any[]
+        };
+
+        const internalMap: Record<string, any> = {
+          "showBackButton": { value: "goBack", title: "返回", icon: "#iconLeft" },
+          "showForwardButton": { value: "goForward", title: "前进", icon: "#iconRight" },
+          "showDailyNoteButton": { value: "dailyNote", title: "今日日记", icon: "#iconCalendar" },
+          "showNavigationMenuButton": { value: "navigationMenu", title: "导航菜单", icon: "#iconMenu" }
+        };
+
+        oldButtonOrder.forEach((key: string) => {
+          if (internalMap[key]) {
+            const showOn = settings.getBySpace("nav-helper", key) || "both";
+            menuItems.push({
+              id: generateId(),
+              type: "internal",
+              ...internalMap[key],
+              showOn
+            });
+          } else if (key === "showCustomLinksButton") {
+            const showOn = settings.getBySpace("nav-helper", key) || "both";
+            defaultSubmenuGroup.showOn = showOn;
+            menuItems.push(defaultSubmenuGroup);
+          }
+        });
+
+        // Migrate customActions
+        const oldActions = settings.getBySpace("nav-helper", "customActions") || [];
+        oldActions.forEach((a: any) => {
+           const showOn = a.enabled === false ? "none" : (a.showOn || "both");
+           const item = {
+             id: generateId(),
+             type: a.type,
+             value: a.value,
+             title: a.title,
+             icon: a.icon,
+             showOn
+           };
+           if (a.desktopPosition === "submenu" || a.mobilePosition === "submenu") {
+             defaultSubmenuGroup.children.push(item);
+           } else {
+             menuItems.push(item);
+           }
+        });
+
+        // If defaultSubmenuGroup wasn't in oldButtonOrder but has children, add it
+        if (defaultSubmenuGroup.children.length > 0 && !menuItems.includes(defaultSubmenuGroup)) {
+           menuItems.push(defaultSubmenuGroup);
+        }
+      } else {
+        // First install, new defaults
+        menuItems = [
+          { id: generateId(), type: "internal", value: "goBack", title: "返回", icon: "#iconLeft", showOn: "both" },
+          { id: generateId(), type: "internal", value: "dailyNote", title: "今日日记", icon: "#iconCalendar", showOn: "both" },
+          { id: generateId(), type: "internal", value: "navigationMenu", title: "导航菜单", icon: "#iconMenu", showOn: "both" },
+          { id: generateId(), type: "internal", value: "goForward", title: "前进", icon: "#iconRight", showOn: "both" },
+          {
+            id: generateId(), type: "group", value: "", title: "快捷动作", icon: "#iconStar", showOn: "both",
+            children: [
+               { id: generateId(), type: "url", title: "首页", value: "siyuan://common/dashboard", icon: "#iconWorkspace", showOn: "both" },
+               { id: generateId(), type: "command", title: "全局搜索", value: "globalSearch", icon: "#iconSearch", showOn: "mobile" },
+               { id: generateId(), type: "sql", title: "随机漫游", value: "SELECT id FROM blocks WHERE type = 'd'", icon: "#iconRefresh", showOn: "both" },
+               { id: generateId(), type: "url", title: "作者博客", value: "https://leay.net/", icon: "#iconLink", showOn: "both" }
+            ]
+          }
+        ];
       }
-    }
-    
-    if (modified) {
+
+      // Cleanup old settings to avoid saving legacy bloat (optional, but good practice)
+      const keysToRemove = [
+        "showBackButton", "showForwardButton", "showDailyNoteButton", 
+        "showNavigationMenuButton", "showCustomLinksButton", 
+        "buttonOrder", "customActions"
+      ];
+      keysToRemove.forEach(k => {
+        // @ts-ignore - Assuming we can delete or set to undefined
+        delete settings.data[k]; 
+      });
+
+      settings.setBySpace("nav-helper", "menuItems", menuItems);
+      // We still need other default settings
+      if (settings.getBySpace("nav-helper", "enableBottomNav") === undefined) {
+         settings.setBySpace("nav-helper", "enableBottomNav", "both");
+      }
+      if (settings.getBySpace("nav-helper", "noteBookID") === undefined) {
+         settings.setBySpace("nav-helper", "noteBookID", "");
+      }
+      if (settings.getBySpace("nav-helper", "showButtonLabels") === undefined) {
+         settings.setBySpace("nav-helper", "showButtonLabels", "both");
+      }
+
       settings.save();
     }
   }

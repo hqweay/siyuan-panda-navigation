@@ -57,56 +57,18 @@ const log = getLogger("lets-nav-helper");
     lastScrollTop = currentScrollTop;
   }
 
-  // 导航按钮配置
-  const buttonConfigs = [
-    {
-      key: "showBackButton",
-      icon: "#iconLeft",
-      label: plugin.i18n["lets-nav-helper.back"],
-      show: settings.getBySpace(pluginMetadata.name, "showBackButton"),
-      action: () => navigation.goBack(),
-    },
-    {
-      key: "showDailyNoteButton",
-      icon: "#iconCalendar",
-      label: plugin.i18n["lets-nav-helper.dailyNote"],
-      show: settings.getBySpace(pluginMetadata.name, "showDailyNoteButton"),
-      action: () => createDailyNote(),
-    },
-    {
-      key: "showNavigationMenuButton",
-      icon: "#iconMenu",
-      label: plugin.i18n["lets-nav-helper.navigation"],
-      show: settings.getBySpace(
-        pluginMetadata.name,
-        "showNavigationMenuButton"
-      ),
-      action: (event) => showNavigationSubmenu(event),
-      hasSubmenu: true,
-    },
-    {
-      key: "showForwardButton",
-      icon: "#iconRight",
-      label: plugin.i18n["lets-nav-helper.forward"],
-      show: settings.getBySpace(pluginMetadata.name, "showForwardButton"),
-      action: () => navigation.goForward(),
-    },
-    {
-      key: "showCustomLinksButton",
-      icon: "#iconStar",
-      label: plugin.i18n["lets-nav-helper.links"],
-      show: settings.getBySpace(pluginMetadata.name, "showCustomLinksButton"),
-      action: (event) => showCustomActionsSubmenu(event),
-      hasSubmenu: true,
-    },
-  ];
-
-  // 加载自定义动作
-  let customActions: CustomAction[] = settings.getBySpace(pluginMetadata.name, "customActions") || [];
+  // 加载菜单配置
+  let menuItems: any[] = settings.getBySpace(pluginMetadata.name, "menuItems") || [];
   let submenuDisplayMode = settings.getBySpace(pluginMetadata.name, "submenuDisplayMode") || "list";
 
+  $: visibleMenuItems = menuItems.filter(item => {
+    if (item.showOn === "none") return false;
+    if (deviceType === "mobile") return item.showOn === "both" || item.showOn === "mobile";
+    return item.showOn === "both" || item.showOn === "desktop";
+  });
+
   // 动作执行分发
-  async function executeCustomAction(action: CustomAction) {
+  async function executeCustomAction(action: any) {
     const { type, value, title } = action;
     if (type === "url") {
       openByUrl(value);
@@ -134,11 +96,9 @@ const log = getLogger("lets-nav-helper");
         } else if (value === "goForward") {
           navigation.goForward();
         } else if (value === "globalSearch") {
-          // Desktop check
           const searchDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
             item.element?.querySelector("#searchList")
           );
-          // Mobile check
           const mobileModel = document.getElementById("model");
           const isMobileSearchOpen = mobileModel &&
             mobileModel.style.transform === "translateY(0px)" &&
@@ -152,12 +112,10 @@ const log = getLogger("lets-nav-helper");
             globalCommand(value, plugin.app);
           }
         } else if (value === "recentDocs") {
-          // Desktop check
           const recentDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
             item.element?.getAttribute("data-key") === "dialog-recentdocs" ||
             (item.element?.querySelector(".b3-list") && item.element?.innerHTML.includes((window as any).siyuan?.languages?.recentDocs))
           );
-          // Mobile check
           const mobileModel = document.getElementById("model");
           const isMobileRecentOpen = mobileModel &&
             mobileModel.style.transform === "translateY(0px)" &&
@@ -171,7 +129,6 @@ const log = getLogger("lets-nav-helper");
             globalCommand(value, plugin.app);
           }
         } else if (value === "config") {
-          // 若思源设置窗口已打开，则再次点击时关闭它
           const configDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
             item.element?.querySelector(".config__panel")
           );
@@ -184,8 +141,8 @@ const log = getLogger("lets-nav-helper");
           globalCommand(value, plugin.app);
         }
       } catch (err) {
-        log.error("执行内置命令失败:", err);
-        showMessage("执行内置命令失败");
+        log.error("执行命令失败:", err);
+        showMessage("执行命令失败");
       }
     } else if (type === "av-add") {
       try {
@@ -201,46 +158,28 @@ const log = getLogger("lets-nav-helper");
     }
   }
 
-  // 按照用户设置的顺序对内置按钮进行排序
-  $: sortedButtonConfigs = [...buttonConfigs].sort((a, b) => {
-    const defaultOrder = [
-      "showBackButton",
-      "showDailyNoteButton",
-      "showNavigationMenuButton",
-      "showForwardButton",
-      "showCustomLinksButton",
-    ];
-    const buttonOrder = settings.getBySpace(pluginMetadata.name, "buttonOrder") || defaultOrder;
-    return buttonOrder.indexOf(a.key) - buttonOrder.indexOf(b.key);
-  });
+  function handleActionClick(item: any, event: Event) {
+     if (item.type === "group") {
+        showGroupSubmenu(item, event);
+     } else if (item.type === "internal") {
+        if (item.value === "goBack") navigation.goBack();
+        else if (item.value === "goForward") navigation.goForward();
+        else if (item.value === "dailyNote") createDailyNote();
+        else if (item.value === "navigationMenu") showNavigationSubmenu(event as MouseEvent);
+     } else {
+        executeCustomAction(item);
+     }
+  }
 
-  // 处理自定义动作的位置分发与防溢出回退
-  $: filteredActions = customActions.filter(a => {
-    if (!a.enabled) return false;
-    if (deviceType === "mobile")
-      return a.showOn === "both" || a.showOn === "mobile";
-    return a.showOn === "both" || a.showOn === "desktop";
-  });
+  $: allNavbarButtons = visibleMenuItems.map((item) => ({
+    key: item.id,
+    icon: item.icon,
+    label: item.title,
+    action: (e: Event) => handleActionClick(item, e),
+    hasSubmenu: item.type === "group" || (item.type === "internal" && item.value === "navigationMenu")
+  }));
 
-  $: navbarActions = filteredActions.filter(a =>
-    deviceType === "mobile"
-      ? a.mobilePosition === "navbar"
-      : a.desktopPosition === "navbar"
-  );
-  $: submenuActions = filteredActions.filter(a =>
-    deviceType === "mobile"
-      ? a.mobilePosition === "submenu"
-      : a.desktopPosition === "submenu"
-  );
-
-  // 过滤显示的内置按钮
-  $: visibleBuiltInButtons = sortedButtonConfigs.filter((btn) => {
-    if (btn.key === "showCustomLinksButton" && filteredActions.length === 0) return false;
-    if (isMobile && btn.show === "mobile") return true;
-    if (!isMobile && btn.show === "pc") return true;
-    if (btn.show === "both") return true;
-    return false;
-  });
+  $: visibleButtons = allNavbarButtons;
 
   function shouldShowLabel(): boolean {
     const setting = settings.getBySpace(pluginMetadata.name, "showButtonLabels") ?? "both";
@@ -252,37 +191,6 @@ const log = getLogger("lets-nav-helper");
 
   let showLabel: boolean = true;
   $: showLabel = shouldShowLabel();
-
-  let finalNavbarActions: CustomAction[] = [];
-  let finalSubmenuActions: CustomAction[] = [];
-
-  $: {
-    finalNavbarActions = [...navbarActions];
-    finalSubmenuActions = [...submenuActions];
-
-    if (isMobile && deviceType === "mobile") {
-      const totalBuiltIn = visibleBuiltInButtons.length;
-      const limit = 7;
-      if (totalBuiltIn + finalNavbarActions.length > limit) {
-        const allowedNavbarCount = Math.max(0, limit - totalBuiltIn);
-        const overflowActions = finalNavbarActions.slice(allowedNavbarCount);
-        finalNavbarActions = finalNavbarActions.slice(0, allowedNavbarCount);
-        finalSubmenuActions = [...overflowActions, ...finalSubmenuActions];
-      }
-    }
-  }
-
-  $: allNavbarButtons = [
-    ...visibleBuiltInButtons,
-    ...finalNavbarActions.map((action, idx) => ({
-      key: `custom-nav-${idx}`,
-      icon: action.icon || "#iconLink",
-      label: action.title,
-      action: () => executeCustomAction(action),
-    }))
-  ];
-
-
 
   // 创建今日笔记
   async function createDailyNote() {
@@ -436,28 +344,38 @@ const log = getLogger("lets-nav-helper");
     submenuVisible = true;
   }
 
-  // 显示快捷动作子菜单
-  function showCustomActionsSubmenu(event: MouseEvent) {
-    submenuTriggerButton = event.currentTarget as HTMLElement;
-    if (showIconPanel) {
+  function showGroupSubmenu(group: any, event: Event) {
+    if (submenuVisible && submenuType === "customLinks") {
       hideSubmenu();
       return;
     }
-    if (finalSubmenuActions.length === 0) {
-      showMessage(plugin.i18n["lets-nav-helper.noCustomLinks"]);
+    
+    // 过滤掉没显示的子动作
+    const validChildren = (group.children || []).filter((child: any) => {
+       if (child.showOn === "none") return false;
+       if (deviceType === "mobile") return child.showOn === "both" || child.showOn === "mobile";
+       return child.showOn === "both" || child.showOn === "desktop";
+    });
+
+    if (validChildren.length === 0) {
+      showMessage("该分组下没有内容");
       return;
     }
 
-    submenuType = "customLinks";
-    submenuItems = finalSubmenuActions.map((action: any) => {
-      return {
-        icon: action.icon || "#iconLink",
-        label: action.title,
-        action: () => executeCustomAction(action),
-      };
-    });
+    submenuType = "customLinks"; // Reuse customLinks CSS
+    submenuItems = validChildren.map((child: any) => ({
+      icon: child.icon || "#iconLink",
+      label: child.title,
+      action: () => handleActionClick(child, event),
+    }));
 
-    submenuVisible = true;
+    submenuTriggerButton = (event.currentTarget as HTMLElement).closest(".nav-button");
+
+    if (deviceType === "mobile" && submenuDisplayMode === "iconPanel") {
+      showIconPanel = true;
+    } else {
+      submenuVisible = true;
+    }
   }
 
   // 隐藏子菜单

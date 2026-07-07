@@ -13,8 +13,6 @@
   let avDatabases: { id: string; name: string }[] = [];
 
   // 图标选择弹窗相关的状态
-  let showIconPicker = false;
-  let iconEditingIndex: number | null = null;
   let allSiyuanIcons: string[] = [];
 
   let sysCommands: { value: string; label: string }[] = [];
@@ -113,18 +111,7 @@
     }
   });
 
-  function openIconPicker(index: number) {
-    iconEditingIndex = index;
-    showIconPicker = true;
-  }
 
-  function handleSelectIcon(icon: string) {
-    if (iconEditingIndex !== null) {
-      actions[iconEditingIndex].icon = icon;
-      actions = [...actions];
-    }
-    showIconPicker = false;
-  }
 
   let activeTab: "general" | "buttons" | "links" = "general";
 
@@ -132,82 +119,11 @@
   let enableBottomNav =
     settings.getBySpace("nav-helper", "enableBottomNav") ?? "both";
   let noteBookID = settings.getBySpace("nav-helper", "noteBookID") ?? "";
+  let showButtonLabels = settings.getBySpace("nav-helper", "showButtonLabels") ?? "both";
 
-  // Button Visibility Settings
-  let showBackButton =
-    settings.getBySpace("nav-helper", "showBackButton") ?? "both";
-  let showForwardButton =
-    settings.getBySpace("nav-helper", "showForwardButton") ?? "both";
-  let showCustomLinksButton =
-    settings.getBySpace("nav-helper", "showCustomLinksButton") ?? "both";
-  let showDailyNoteButton =
-    settings.getBySpace("nav-helper", "showDailyNoteButton") ?? "both";
-  let showNavigationMenuButton =
-    settings.getBySpace("nav-helper", "showNavigationMenuButton") ?? "both";
-  let showContextButton =
-    settings.getBySpace("nav-helper", "showContextButton") ?? "both";
-  let showButtonLabels =
-    settings.getBySpace("nav-helper", "showButtonLabels") ?? "both";
-  let submenuDisplayMode =
-    settings.getBySpace("nav-helper", "submenuDisplayMode") ?? "list";
-
-  // Button Order Settings
-  const ALL_BUTTONS = [
-    { key: "showBackButton", label: "返回按钮", icon: "#iconLeft" },
-    { key: "showDailyNoteButton", label: "今日日记按钮", icon: "#iconCalendar" },
-    { key: "showNavigationMenuButton", label: "导航菜单按钮", icon: "#iconMenu" },
-    { key: "showForwardButton", label: "前进按钮", icon: "#iconRight" },
-    { key: "showCustomLinksButton", label: "快捷链接按钮", icon: "#iconStar" },
-  ];
-
-  let defaultButtonOrder = ALL_BUTTONS.map(b => b.key);
-  let buttonOrder = settings.getBySpace("nav-helper", "buttonOrder") || [...defaultButtonOrder];
-
-  // 保证已保存列表中含有所有当前配置键 (防止升级兼容问题)
-  ALL_BUTTONS.forEach(b => {
-    if (!buttonOrder.includes(b.key)) {
-      buttonOrder.push(b.key);
-    }
-  });
-
-  let displayButtons = [...ALL_BUTTONS].sort((a, b) => buttonOrder.indexOf(a.key) - buttonOrder.indexOf(b.key));
-
-  function moveButtonUp(index: number) {
-    if (index === 0) return;
-    const temp = displayButtons[index];
-    displayButtons[index] = displayButtons[index - 1];
-    displayButtons[index - 1] = temp;
-    displayButtons = [...displayButtons];
-    buttonOrder = displayButtons.map(b => b.key);
-  }
-
-  function moveButtonDown(index: number) {
-    if (index === displayButtons.length - 1) return;
-    const temp = displayButtons[index];
-    displayButtons[index] = displayButtons[index + 1];
-    displayButtons[index + 1] = temp;
-    displayButtons = [...displayButtons];
-    buttonOrder = displayButtons.map(b => b.key);
-  }
-
-  // Custom Actions
-  let customActions = settings.getBySpace("nav-helper", "customActions") || [];
-  if (!Array.isArray(customActions)) {
-    customActions = [];
-  }
-  let actions = customActions.map((a: any) => ({
-    enabled: a.enabled ?? true,
-    title: a.title,
-    type: a.type,
-    value: a.value,
-    icon: a.icon,
-    showOn: a.showOn ?? "both",
-    mobilePosition: a.mobilePosition ?? a.position ?? "navbar",
-    desktopPosition: a.desktopPosition ?? a.position ?? "navbar",
-  }));
-
-  // 折叠与选择相关的状态
-  let expandedIndex: number | null = null;
+  // Menu Builder Variables
+  let menuItems: any[] = settings.getBySpace("nav-helper", "menuItems") || [];
+  let expandedIndex: string | null = null;
 
   const COMMON_ICONS = [
     "#iconWorkspace",
@@ -228,60 +144,84 @@
     "#iconTrashcan",
   ];
 
-  function addAction() {
-    actions = [
-      ...actions,
-      {
-        enabled: true,
-        title: "新动作",
-        type: "url",
-        value: "",
-        icon: "#iconLink",
-        showOn: "both",
-        mobilePosition: "navbar",
-        desktopPosition: "navbar",
-      },
-    ];
-    expandedIndex = actions.length - 1;
+  function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
   }
 
-  function removeAction(index: number) {
-    actions = actions.filter((_, i) => i !== index);
-    if (expandedIndex === index) {
-      expandedIndex = actions.length > 0 ? 0 : null;
-    } else if (expandedIndex !== null && expandedIndex > index) {
-      expandedIndex -= 1;
+  function addMenuItem(parentGroup?: any) {
+    const newItem = {
+      id: generateId(),
+      type: "url",
+      title: "新动作",
+      value: "",
+      icon: "#iconLink",
+      showOn: "both"
+    };
+    if (parentGroup) {
+      if (!parentGroup.children) parentGroup.children = [];
+      parentGroup.children = [...parentGroup.children, newItem];
+    } else {
+      menuItems = [...menuItems, newItem];
     }
   }
 
-  function toggleExpand(index: number) {
-    expandedIndex = expandedIndex === index ? null : index;
+  function addGroup() {
+    const newGroup = {
+      id: generateId(),
+      type: "group",
+      title: "新分组",
+      value: "",
+      icon: "#iconMenu",
+      showOn: "both",
+      children: []
+    };
+    menuItems = [...menuItems, newGroup];
   }
 
-  function moveUp(index: number) {
+  function removeMenuItem(id: string, parentGroup?: any) {
+    if (parentGroup) {
+      parentGroup.children = parentGroup.children.filter((item: any) => item.id !== id);
+    } else {
+      menuItems = menuItems.filter((item: any) => item.id !== id);
+    }
+    menuItems = [...menuItems];
+  }
+
+  function toggleExpand(id: string) {
+    expandedIndex = expandedIndex === id ? null : id;
+  }
+
+  function moveMenuItemUp(index: number, arr: any[]) {
     if (index === 0) return;
-    const temp = actions[index];
-    actions[index] = actions[index - 1];
-    actions[index - 1] = temp;
-    actions = [...actions];
-    if (expandedIndex === index) {
-      expandedIndex = index - 1;
-    } else if (expandedIndex === index - 1) {
-      expandedIndex = index;
-    }
+    const temp = arr[index];
+    arr[index] = arr[index - 1];
+    arr[index - 1] = temp;
+    menuItems = [...menuItems];
   }
 
-  function moveDown(index: number) {
-    if (index === actions.length - 1) return;
-    const temp = actions[index];
-    actions[index] = actions[index + 1];
-    actions[index + 1] = temp;
-    actions = [...actions];
-    if (expandedIndex === index) {
-      expandedIndex = index + 1;
-    } else if (expandedIndex === index + 1) {
-      expandedIndex = index;
+  function moveMenuItemDown(index: number, arr: any[]) {
+    if (index === arr.length - 1) return;
+    const temp = arr[index];
+    arr[index] = arr[index + 1];
+    arr[index + 1] = temp;
+    menuItems = [...menuItems];
+  }
+
+  function duplicateMenuItem(item: any, parentGroup?: any) {
+    const duplicated = JSON.parse(JSON.stringify(item));
+    duplicated.id = generateId();
+    if (duplicated.children) {
+      duplicated.children.forEach((c: any) => c.id = generateId());
     }
+    
+    if (parentGroup) {
+      const idx = parentGroup.children.findIndex((c: any) => c.id === item.id);
+      parentGroup.children.splice(idx + 1, 0, duplicated);
+    } else {
+      const idx = menuItems.findIndex((c: any) => c.id === item.id);
+      menuItems.splice(idx + 1, 0, duplicated);
+    }
+    menuItems = [...menuItems];
   }
 
   function getPlaceholder(type: string) {
@@ -296,29 +236,8 @@
   async function handleSave() {
     settings.setBySpace("nav-helper", "enableBottomNav", enableBottomNav);
     settings.setBySpace("nav-helper", "noteBookID", noteBookID);
-
-    settings.setBySpace("nav-helper", "showBackButton", showBackButton);
-    settings.setBySpace("nav-helper", "showForwardButton", showForwardButton);
-    settings.setBySpace(
-      "nav-helper",
-      "showCustomLinksButton",
-      showCustomLinksButton,
-    );
-    settings.setBySpace(
-      "nav-helper",
-      "showDailyNoteButton",
-      showDailyNoteButton,
-    );
-    settings.setBySpace(
-      "nav-helper",
-      "showNavigationMenuButton",
-      showNavigationMenuButton,
-    );
-    settings.setBySpace("nav-helper", "showContextButton", showContextButton);
     settings.setBySpace("nav-helper", "showButtonLabels", showButtonLabels);
-    settings.setBySpace("nav-helper", "buttonOrder", buttonOrder);
-    settings.setBySpace("nav-helper", "submenuDisplayMode", submenuDisplayMode);
-    settings.setBySpace("nav-helper", "customActions", actions);
+    settings.setBySpace("nav-helper", "menuItems", menuItems);
 
     await settings.save();
     showMessage("熊猫导航配置已保存");
@@ -328,25 +247,6 @@
     if (plugin && (plugin as any).handleSettingsChange) {
       (plugin as any).handleSettingsChange();
     }
-  }
-
-  function getBtnValue(key: string) {
-    if (key === "showBackButton") return showBackButton;
-    if (key === "showForwardButton") return showForwardButton;
-    if (key === "showDailyNoteButton") return showDailyNoteButton;
-    if (key === "showNavigationMenuButton") return showNavigationMenuButton;
-    if (key === "showCustomLinksButton") return showCustomLinksButton;
-    return showContextButton;
-  }
-
-  function setBtnValue(key: string, value: string) {
-    if (key === "showBackButton") showBackButton = value;
-    else if (key === "showForwardButton") showForwardButton = value;
-    else if (key === "showDailyNoteButton") showDailyNoteButton = value;
-    else if (key === "showNavigationMenuButton")
-      showNavigationMenuButton = value;
-    else if (key === "showCustomLinksButton") showCustomLinksButton = value;
-    else showContextButton = value;
   }
 </script>
 
@@ -365,14 +265,7 @@
       class:active={activeTab === "buttons"}
       on:click={() => (activeTab = "buttons")}
     >
-      按钮显示
-    </button>
-    <button
-      class="tab-btn"
-      class:active={activeTab === "links"}
-      on:click={() => (activeTab = "links")}
-    >
-      快捷动作
+      菜单构建
     </button>
   </div>
 
@@ -412,13 +305,18 @@
       </div>
     {/if}
 
+
     {#if activeTab === "buttons"}
-      <div class="tab-pane">
-        <div style="margin-bottom: 12px;">
-          <span class="setting-desc" style="margin: 0;">配置各个按钮的显示状态。点击右侧上下箭头可以调整按钮在导航栏的显示顺序。</span>
+      <div class="tab-pane align-stretch">
+        <div class="fn__flex align-center justify-between" style="margin-bottom: 12px;">
+          <span class="setting-desc" style="margin: 0;">配置您的导航菜单。支持动作和分组（最多2层）。</span>
+          <div class="fn__flex" style="gap: 8px;">
+            <button class="b3-button b3-button--outline" on:click={() => addGroup()}>添加分组</button>
+            <button class="b3-button b3-button--outline" on:click={() => addMenuItem()}>添加动作</button>
+          </div>
         </div>
 
-        <div class="setting-row button-setting-row">
+        <div class="setting-row button-setting-row" style="margin-bottom: 16px;">
           <div class="button-info">
             <span class="setting-title">按钮标签文字</span>
             <span class="setting-desc" style="margin: 0;">控制按钮下方文字标签的显示</span>
@@ -433,332 +331,160 @@
           </div>
         </div>
 
-        {#each displayButtons as btn, i (btn.key)}
-          <div class="setting-row button-setting-row">
-            <div class="button-info">
-              <div class="action-icon-preview">
-                <svg class="preview-svg"><use xlink:href={btn.icon}></use></svg>
-              </div>
-              <span class="setting-title">{btn.label}</span>
-            </div>
-
-            <div class="button-controls">
-              <select
-                class="b3-select"
-                value={getBtnValue(btn.key)}
-                on:change={(e) => setBtnValue(btn.key, e.currentTarget.value)}
-              >
-                <option value="both">移动端与 PC 端</option>
-                <option value="mobile">仅移动端</option>
-                <option value="pc">仅 PC 端</option>
-                <option value="none">不显示</option>
-              </select>
-
-              <div class="action-arrows fn__flex">
-                <button class="arrow-btn" disabled={i === 0} on:click={() => moveButtonUp(i)}>▲</button>
-                <button class="arrow-btn" disabled={i === displayButtons.length - 1} on:click={() => moveButtonDown(i)}>▼</button>
-              </div>
-            </div>
-          </div>
-        {/each}
-      </div>
-    {/if}
-
-    {#if activeTab === "links"}
-      <div class="tab-pane align-stretch">
-        <div class="form-group" style="margin-bottom: 16px;">
-          <label class="form-label">子菜单展示方式</label>
-          <select class="b3-select" bind:value={submenuDisplayMode}>
-            <option value="list">列表</option>
-            <option value="iconPanel">图标面板</option>
-          </select>
-        </div>
-
-        <div
-          class="fn__flex align-center justify-between"
-          style="margin-bottom: 12px;"
-        >
-          <span class="setting-desc" style="margin: 0;"
-            >配置您的快捷操作。点击卡片展开编辑详情，还可以通过上下箭头进行排序。</span
-          >
-          <button class="b3-button b3-button--outline" on:click={addAction}
-            >添加动作</button
-          >
-        </div>
-
         <div class="actions-list">
-          {#each actions as action, i (i)}
-            <div class="action-card" class:expanded={expandedIndex === i} class:disabled={!action.enabled}>
-              <!-- Header of card -->
-              <!-- svelte-ignore a11y-no-static-element-interactions -->
-              <!-- svelte-ignore a11y-click-events-have-key-events -->
-              <div class="action-card-header" on:click={() => toggleExpand(i)}>
+          {#each menuItems as item, i (item.id)}
+            <div class="action-card" class:expanded={expandedIndex === item.id} class:disabled={item.showOn === 'none'} style={item.type === 'group' ? 'border-left: 3px solid var(--b3-theme-primary);' : ''}>
+              <!-- Header -->
+              <div class="action-card-header" on:click={() => toggleExpand(item.id)}>
                 <div class="header-left fn__flex align-center">
-                  <span class="arrow-indicator"
-                    >{expandedIndex === i ? "▼" : "▶"}</span
-                  >
-                  <!-- svelte-ignore a11y-click-events-have-key-events -->
-                  <span
-                    class="enable-toggle"
-                    class:enabled={action.enabled}
-                    on:click|stopPropagation
-                    on:click={() => {
-                      action.enabled = !action.enabled;
-                      actions = [...actions];
-                    }}
-                    role="checkbox"
-                    aria-checked={action.enabled}
-                    tabindex="-1"
-                  ></span>
+                  <span class="arrow-indicator">{expandedIndex === item.id ? "▼" : "▶"}</span>
                   <div class="action-icon-preview">
-                    {#if action.icon && action.icon.startsWith("#icon")}
-                      <svg class="preview-svg"
-                        ><use xlink:href={action.icon}></use></svg
-                      >
+                    {#if item.icon && item.icon.startsWith("#icon")}
+                      <svg class="preview-svg"><use xlink:href={item.icon}></use></svg>
                     {:else}
-                      <span class="preview-emoji">{action.icon || "🔗"}</span>
+                      <span class="preview-emoji">{item.icon || "🔗"}</span>
                     {/if}
                   </div>
-                  <span class="action-title-text"
-                    >{action.title || "未命名动作"}</span
-                  >
+                  <span class="action-title-text">{item.title || "未命名"}</span>
                 </div>
 
-                <div
-                  class="header-right fn__flex align-center"
-                  on:click|stopPropagation
-                >
+                <div class="header-right fn__flex align-center" on:click|stopPropagation>
                   <span class="badge badge-type">
-                    {action.type === "url"
-                      ? "链接"
-                      : action.type === "sql"
-                        ? "SQL"
-                        : action.type === "command"
-                          ? "命令"
-                          : action.type === "av-add"
-                            ? "添加到数据库"
-                            : "打开设置"}
-                  </span>
-                  <span class="badge badge-showon">
-                    {action.showOn === "both"
-                      ? "全部"
-                      : action.showOn === "mobile"
-                        ? "仅手机"
-                        : "仅电脑"}
+                    {item.type === "group" ? "分组" : item.type === "internal" ? "内置" : "动作"}
                   </span>
 
                   <div class="action-arrows fn__flex">
-                    <button
-                      class="arrow-btn"
-                      disabled={i === 0}
-                      on:click={() => moveUp(i)}>▲</button
-                    >
-                    <button
-                      class="arrow-btn"
-                      disabled={i === actions.length - 1}
-                      on:click={() => moveDown(i)}>▼</button
-                    >
+                    <button class="arrow-btn" disabled={i === 0} on:click={() => moveMenuItemUp(i, menuItems)}>▲</button>
+                    <button class="arrow-btn" disabled={i === menuItems.length - 1} on:click={() => moveMenuItemDown(i, menuItems)}>▼</button>
                   </div>
-
-                  <button class="delete-btn" on:click={() => removeAction(i)}>
-                    <svg class="delete-svg"
-                      ><use xlink:href="#iconTrashcan"></use></svg
-                    >
+                  
+                  <button class="remove-btn b3-tooltips b3-tooltips__w" aria-label="删除" on:click={() => removeMenuItem(item.id)}>
+                    <svg><use xlink:href="#iconTrashcan"></use></svg>
                   </button>
                 </div>
               </div>
 
-              <!-- Body of card (only rendered/visible when expanded) -->
-              {#if expandedIndex === i}
-                <div class="action-card-body">
-                  <div class="grid-form">
+              <!-- Body -->
+              {#if expandedIndex === item.id}
+                <div class="action-card-body" role="none" on:click|stopPropagation on:keydown={null}>
+                  <div class="form-row">
                     <div class="form-item">
-                      <label class="form-label">显示标题</label>
-                      <input
-                        class="b3-text-field"
-                        type="text"
-                        bind:value={action.title}
-                        placeholder="标题名称"
-                      />
+                      <span class="form-label">标题</span>
+                      <input class="b3-text-field" type="text" bind:value={item.title} />
                     </div>
-
                     <div class="form-item">
-                      <label class="form-label">启用</label>
-                      <div class="fn__flex" style="align-items:center;gap:8px;">
-                        <span
-                          class="enable-switch"
-                          class:on={action.enabled}
-                          role="checkbox"
-                          aria-checked={action.enabled}
-                          tabindex="0"
-                          on:click={() => {
-                            action.enabled = !action.enabled;
-                            actions = [...actions];
-                          }}
-                          on:keydown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              action.enabled = !action.enabled;
-                              actions = [...actions];
-                            }
-                          }}
-                        ></span>
-                        <span style="font-size:13px;color:var(--b3-theme-on-surface);"
-                          >{action.enabled ? "已启用" : "已停用"}</span
-                        >
+                      <span class="form-label">图标 (Emoji或图标ID)</span>
+                      <div class="fn__flex" style="gap: 8px;">
+                        <input class="b3-text-field fn__flex-1" type="text" bind:value={item.icon} />
                       </div>
-                    </div>
-
-                    <div class="form-item">
-                      <label class="form-label">展示于</label>
-                      <select class="b3-select" bind:value={action.showOn}>
-                        <option value="both">全部设备</option>
-                        <option value="mobile">仅手机</option>
-                        <option value="desktop">仅电脑</option>
-                      </select>
-                    </div>
-
-                    {#if action.showOn !== "desktop"}
-                      <div class="form-item">
-                        <label class="form-label">手机端位置</label>
-                        <select class="b3-select" bind:value={action.mobilePosition}>
-                          <option value="navbar">底栏</option>
-                          <option value="submenu">菜单</option>
-                        </select>
-                      </div>
-                    {/if}
-
-                    {#if action.showOn !== "mobile"}
-                      <div class="form-item">
-                        <label class="form-label">电脑端位置</label>
-                        <select class="b3-select" bind:value={action.desktopPosition}>
-                          <option value="navbar">底栏</option>
-                          <option value="submenu">菜单</option>
-                        </select>
-                      </div>
-                    {/if}
-
-                    <div class="form-item">
-                      <label class="form-label">动作类型</label>
-                      <select
-                        class="b3-select"
-                        bind:value={action.type}
-                        on:change={() => {
-                          // 类型切换时，重置 value 默认值，避免保存不合适的内容
-                          action.value = "";
-                        }}
-                      >
-                        <option value="url">链接 / 文档ID</option>
-                        <option value="sql">随机 SQL</option>
-                        <option value="command">内置命令</option>
-                        <option value="av-add">添加到数据库</option>
-                        <option value="open-setting">打开插件设置</option>
-                      </select>
-                    </div>
-
-                    <div class="form-item span-2">
-                      <label class="form-label">动作图标</label>
-                      <div class="fn__flex" style="gap: 8px; align-items: center;">
-                        <input
-                          class="b3-text-field"
-                          style="flex: 1;"
-                          type="text"
-                          bind:value={action.icon}
-                          placeholder="可输入 Emoji，或选择内置图标"
-                        />
-                        <button class="b3-button b3-button--outline" on:click={() => openIconPicker(i)}>
-                          🎨 选择内置图标
-                        </button>
-                      </div>
-                    </div>
-
-                    <div class="form-item span-2">
-                      <label class="form-label">动作内容 / 值</label>
-
-                      {#if action.type === "command"}
-                        <!-- 命令选择器 -->
-                        <div class="fn__flex-column" style="gap: 6px;">
-                          <select
-                            class="b3-select"
-                            bind:value={action.value}
-                          >
-                            <option value="">-- 请选择命令 --</option>
-                            <optgroup label="👑 思源内置命令">
-                              {#each sysCommands as cmd}
-                                <option value={cmd.value}>{cmd.label}</option>
-                              {/each}
-                            </optgroup>
-                            {#each pluginCommandsGroups as group}
-                              <optgroup label={`🧩 插件：${group.pluginName}`}>
-                                {#each group.commands as cmd}
-                                  <option value={cmd.value}>{cmd.label}</option>
-                                {/each}
-                              </optgroup>
-                            {/each}
-                          </select>
-                        </div>
-                      {:else if action.type === "av-add"}
-                        <div class="fn__flex-column" style="gap: 6px;">
-                          <select
-                            class="b3-select"
-                            on:change={(e) => {
-                              if (e.currentTarget.value !== "custom") {
-                                action.value = e.currentTarget.value;
-                              }
-                            }}
-                            value={avDatabases.some(
-                              (db) => db.id === action.value,
-                            )
-                              ? action.value
-                              : "custom"}
-                          >
-                            <option value="">-- 请选择数据库 --</option>
-                            {#each avDatabases as db}
-                              <option value={db.id}>{db.name}</option>
-                            {/each}
-                            <option value="custom">✍️ 输入自定义 ID</option>
-                          </select>
-                          {#if !avDatabases.some((db) => db.id === action.value) || action.value === ""}
-                            <input
-                              class="b3-text-field"
-                              type="text"
-                              bind:value={action.value}
-                              placeholder="输入数据库块 ID"
-                            />
-                          {/if}
-                        </div>
-                      {:else if action.type === "open-setting"}
-                        <div style="padding: 8px 0; opacity: 0.6; font-size: 13px;">
-                          点击后将打开熊猫导航设置面板
-                        </div>
-                      {:else if action.type === "sql"}
-                        <textarea
-                          class="b3-text-field action-sql-textarea"
-                          bind:value={action.value}
-                          placeholder={getPlaceholder(action.type)}
-                        ></textarea>
-                      {:else}
-                        <input
-                          class="b3-text-field"
-                          type="text"
-                          bind:value={action.value}
-                          placeholder={getPlaceholder(action.type)}
-                        />
-                      {/if}
                     </div>
                   </div>
+
+                  <div class="form-item">
+                    <span class="form-label">显示位置 (设备)</span>
+                    <select class="b3-select" bind:value={item.showOn}>
+                      <option value="both">全部设备</option>
+                      <option value="desktop">仅桌面端</option>
+                      <option value="mobile">仅移动端</option>
+                      <option value="none">隐藏 (禁用)</option>
+                    </select>
+                  </div>
+
+                  {#if item.type !== "group" && item.type !== "internal"}
+                    <div class="form-row">
+                      <div class="form-item">
+                        <span class="form-label">动作类型</span>
+                        <select class="b3-select" bind:value={item.type}>
+                          <option value="url">URL 链接</option>
+                          <option value="sql">随机 SQL</option>
+                          <option value="command">思源系统命令</option>
+                          <option value="av-add">添加到数据库</option>
+                          <option value="open-setting">打开设置</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {#if item.type !== "open-setting"}
+                      <div class="form-item">
+                        <span class="form-label">参数值</span>
+                        <input class="b3-text-field" type="text" bind:value={item.value} placeholder={getPlaceholder(item.type)} />
+                      </div>
+                    {/if}
+                  {/if}
+                  
+                  {#if item.type === "group"}
+                    <div class="group-children-container" style="margin-top: 16px; padding: 12px; background-color: var(--b3-theme-background-light); border-radius: 4px;">
+                       <div class="fn__flex align-center justify-between" style="margin-bottom: 8px;">
+                          <strong>组内动作</strong>
+                          <button class="b3-button b3-button--small b3-button--outline" on:click={() => addMenuItem(item)}>添加子动作</button>
+                       </div>
+                       
+                       {#if !item.children || item.children.length === 0}
+                         <div style="color: var(--b3-theme-on-surface-light); font-size: 12px; padding: 8px 0;">该分组暂无动作</div>
+                       {:else}
+                         {#each item.children as child, j (child.id)}
+                            <div class="action-card" style="margin-bottom: 8px; border: 1px solid var(--b3-border-color);" class:disabled={child.showOn === 'none'}>
+                               <div class="action-card-header" style="background: transparent;">
+                                  <div class="header-left fn__flex align-center">
+                                     <div class="action-icon-preview" style="transform: scale(0.8);">
+                                       {#if child.icon && child.icon.startsWith("#icon")}
+                                         <svg class="preview-svg"><use xlink:href={child.icon}></use></svg>
+                                       {:else}
+                                         <span class="preview-emoji">{child.icon || "🔗"}</span>
+                                       {/if}
+                                     </div>
+                                     <span class="action-title-text" style="font-size: 13px;">{child.title || "未命名"}</span>
+                                  </div>
+                                  <div class="header-right fn__flex align-center">
+                                      <select class="b3-select" bind:value={child.showOn} style="width: 80px; margin-right: 8px;">
+                                        <option value="both">全部</option>
+                                        <option value="desktop">桌面</option>
+                                        <option value="mobile">移动</option>
+                                        <option value="none">隐藏</option>
+                                      </select>
+                                      <div class="action-arrows fn__flex">
+                                        <button class="arrow-btn" disabled={j === 0} on:click={() => moveMenuItemUp(j, item.children)}>▲</button>
+                                        <button class="arrow-btn" disabled={j === item.children.length - 1} on:click={() => moveMenuItemDown(j, item.children)}>▼</button>
+                                      </div>
+                                      <button class="remove-btn" style="padding: 4px;" aria-label="删除" on:click={() => removeMenuItem(child.id, item)}>
+                                        <svg><use xlink:href="#iconTrashcan"></use></svg>
+                                      </button>
+                                  </div>
+                               </div>
+                               <!-- child body edit -->
+                               {#if child.type !== "internal"}
+                                 <div style="padding: 0 12px 12px 12px;">
+                                     <div class="fn__flex" style="gap: 8px; margin-bottom: 8px;">
+                                       <input class="b3-text-field" style="width: 80px;" type="text" bind:value={child.title} placeholder="标题" />
+                                       <input class="b3-text-field" style="width: 80px;" type="text" bind:value={child.icon} placeholder="图标" />
+                                       <select class="b3-select" bind:value={child.type} style="width: 100px;">
+                                          <option value="url">URL 链接</option>
+                                          <option value="sql">随机 SQL</option>
+                                          <option value="command">系统命令</option>
+                                          <option value="av-add">添加数据库</option>
+                                          <option value="open-setting">打开设置</option>
+                                       </select>
+                                     </div>
+                                     {#if child.type !== "open-setting"}
+                                       <input class="b3-text-field" type="text" bind:value={child.value} placeholder={getPlaceholder(child.type)} />
+                                     {/if}
+                                 </div>
+                               {/if}
+                            </div>
+                         {/each}
+                       {/if}
+                    </div>
+                  {/if}
+
                 </div>
               {/if}
             </div>
           {/each}
-
-          {#if actions.length === 0}
-            <div class="no-actions-tip">
-              <span>📭 暂无自定义动作，点击“添加动作”开始配置</span>
-            </div>
-          {/if}
         </div>
       </div>
     {/if}
+
+
   </div>
 
   <!-- Footer Actions -->
@@ -771,13 +497,6 @@
   </div>
 </div>
 
-<IconPicker
-  active={showIconPicker}
-  currentIcon={iconEditingIndex !== null ? actions[iconEditingIndex].icon : ""}
-  allIcons={allSiyuanIcons}
-  onSelect={handleSelectIcon}
-  onClose={() => showIconPicker = false}
-/>
 
 <style>
   .settings-container {
@@ -987,81 +706,14 @@
     border: 1px solid var(--b3-border-color);
   }
 
-  .badge-pos {
-    background-color: rgba(65, 184, 131, 0.1);
-    color: #41b883;
-    border: 1px solid rgba(65, 184, 131, 0.2);
-  }
 
-  .badge-showon {
-    background-color: rgba(64, 128, 255, 0.1);
-    color: #4080ff;
-    border: 1px solid rgba(64, 128, 255, 0.2);
-  }
 
-  .enable-toggle {
-    display: inline-flex;
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    border: 2px solid var(--b3-border-color);
-    background: transparent;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.2s ease;
-    margin: 0 4px;
-  }
 
-  .enable-toggle.enabled {
-    background: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-    position: relative;
-  }
 
-  .enable-toggle.enabled::after {
-    content: '';
-    position: absolute;
-    left: 4px;
-    top: 1px;
-    width: 8px;
-    height: 12px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-  }
 
-  .enable-switch {
-    display: inline-block;
-    width: 36px;
-    height: 20px;
-    border-radius: 10px;
-    background: var(--b3-border-color);
-    cursor: pointer;
-    position: relative;
-    transition: background 0.2s ease;
-    flex-shrink: 0;
-  }
 
-  .enable-switch::after {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: white;
-    transition: transform 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  }
 
-  .enable-switch.on {
-    background: var(--b3-theme-primary);
-  }
 
-  .enable-switch.on::after {
-    transform: translateX(16px);
-  }
 
   .action-arrows {
     gap: 2px;
@@ -1091,27 +743,8 @@
     opacity: 0.2;
   }
 
-  .delete-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 6px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-  }
 
-  .delete-btn:hover {
-    background-color: rgba(244, 63, 94, 0.1);
-  }
 
-  .delete-svg {
-    width: 14px;
-    height: 14px;
-    fill: var(--b3-theme-error);
-  }
 
   .action-card-body {
     padding: 14px;
@@ -1119,11 +752,6 @@
     border-top: 1px solid var(--b3-border-color);
   }
 
-  .grid-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
 
   .form-item {
     display: flex;
@@ -1131,9 +759,6 @@
     gap: 6px;
   }
 
-  .form-item.span-2 {
-    grid-column: span 2;
-  }
 
   .form-label {
     font-size: 12px;
@@ -1143,23 +768,7 @@
 
 
 
-  .action-sql-textarea {
-    height: 60px;
-    font-family: monospace;
-    resize: vertical;
-    font-size: 12px;
-  }
 
-  .no-actions-tip {
-    text-align: center;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.5;
-    padding: 40px;
-    background-color: var(--b3-theme-surface);
-    border: 1px dashed var(--b3-border-color);
-    border-radius: 8px;
-    font-size: 14px;
-  }
 
   .settings-footer {
     border-top: 1px solid var(--b3-border-color);
