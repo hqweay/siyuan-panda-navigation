@@ -1,6 +1,6 @@
 import { BuiltinCommand } from "../types";
 import { showMessage } from "siyuan";
-import { sql } from "../../api";
+import { getBlockByID, listDocsByPath } from "../../api";
 import { getCurrentDocId, openBlockByID } from "../../myscripts/syUtils";
 import { navigation } from "../../navigation";
 
@@ -22,6 +22,59 @@ export const goForwardCommand: BuiltinCommand = {
     }
 };
 
+const listChildDocs = async (box: string, path: string) => {
+    let data = await listDocsByPath(box, path);
+    return data?.files || [];
+};
+
+const getSibling = async (path: string, box: string) => {
+    path = path.replace(".sy", "");
+    const parts = path.split("/");
+    if (parts.length > 0) {
+        parts.pop();
+    }
+    let parentPath = parts.join("/");
+    parentPath = parentPath || "/";
+    return await listChildDocs(box, parentPath);
+};
+
+const goToSibling = async (delta: -1 | 1) => {
+    let docId = getCurrentDocId();
+    if (!docId) return;
+    let doc = await getBlockByID(docId);
+    if (!doc) return;
+    let { path, box } = doc;
+
+    let siblings = await getSibling(path, box);
+    if (!siblings || siblings.length === 0) return;
+    
+    let index = siblings.findIndex((sibling: any) => sibling.path === path);
+    if (index === -1) return;
+    
+    if (delta < 0 && index == 0) {
+        showMessage("当前文档已经是第一篇相邻文档");
+        return;
+    }
+    if (delta > 0 && index == siblings.length - 1) {
+        showMessage("当前文档已经是最后一篇相邻文档");
+        return;
+    }
+
+    let newIndex = (index + delta + siblings.length) % siblings.length;
+    openBlockByID(siblings[newIndex].id);
+};
+
+async function getParentDocument(path: string) {
+    let pathArr = path.split("/").filter((item) => item != "");
+    pathArr.pop();
+    if (pathArr.length == 0) {
+        return null;
+    } else {
+        let id = pathArr[pathArr.length - 1];
+        return getBlockByID(id);
+    }
+}
+
 export const goParentCommand: BuiltinCommand = {
     id: "goParent",
     title: "跳转父文档",
@@ -29,14 +82,13 @@ export const goParentCommand: BuiltinCommand = {
     execute: async (plugin) => {
         const currentDocId = getCurrentDocId();
         if (!currentDocId) return;
-        const res = await sql(`SELECT * FROM blocks WHERE id = '${currentDocId}' LIMIT 1`);
-        if (res && res.length > 0) {
-            const parentId = res[0].parent_id;
-            if (parentId) {
-                openBlockByID(parentId);
-            } else {
-                showMessage("当前文档已经是顶层文档");
-            }
+        const doc = await getBlockByID(currentDocId);
+        if (!doc) return;
+        const parent = await getParentDocument(doc.path);
+        if (parent) {
+            openBlockByID(parent.id);
+        } else {
+            showMessage("当前文档已经是顶层文档");
         }
     }
 };
@@ -48,10 +100,11 @@ export const goChildCommand: BuiltinCommand = {
     execute: async (plugin) => {
         const currentDocId = getCurrentDocId();
         if (!currentDocId) return;
-        // Get the first child document
-        const res = await sql(`SELECT * FROM blocks WHERE type = 'd' AND parent_id = '${currentDocId}' ORDER BY sort ASC LIMIT 1`);
-        if (res && res.length > 0) {
-            openBlockByID(res[0].id);
+        const doc = await getBlockByID(currentDocId);
+        if (!doc) return;
+        const children = await listChildDocs(doc.box, doc.path);
+        if (children && children.length > 0) {
+            openBlockByID(children[0].id);
         } else {
             showMessage("当前文档没有子文档");
         }
@@ -63,32 +116,7 @@ export const goNextCommand: BuiltinCommand = {
     title: "跳转下一个文档",
     requiresParam: false,
     execute: async (plugin) => {
-        const currentDocId = getCurrentDocId();
-        if (!currentDocId) return;
-        // Get current doc info
-        const res = await sql(`SELECT * FROM blocks WHERE id = '${currentDocId}' LIMIT 1`);
-        if (res && res.length > 0) {
-            const parentId = res[0].parent_id;
-            const sort = res[0].sort;
-            
-            // Get next sibling document
-            let query = '';
-            if (parentId) {
-                query = `SELECT * FROM blocks WHERE type = 'd' AND parent_id = '${parentId}' AND sort > ${sort} ORDER BY sort ASC LIMIT 1`;
-            } else {
-                // Top level documents in the same notebook
-                const box = res[0].box;
-                const path = res[0].path;
-                // For top level documents, parent_id is empty. We look for docs with empty parent_id in the same box.
-                query = `SELECT * FROM blocks WHERE type = 'd' AND box = '${box}' AND parent_id = '' AND sort > ${sort} ORDER BY sort ASC LIMIT 1`;
-            }
-            const siblingsRes = await sql(query);
-            if (siblingsRes && siblingsRes.length > 0) {
-                openBlockByID(siblingsRes[0].id);
-            } else {
-                showMessage("当前文档没有下一个相邻文档");
-            }
-        }
+        await goToSibling(1);
     }
 };
 
@@ -97,31 +125,7 @@ export const goPrevCommand: BuiltinCommand = {
     title: "跳转上一个文档",
     requiresParam: false,
     execute: async (plugin) => {
-        const currentDocId = getCurrentDocId();
-        if (!currentDocId) return;
-        // Get current doc info
-        const res = await sql(`SELECT * FROM blocks WHERE id = '${currentDocId}' LIMIT 1`);
-        if (res && res.length > 0) {
-            const parentId = res[0].parent_id;
-            const sort = res[0].sort;
-            
-            // Get prev sibling document
-            let query = '';
-            if (parentId) {
-                query = `SELECT * FROM blocks WHERE type = 'd' AND parent_id = '${parentId}' AND sort < ${sort} ORDER BY sort DESC LIMIT 1`;
-            } else {
-                // Top level documents in the same notebook
-                const box = res[0].box;
-                // For top level documents, parent_id is empty. We look for docs with empty parent_id in the same box.
-                query = `SELECT * FROM blocks WHERE type = 'd' AND box = '${box}' AND parent_id = '' AND sort < ${sort} ORDER BY sort DESC LIMIT 1`;
-            }
-            const siblingsRes = await sql(query);
-            if (siblingsRes && siblingsRes.length > 0) {
-                openBlockByID(siblingsRes[0].id);
-            } else {
-                showMessage("当前文档没有上一个相邻文档");
-            }
-        }
+        await goToSibling(-1);
     }
 };
 
