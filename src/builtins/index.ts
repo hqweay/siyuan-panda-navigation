@@ -12,7 +12,7 @@ export const builtinCommands: Record<string, BuiltinCommand> = {
         id: "url",
         title: "URL 链接",
         requiresParam: true,
-        paramPlaceholder: "https://...",
+        paramPlaceholder: "https:// 或 siyuan://...",
         execute: (plugin, param) => {
             if (param) window.open(param);
         }

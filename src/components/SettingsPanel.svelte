@@ -444,12 +444,12 @@
                       <span class="form-label">执行内容</span>
                       <div class="fn__flex" style="gap: 8px;">
                         {#if item.type === "builtin"}
-                          <select class="b3-select" bind:value={item.value} style="width: 200px;" on:change={() => handleTypeChange(item)}>
+                          <select class="b3-select" bind:value={item.value} style="width: 200px;" on:change={() => { item.param = ""; handleTypeChange(item); }}>
                             {#each builtinCommandList as cmd}
                                <option value={cmd.id}>{cmd.title}</option>
                             {/each}
                           </select>
-                          {#if builtinCommands[item.value]?.requiresParam}
+                           {#if builtinCommands[item.value]?.requiresParam}
                              {#if item.value === "av-add"}
                                <select class="b3-select fn__flex-1" bind:value={item.param}>
                                  <option value="">请选择数据库</option>
@@ -457,6 +457,8 @@
                                    <option value={db.id}>{db.name}</option>
                                  {/each}
                                </select>
+                             {:else if item.value === "sql"}
+                               <textarea class="b3-text-field fn__flex-1" bind:value={item.param} placeholder={builtinCommands[item.value]?.paramPlaceholder || ""} style="height: 60px; resize: vertical; font-family: monospace;"></textarea>
                              {:else}
                                <input class="b3-text-field fn__flex-1" type="text" bind:value={item.param} placeholder={builtinCommands[item.value]?.paramPlaceholder || ""} />
                              {/if}
@@ -538,7 +540,7 @@
                                      
                                      <div class="fn__flex" style="gap: 8px; width: 100%;">
                                         {#if child.type === "builtin"}
-                                          <select class="b3-select" bind:value={child.value} style="width: 160px;" on:change={() => handleTypeChange(child)}>
+                                          <select class="b3-select" bind:value={child.value} style="width: 160px;" on:change={() => { child.param = ""; handleTypeChange(child); }}>
                                             {#each builtinCommandList as cmd}
                                                <option value={cmd.id}>{cmd.title}</option>
                                             {/each}
@@ -551,6 +553,8 @@
                                                   <option value={db.id}>{db.name}</option>
                                                 {/each}
                                               </select>
+                                            {:else if child.value === "sql"}
+                                              <textarea class="b3-text-field fn__flex-1" bind:value={child.param} placeholder={builtinCommands[child.value]?.paramPlaceholder || ""} style="height: 60px; resize: vertical; font-family: monospace;"></textarea>
                                             {:else}
                                               <input class="b3-text-field fn__flex-1" type="text" bind:value={child.param} placeholder={builtinCommands[child.value]?.paramPlaceholder || ""} />
                                             {/if}
