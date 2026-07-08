@@ -69,6 +69,9 @@ const log = getLogger("lets-nav-helper");
   });
 
   async function executeCustomAction(item: any) {
+    if (submenuVisible) {
+      hideSubmenu();
+    }
     const type = item.type;
     // Fallback logic for legacy configs, map internal/url/sql/av-add/open-setting to builtin
     const isBuiltin = type === "builtin" || ["internal", "url", "sql", "av-add", "open-setting"].includes(type);
@@ -173,9 +176,14 @@ const log = getLogger("lets-nav-helper");
 
 
   function showGroupSubmenu(group: any, event: Event) {
+    const triggerBtn = (event.currentTarget as HTMLElement).closest(".nav-button");
+
     if (submenuVisible && submenuType === "customLinks") {
-      hideSubmenu();
-      return;
+      if (submenuTriggerButton === triggerBtn) {
+        hideSubmenu();
+        return;
+      }
+      // 如果点击的是另一个分组按钮，则不 hideSubmenu，直接切换内容
     }
     
     // 过滤掉没显示的子动作

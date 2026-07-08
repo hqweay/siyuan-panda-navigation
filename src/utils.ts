@@ -116,7 +116,7 @@ class MobileUtils {
 
   showMobileMessage(
     message: string,
-    type: "info" | "success" | "error" = "info"
+    type: "info" | "success" | "error" = "info",
   ): void {
     if ((window as any).showMessage) {
       (window as any).showMessage(message);
@@ -167,7 +167,10 @@ class MobileUtils {
     };
   }
 
-  safeExecute(fn: () => void, errorMessage: string = plugin.i18n["lets-nav-helper.execFailed"]): void {
+  safeExecute(
+    fn: () => void,
+    errorMessage: string = plugin.i18n["lets-nav-helper.execFailed"],
+  ): void {
     try {
       fn();
     } catch (error) {
@@ -193,10 +196,13 @@ class MobileUtils {
         lastExecTime = currentTime;
       } else {
         clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          func.apply(null, args);
-          lastExecTime = Date.now();
-        }, delay - (currentTime - lastExecTime));
+        timeoutId = setTimeout(
+          () => {
+            func.apply(null, args);
+            lastExecTime = Date.now();
+          },
+          delay - (currentTime - lastExecTime),
+        );
       }
     };
   }
@@ -217,14 +223,20 @@ export const mobileUtils = new MobileUtils();
 export const openByMobile = (uri: string) => {
   if (!uri) return;
 
-  const isInIOS = () => window.siyuan.config.system.container === "ios" && window.webkit?.messageHandlers;
-  const isInAndroid = () => window.siyuan.config.system.container === "android" && window.JSAndroid;
-  const isInHarmony = () => window.siyuan.config.system.container === "harmony" && window.JSHarmony;
+  const isInIOS = () =>
+    window.siyuan.config.system.container === "ios" &&
+    window.webkit?.messageHandlers;
+  const isInAndroid = () =>
+    window.siyuan.config.system.container === "android" && window.JSAndroid;
+  const isInHarmony = () =>
+    window.siyuan.config.system.container === "harmony" && window.JSHarmony;
 
   if (isInIOS()) {
     if (uri.startsWith("assets/")) {
       window.webkit.messageHandlers.openLink.postMessage(
-        location.origin + "/assets/" + encodeURIComponent(uri.replace("assets/", ""))
+        location.origin +
+          "/assets/" +
+          encodeURIComponent(uri.replace("assets/", "")),
       );
     } else if (uri.startsWith("/")) {
       window.webkit.messageHandlers.openLink.postMessage(location.origin + uri);

@@ -12,7 +12,12 @@
   let submenuElement: HTMLElement;
 
   function handleOutsideClick(event: Event) {
-    if (submenuElement && !submenuElement.contains(event.target as Node)) {
+    const target = event.target as HTMLElement;
+    // 交给 NavigationContainer 自己处理内部的点击（如切换分组），防止冒泡导致立刻关闭
+    if (target.closest('.navigation-container')) {
+      return;
+    }
+    if (submenuElement && !submenuElement.contains(target)) {
       dispatch("close");
     }
   }
@@ -34,14 +39,14 @@
     document.removeEventListener("click", handleOutsideClick);
   });
 
-  $: position = getPosition();
+  $: position = getPosition(triggerButton);
 
-  function getPosition() {
+  function getPosition(btn: HTMLElement | null) {
     // 动态获取子菜单预估宽度
     const submenuWidth = deviceType === 'mobile' ? 200 : 180;
 
-    if (triggerButton) {
-      const buttonRect = triggerButton.getBoundingClientRect();
+    if (btn) {
+      const buttonRect = btn.getBoundingClientRect();
       
       // 基础位置：尝试与触发按钮居中对齐
       let left = buttonRect.left + (buttonRect.width - submenuWidth) / 2;
@@ -170,7 +175,12 @@
 
 <style>
   .submenu {
-    animation: slideDown 0.2s ease-out;
+    animation: slideDown 0.2s ease-out forwards;
+    transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                width 0.3s ease;
+    will-change: left, transform, bottom;
   }
 
   .submenu-item {
@@ -187,15 +197,11 @@
   @keyframes slideDown {
     from {
       opacity: 0;
-      transform: translateY(-10px);
+      margin-bottom: -10px;
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+      margin-bottom: 0;
     }
-  }
-
-  .submenu:not(.no-animation) {
-    animation: slideDown 0.2s ease-out forwards;
   }
 </style>
