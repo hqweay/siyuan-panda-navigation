@@ -388,12 +388,24 @@
                         <li class="b3-list-item"><span class="b3-list-item__text"><b>追加</b>：将该预设作为一个独立分组，添加到现有按钮后面</span></li>
                       </ul>
                     </div>
-                    <div class="b3-dialog__action">
+                    <div class="b3-dialog__action" style="display: flex; align-items: center;">
+                      <button class="b3-button b3-button--text" id="presetLoadDeleteBtn" style="color: var(--b3-theme-error); margin-right: auto;">删除此预设</button>
                       <button class="b3-button b3-button--cancel" id="presetLoadCancelBtn">取消操作</button><div class="fn__space"></div>
                       <button class="b3-button b3-button--outline" id="presetLoadAppendBtn">追加为分组</button><div class="fn__space"></div>
                       <button class="b3-button b3-button--error" id="presetLoadReplaceBtn">覆盖当前</button>
                     </div>`,
                     width: "480px",
+                  });
+
+                  dialog.element.querySelector("#presetLoadDeleteBtn")?.addEventListener("click", () => {
+                    const confirmDelete = window.confirm(`确定要删除自定义预设 [${customPreset.name}] 吗？`);
+                    if (confirmDelete) {
+                      customPresets = customPresets.filter(p => p.id !== presetId);
+                      settings.setBySpace("nav-helper", "customPresets", customPresets);
+                      settings.save();
+                      showMessage("预设已删除");
+                      dialog.destroy();
+                    }
                   });
 
                   dialog.element.querySelector("#presetLoadCancelBtn")?.addEventListener("click", () => dialog.destroy());
