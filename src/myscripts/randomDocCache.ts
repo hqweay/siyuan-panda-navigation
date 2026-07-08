@@ -4,7 +4,7 @@
  */
 
 import { sql as executeSql } from "@/api";
-import { getCurrentDocId, openBlockByID } from "./syUtils";
+import { getCurrentDocId } from "./syUtils";
 import { openMobileFileById, openTab, showMessage } from "siyuan";
 import { mobileUtils, isMobile, plugin } from "@/utils";
 import { navigation } from "@/navigation";
@@ -338,23 +338,22 @@ export const clearRandomDocCache = (sql?: string) => {
 };
 
 /**
- * 跳转到随机文档
+ * 跳转到随机文档（不传 action，避免聚焦第一行导致视觉延迟）
  */
 export const goToRandomBlock = async (sql: string) => {
   try {
     const randomDocId = await getRandomDocId(sql);
 
-    // isMobile
-    //   ? openMobileFileById(plugin.app, randomDocId)
-    //   : openTab({
-    //       app: plugin.app,
-    //       doc: {
-    //         id: randomDocId,
-    //         // action: ["cb-get-focus", "cb-get-all"],
-    //         action: ["cb-get-all"],
-    //       },
-    //     });
-    openBlockByID(randomDocId);
+    if (isMobile) {
+      openMobileFileById(plugin.app, randomDocId);
+    } else {
+      openTab({
+        app: plugin.app,
+        doc: {
+          id: randomDocId,
+        },
+      });
+    }
     showMessage("已跳转到随机文档");
     mobileUtils.vibrate(50);
   } catch (error) {
