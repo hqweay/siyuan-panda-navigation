@@ -2,6 +2,7 @@ import { BuiltinCommand } from "../types";
 import * as siyuan from "siyuan";
 import { builtinCommands } from "../index";
 import { pandaUtils } from "../../utils/panda-utils";
+import * as kits from "@frostime/siyuan-plugin-kits";
 
 export const scriptCommand: BuiltinCommand = {
   id: "script",
@@ -9,7 +10,7 @@ export const scriptCommand: BuiltinCommand = {
   requiresParam: true,
   inputType: "textarea",
   paramPlaceholder:
-    "可使用顶层 await，支持调用 plugin、siyuan、utils 等变量，也可用 utils 下的内置命令和自定义工具函数\n例如: await utils.sql(\"SELECT * FROM blocks LIMIT 5\")",
+    "可使用顶层 await，支持调用 plugin、siyuan、utils、kits 等变量，例如: await utils.sql(\"SELECT * FROM blocks LIMIT 5\")",
   execute: async (plugin, param) => {
     if (!param) return;
     try {
@@ -29,8 +30,8 @@ export const scriptCommand: BuiltinCommand = {
       }
 
       const asyncScript = `return (async () => { \n${param}\n })();`;
-      const runner = new Function("plugin", "siyuan", "utils", asyncScript);
-      await runner(plugin, siyuan, utils);
+      const runner = new Function("plugin", "siyuan", "utils", "kits", asyncScript);
+      await runner(plugin, siyuan, utils, kits);
     } catch (err) {
       console.error("自定义脚本执行报错:", err);
       siyuan.showMessage(

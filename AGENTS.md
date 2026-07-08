@@ -14,7 +14,7 @@
 | 思源前端/内核具体实现细节 | `vendor/siyuan/app/` 或 `vendor/siyuan/kernel/` |
 | 向 utils 暴露工具方法 | `src/utils/panda-utils.ts`（参考已有的 `sql` / `showMessage` 条目） |
 | 新增内置命令（BuiltinCommand） | `src/builtins/commands/`（参考已有的 `document.ts`/`url.ts`） |
-| 查询 AI 可用的 utils 函数列表 | MCP 工具 `panda-nav:get-capabilities`（自动生成，无需手动同步） |
+| 查询 AI 可用的 utils 函数列表 + 脚本上下文 API 参考 | MCP 工具 `panda-nav:get-script-context`（自动生成，无需手动同步） |
 
 ## 路径说明
 
@@ -80,9 +80,18 @@ getNotebooks: {
 
 **改 1 处文件**：`panda-utils.ts`（MCP 描述自动由 `kernel.ts` 编译内联，无需额外操作）
 
-### AI 发现机制
+### AI 发现机制与脚本生成约束
 
-AI 智能体调用 MCP 工具 `panda-nav:get-capabilities` 即可查询当前 `utils` 支持的所有函数名、参数签名和示例代码。该工具的描述由 `src/kernel.ts` 结合 `pandaUtils` + 自动提取构建的 `builtinMetas` 生成。
+AI 智能体调用 MCP 工具 `panda-nav:get-script-context` 即可获取当前脚本执行的全部上下文。该工具返回三部分：
+- **`utils`**：自定义工具函数列表（含参数签名和示例）
+- **`scriptContext`**：结构化 API 参考，包含 `plugin`/`siyuan`/`window.siyuan` 的属性和方法速查、常见误区清单、最佳实践、参考链接
+- **`availableTypes`**：可用的思源 SDK 类型文件路径列表；传入 `path` 参数可读取对应 `.d.ts` 源码
+
+**🚨 [写脚本前的红线规定]** 
+当用户要求"编写自定义 JS 脚本（script）"以新建一个动作按钮时，AI **绝对禁止**仅凭过去的记忆去假设思源核心 API。你必须：
+1. 先调用 `panda-nav:get-script-context`（不带参数）获取完整的 `scriptContext` API 参考。
+2. 仔细阅读 `scriptContext.commonPitfalls` 避免常见错误。如果对某个官方对象（如 `Tab`, `App`, `Plugin`）的属性和方法不确定，再次调用 `get-script-context` 传入 `path` 参数查阅官方源码（例如 `path: "types/layout/Tab.d.ts"`）。
+3. 根据最新文档编写脚本代码，并通过 `add-action` 工具将其写入。
 
 **开发者只要在 `commands` 下新增内置命令，或者在 `panda-utils.ts` 中新增工具，AI 就能全自动通过 MCP 认识它们，无需手动同步文档或修改注册代码！**
 
@@ -98,7 +107,7 @@ AI 智能体调用 MCP 工具 `panda-nav:get-capabilities` 即可查询当前 `u
 
 | 工具 | 用途 |
 |------|------|
-| `get-action-schema` | 返回所有合法字段值（type 枚举、builtinValues、icons、positions 等），**构造 action 前先调此工具** |
+| `get-action-schema` | 返回所有合法字段值（type 枚举、动态生成的 builtinValues、commandValues、pluginCommandValues、icons、positions 等），**构造 action 前先调此工具** |
 | `get-full-config` | 返回完整 config.json（含 menuItems + 所有设置项） |
 | `list-actions` | 返回 menuItems 列表及其索引 |
 | `add-action` | 添加单个 action |
@@ -110,7 +119,7 @@ AI 智能体调用 MCP 工具 `panda-nav:get-capabilities` 即可查询当前 `u
 
 | 工具 | 用途 |
 |------|------|
-| `get-capabilities` | 返回 utils 对象中所有可用函数（含自定义工具 + 内置命令），含参数签名和示例 |
+| `get-script-context` | 返回 `utils` 函数列表 + `scriptContext` API 参考（plugin/siyuan/window.siyuan 速查 + 常见误区 + 最佳实践） + `availableTypes` 类型文件列表。写 script 前必查，遇未知对象传入 `path` 参数深查 |
 
 ## 构建命令
 

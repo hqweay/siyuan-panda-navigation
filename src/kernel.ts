@@ -1,5 +1,8 @@
 import { pandaUtils } from "./utils/panda-utils";
 import { builtinMetas } from "./utils/builtin-metas";
+import { scriptApiReference } from "./utils/script-api-reference";
+import { bundledDts } from "./utils/bundled-dts";
+import { normalizeMenuItems } from "./normalize";
 
 class KernelPlugin {
   private mcp: any;
@@ -14,7 +17,12 @@ class KernelPlugin {
       return;
     }
     siyuan.plugin.lifecycle.onload = this.onload.bind(this);
+    siyuan.plugin.lifecycle.onrunning = this.onrunning.bind(this);
     siyuan.plugin.lifecycle.onunload = this.onunload.bind(this);
+  }
+
+  async onrunning() {
+    // empty hook to satisfy Siyuan host
   }
 
   async onload() {
@@ -26,7 +34,7 @@ class KernelPlugin {
 
     await this.logger.info("[panda-nav] kernel plugin loading...");
 
-    await this.registerCapabilitiesTool();
+    await this.registerScriptContextTool();
     await this.registerSchemaTool();
     await this.registerListActionsTool();
     await this.registerGetFullConfigTool();
@@ -58,33 +66,58 @@ class KernelPlugin {
     for (const name of names) {
       try {
         await this.mcp.unregisterTool(name);
-      } catch { }
+      } catch {}
     }
     await this.logger.info("[panda-nav] kernel plugin unloaded");
   }
 
-  private async registerCapabilitiesTool() {
+  private async registerScriptContextTool() {
     const allMetas: Record<string, any> = { ...builtinMetas };
     for (const [k, v] of Object.entries(pandaUtils)) {
       allMetas[k] = v.meta;
     }
 
-    const capabilities = Object.entries(allMetas).map(([name, meta]) => ({
-      name,
-      description: meta.description,
-      parameters: meta.parameters.map((p: any) => `${p.name}: ${p.type}`),
-      example: meta.example,
-    }));
-
     await this.mcp.registerTool(
-      "panda-nav:get-capabilities",
+      "panda-nav:get-script-context",
       {
-        title: "Get available script utilities",
-        description: "Returns all functions available in the utils object for script execution, including custom utilities and built-in commands",
-        inputSchema: { type: "object" },
+        title: "Get TypeScript execution context for script writing",
+        description:
+          "Returns the global TypeScript environment, custom utils interface, or reads specific official Siyuan SDK .d.ts files. ALWAYS call this before writing a script to avoid hallucinations.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: {
+              type: "string",
+              description:
+                "Optional. The path of the official .d.ts file to read (e.g. 'types/layout/Tab.d.ts'). If omitted, returns the global context and a list of available paths.",
+            },
+          },
+        },
         outputSchema: { type: "object" },
       },
-      async () => ({ capabilities }),
+      async (input: any) => {
+        if (input && input.path) {
+          if (bundledDts[input.path]) {
+            return { content: bundledDts[input.path] };
+          } else {
+            return { error: `File not found: ${input.path}` };
+          }
+        }
+
+        const capabilities = Object.entries(allMetas).map(([name, meta]) => ({
+          name,
+          description: meta.description,
+          parameters: meta.parameters.map((p: any) => `${p.name}: ${p.type}`),
+          example: meta.example,
+        }));
+
+        return {
+          utils: capabilities,
+          scriptContext: scriptApiReference,
+          availableTypes: Object.keys(bundledDts),
+          hint: "Read the scriptContext carefully. If you need to know what 'Tab', 'App', or 'Plugin' is in detail, call this tool again with the specific 'path' from availableTypes.",
+        };
+      },
     );
   }
 
@@ -93,54 +126,89 @@ class KernelPlugin {
       "panda-nav:get-action-schema",
       {
         title: "Get action schema reference",
-        description: "Returns valid values for all action fields (type, builtin values, icons, positions, etc.) so you can construct correct action objects",
+        description:
+          "Returns valid values for all action fields. **CRITICAL PRIORITY**: When fulfilling a request, AI MUST determine the 'type' in this order: Priority 1: `builtin` (check builtinValues first) -> Priority 2: `command` (use SiYuan native command like dailyNote, search) -> Priority 3: `pluginCommand`.",
         inputSchema: { type: "object" },
         outputSchema: { type: "object" },
       },
-      async () => ({
-        actionSchema: {
-          types: {
-            builtin: "Predefined action: use one of the builtinValues below",
-            command: "A registered SiYuan command (e.g. dailyNote, globalSearch)",
-            pluginCommand: "A command registered by another plugin",
-            group: "Submenu container with children array and submenuLayout",
+      async () => {
+        const dynamicBuiltinValues = Object.values(builtinMetas).map((meta: any) => ({
+          value: meta.name,
+          description: meta.description,
+        }));
+        
+        // script 被 gen-builtin-metas.js 在生成 utils 时去除了，所以这里需要手动补回
+        dynamicBuiltinValues.push({
+          value: "script",
+          description: "Execute custom JavaScript (provide code in param field)",
+        });
+        
+        // Fetch Siyuan native commands and plugin commands
+        let commandValues: any[] = [];
+        let pluginCommandValues: any[] = [];
+        try {
+          const siyuanObj = (globalThis as any).siyuan;
+          if (siyuanObj?.config?.keymap?.general) {
+            commandValues = Object.keys(siyuanObj.config.keymap.general).map(k => ({
+              value: k,
+              description: `System command: ${k}`
+            }));
+          }
+          if (siyuanObj?.config?.keymap?.plugin) {
+            pluginCommandValues = Object.keys(siyuanObj.config.keymap.plugin).map(k => ({
+              value: k,
+              description: `Plugin command: ${k}`
+            }));
+          }
+        } catch (e) {
+          console.error("Failed to fetch commands:", e);
+        }
+
+        return {
+          actionSchema: {
+            types: {
+              builtin: "Predefined action: use one of the builtinValues below (HIGHEST PRIORITY)",
+              command:
+                "A registered SiYuan command (e.g. dailyNote, search). See commandValues below. Use if no builtin matches.",
+              pluginCommand: "A command registered by another plugin. See pluginCommandValues below. Use as last resort.",
+              group: "Submenu container with children array and submenuLayout",
+            },
+            builtinValues: dynamicBuiltinValues,
+            commandValues: commandValues,
+            pluginCommandValues: pluginCommandValues,
+            showOn: ["both", "mobile", "desktop"],
+            positions: {
+              mobilePosition: ["navbar", "submenu"],
+              desktopPosition: ["navbar", "submenu"],
+            },
+            icons: {
+              format: "#iconXxx (e.g. #iconStar)",
+              common: [
+                "#iconStar",
+                "#iconHeart",
+                "#iconLink",
+                "#iconLeft",
+                "#iconRight",
+                "#iconUp",
+                "#iconDown",
+                "#iconMenu",
+                "#iconCalendar",
+                "#iconSearch",
+                "#iconRefresh",
+                "#iconInfo",
+                "#iconSettings",
+                "#iconWorkspace",
+              ],
+            },
+            groupFields: {
+              submenuLayout: ["list", "grid"],
+              children: "Array of action items (same schema as parent)",
+            },
+            param:
+              "Required for type=builtin with value=script/sql/url. For type=builtin value=script: JS code using plugin, siyuan, utils variables. Call get-script-context to read the TypeScript environment and verify available APIs.",
           },
-          builtinValues: [
-            { value: "goBack", description: "Navigate to previous document in history" },
-            { value: "goForward", description: "Navigate to next document in history" },
-            { value: "goParent", description: "Go to parent document" },
-            { value: "goChild", description: "Go to first child document" },
-            { value: "goNext", description: "Go to next sibling document" },
-            { value: "goPrev", description: "Go to previous sibling document" },
-            { value: "dailyNote", description: "Open today's daily note" },
-            { value: "random", description: "Open a random document" },
-            { value: "scrollToTop", description: "Scroll current document to top" },
-            { value: "search", description: "Open global search" },
-            { value: "script", description: "Execute custom JavaScript (provide code in param field)" },
-            { value: "sql", description: "Execute SQL and open a random result (provide SQL in param field)" },
-            { value: "url", description: "Open a URL (provide URL in param field)" },
-          ],
-          showOn: ["both", "mobile", "desktop"],
-          positions: {
-            mobilePosition: ["navbar", "submenu"],
-            desktopPosition: ["navbar", "submenu"],
-          },
-          icons: {
-            format: "#iconXxx (e.g. #iconStar)",
-            common: [
-              "#iconStar", "#iconHeart", "#iconLink", "#iconLeft", "#iconRight",
-              "#iconUp", "#iconDown", "#iconMenu", "#iconCalendar", "#iconSearch",
-              "#iconRefresh", "#iconInfo", "#iconSettings", "#iconWorkspace",
-            ],
-          },
-          groupFields: {
-            submenuLayout: ["list", "grid"],
-            children: "Array of action items (same schema as parent)",
-          },
-          param: "Required for type=builtin with value=script/sql/url. For script: JS code using plugin, siyuan, utils variables with top-level await support",
-        },
-      }),
-    );
+        };
+      });
   }
 
   private async registerGetFullConfigTool() {
@@ -148,7 +216,8 @@ class KernelPlugin {
       "panda-nav:get-full-config",
       {
         title: "Get full plugin configuration",
-        description: "Returns the entire config.json including all settings (menuItems, enableBottomNav, showButtonLabels, etc.)",
+        description:
+          "Returns the entire config.json including all settings (menuItems, enableBottomNav, showButtonLabels, etc.)",
         inputSchema: { type: "object" },
         outputSchema: { type: "object" },
       },
@@ -164,19 +233,22 @@ class KernelPlugin {
       "panda-nav:batch-add-actions",
       {
         title: "Batch add / replace navigation actions",
-        description: "Add multiple actions at once or replace all existing actions. Use get-action-schema to see valid field values",
+        description:
+          "Add multiple actions at once or replace all existing actions. MUST respect the priority: 1) builtin 2) command 3) pluginCommand. Call get-action-schema to check valid builtins.",
         inputSchema: {
           type: "object",
           properties: {
             actions: {
               type: "array",
-              description: "Array of action objects. Each object supports: title (string), type (string), value (string), icon (string), showOn (string), param (string). For type=group also: children (array), submenuLayout (string). See get-action-schema for valid values",
+              description:
+                "Array of action objects. Each object supports: title (string), type (string), value (string), icon (string), showOn (string), param (string). For type=group also: children (array), submenuLayout (string). See get-action-schema for valid values",
               items: { type: "object" },
             },
             mode: {
               type: "string",
               enum: ["append", "replace"],
-              description: "append = add to existing list, replace = replace all existing actions",
+              description:
+                "append = add to existing list, replace = replace all existing actions",
             },
           },
           required: ["actions", "mode"],
@@ -186,7 +258,10 @@ class KernelPlugin {
       async (input: any) => {
         const config = await this.loadConfig();
         if (input.mode === "replace") {
-          config.menuItems = input.actions.map((a: any) => ({ ...a, id: this.generateId() }));
+          config.menuItems = input.actions.map((a: any) => ({
+            ...a,
+            id: this.generateId(),
+          }));
         } else {
           if (!config.menuItems) config.menuItems = [];
           for (const a of input.actions) {
@@ -195,7 +270,11 @@ class KernelPlugin {
         }
         await this.saveConfig(config);
         await this.notifyUI(config.menuItems);
-        return { success: true, total: config.menuItems.length, mode: input.mode };
+        return {
+          success: true,
+          total: config.menuItems.length,
+          mode: input.mode,
+        };
       },
     );
   }
@@ -222,16 +301,28 @@ class KernelPlugin {
       "panda-nav:add-action",
       {
         title: "Add a navigation action",
-        description: "Add a button to the navigation bar. Use get-capabilities to discover available utils functions for script execution",
+        description:
+          "Add a button to the navigation bar. MUST respect the priority: 1) builtin 2) command 3) pluginCommand. Use get-script-context for scripts.",
         inputSchema: {
           type: "object",
           properties: {
             title: { type: "string", description: "Button label" },
-            type: { type: "string", enum: ["builtin", "command", "pluginCommand", "group"], description: "Action type" },
-            value: { type: "string", description: "Action value: builtin id / command name / etc." },
+            type: {
+              type: "string",
+              enum: ["builtin", "command", "pluginCommand", "group"],
+              description: "Action type",
+            },
+            value: {
+              type: "string",
+              description: "Action value: builtin id / command name / etc.",
+            },
             icon: { type: "string", description: "Icon like #iconStar" },
             showOn: { type: "string", enum: ["both", "mobile", "desktop"] },
-            param: { type: "string", description: "Parameter. For type=builtin value=script: JS code using plugin, siyuan, utils variables. Use get-capabilities to see available utils functions" },
+            param: {
+              type: "string",
+              description:
+                "Parameter. For type=builtin value=script: JS code using plugin, siyuan, utils variables. Call get-script-context to discover the TypeScript environment and available SDK types.",
+            },
           },
           required: ["title", "type"],
         },
@@ -252,7 +343,11 @@ class KernelPlugin {
         config.menuItems.push(newItem);
         await this.saveConfig(config);
         await this.notifyUI(config.menuItems);
-        return { success: true, id: newItem.id, count: config.menuItems.length };
+        return {
+          success: true,
+          id: newItem.id,
+          count: config.menuItems.length,
+        };
       },
     );
   }
@@ -262,11 +357,15 @@ class KernelPlugin {
       "panda-nav:remove-action",
       {
         title: "Remove a navigation action",
-        description: "Remove an action button by index. Call list-actions first to get indices",
+        description:
+          "Remove an action button by index. Call list-actions first to get indices",
         inputSchema: {
           type: "object",
           properties: {
-            index: { type: "number", description: "Index in the actions list (0-based)" },
+            index: {
+              type: "number",
+              description: "Index in the actions list (0-based)",
+            },
           },
           required: ["index"],
         },
@@ -274,7 +373,11 @@ class KernelPlugin {
       },
       async (input: any) => {
         const config = await this.loadConfig();
-        if (!config.menuItems || input.index < 0 || input.index >= config.menuItems.length) {
+        if (
+          !config.menuItems ||
+          input.index < 0 ||
+          input.index >= config.menuItems.length
+        ) {
           return { success: false, error: "Index out of bounds or empty list" };
         }
         const removed = config.menuItems.splice(input.index, 1);
@@ -290,13 +393,20 @@ class KernelPlugin {
       "panda-nav:update-action",
       {
         title: "Update a navigation action",
-        description: "Update an existing action button by index. Call list-actions to get the current list",
+        description:
+          "Update an existing action button by index. MUST respect the priority: 1) builtin 2) command 3) pluginCommand. Call list-actions to get the current list.",
         inputSchema: {
           type: "object",
           properties: {
-            index: { type: "number", description: "Index of the action to update (0-based)" },
+            index: {
+              type: "number",
+              description: "Index of the action to update (0-based)",
+            },
             title: { type: "string", description: "New button label" },
-            type: { type: "string", enum: ["builtin", "command", "pluginCommand", "group"] },
+            type: {
+              type: "string",
+              enum: ["builtin", "command", "pluginCommand", "group"],
+            },
             value: { type: "string", description: "New action value" },
             icon: { type: "string", description: "New icon" },
             showOn: { type: "string", enum: ["both", "mobile", "desktop"] },
@@ -308,7 +418,11 @@ class KernelPlugin {
       },
       async (input: any) => {
         const config = await this.loadConfig();
-        if (!config.menuItems || input.index < 0 || input.index >= config.menuItems.length) {
+        if (
+          !config.menuItems ||
+          input.index < 0 ||
+          input.index >= config.menuItems.length
+        ) {
           return { success: false, error: "Index out of bounds or empty list" };
         }
         const item = config.menuItems[input.index];
@@ -334,7 +448,7 @@ class KernelPlugin {
         inputSchema: {
           type: "object",
           properties: {
-            name: { type: "string", description: "Name of the preset" }
+            name: { type: "string", description: "Name of the preset" },
           },
           required: ["name"],
         },
@@ -346,12 +460,12 @@ class KernelPlugin {
         const newPreset = {
           id: "preset-custom-" + Date.now(),
           name: input.name,
-          menuItems: JSON.parse(JSON.stringify(config.menuItems || []))
+          menuItems: JSON.parse(JSON.stringify(config.menuItems || [])),
         };
         config.customPresets.push(newPreset);
         await this.saveConfig(config);
         return { success: true, id: newPreset.id };
-      }
+      },
     );
   }
 
@@ -368,7 +482,7 @@ class KernelPlugin {
         const config = await this.loadConfig();
         const presets = config.customPresets || [];
         return { presets, total: presets.length };
-      }
+      },
     );
   }
 
@@ -381,8 +495,16 @@ class KernelPlugin {
         inputSchema: {
           type: "object",
           properties: {
-            name: { type: "string", description: "Name of the preset to apply" },
-            mode: { type: "string", enum: ["append", "replace"], description: "Whether to append to existing items or replace all items" }
+            name: {
+              type: "string",
+              description: "Name of the preset to apply",
+            },
+            mode: {
+              type: "string",
+              enum: ["append", "replace"],
+              description:
+                "Whether to append to existing items or replace all items",
+            },
           },
           required: ["name", "mode"],
         },
@@ -392,17 +514,21 @@ class KernelPlugin {
         const config = await this.loadConfig();
         const presets = config.customPresets || [];
         const preset = presets.find((p: any) => p.name === input.name);
-        if (!preset) return { success: false, error: `Preset "${input.name}" not found` };
+        if (!preset)
+          return { success: false, error: `Preset "${input.name}" not found` };
 
         if (input.mode === "replace") {
           config.menuItems = JSON.parse(JSON.stringify(preset.menuItems));
         } else {
-          config.menuItems = [...(config.menuItems || []), ...JSON.parse(JSON.stringify(preset.menuItems))];
+          config.menuItems = [
+            ...(config.menuItems || []),
+            ...JSON.parse(JSON.stringify(preset.menuItems)),
+          ];
         }
         await this.saveConfig(config);
         await this.notifyUI(config.menuItems);
         return { success: true, total: config.menuItems.length };
-      }
+      },
     );
   }
 
@@ -410,7 +536,19 @@ class KernelPlugin {
     try {
       const obj = await this.storage.get("config.json");
       const text = await obj.text();
-      return JSON.parse(text);
+      const config = JSON.parse(text) || {};
+      if (config.menuItems) {
+        config.menuItems = normalizeMenuItems(config.menuItems);
+      }
+      if (config.customPresets) {
+        config.customPresets = config.customPresets.map((preset: any) => {
+          if (preset && preset.menuItems) {
+            preset.menuItems = normalizeMenuItems(preset.menuItems);
+          }
+          return preset;
+        });
+      }
+      return config;
     } catch {
       return {};
     }
@@ -426,11 +564,13 @@ class KernelPlugin {
         action: "mcp-update",
         menuItems: menuItems || [],
       });
-    } catch { }
+    } catch {}
   }
 
   private generateId(): string {
-    return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+    return (
+      Math.random().toString(36).substring(2, 10) + Date.now().toString(36)
+    );
   }
 }
 

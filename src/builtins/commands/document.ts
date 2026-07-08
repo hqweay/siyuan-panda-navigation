@@ -1,8 +1,9 @@
 import { BuiltinCommand } from "../types";
-import { showMessage } from "siyuan";
+import { showMessage, getActiveEditor } from "siyuan";
 import { getBlockByID, listDocsByPath } from "../../api";
 import { getCurrentDocId, openBlockByID } from "../../myscripts/syUtils";
 import { navigation } from "../../navigation";
+import { goToRandomBlock, getRandomBlockSql } from "../../myscripts/randomDocCache";
 
 export const goBackCommand: BuiltinCommand = {
     id: "goBack",
@@ -129,4 +130,32 @@ export const goPrevCommand: BuiltinCommand = {
     }
 };
 
-export const documentCommands = [goBackCommand, goForwardCommand, goParentCommand, goChildCommand, goNextCommand, goPrevCommand];
+export const scrollToTopCommand: BuiltinCommand = {
+    id: "scrollToTop",
+    title: "返回顶部",
+    requiresParam: false,
+    execute: () => {
+        const editor = getActiveEditor(false);
+        if (editor?.protyle?.contentElement) {
+            const scrollEle = editor.protyle.contentElement.parentElement;
+            if (scrollEle) {
+                scrollEle.scrollTo({ top: 0, behavior: "smooth" });
+            }
+        }
+    }
+};
+
+export const randomCommand: BuiltinCommand = {
+    id: "random",
+    title: "随机文档",
+    requiresParam: false,
+    execute: () => {
+        goToRandomBlock(getRandomBlockSql());
+    }
+};
+
+export const documentCommands = [
+    goBackCommand, goForwardCommand, goParentCommand, 
+    goChildCommand, goNextCommand, goPrevCommand,
+    scrollToTopCommand, randomCommand
+];

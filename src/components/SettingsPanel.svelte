@@ -1,6 +1,7 @@
 <script lang="ts">
   import { settings } from "../settings";
   import { plugin, generateId } from "../utils";
+  import { normalizeMenuItems } from "../normalize";
   import { showMessage, Dialog } from "siyuan";
   import { onMount } from "svelte";
   import { lsNotebooks, request } from "../api";
@@ -147,8 +148,13 @@
   let showButtonLabels = settings.getBySpace("nav-helper", "showButtonLabels") ?? "both";
 
   // Menu Builder Variables
-  let menuItems: any[] = settings.getBySpace("nav-helper", "menuItems") || [];
-  let customPresets: any[] = settings.getBySpace("nav-helper", "customPresets") || [];
+  let menuItems: any[] = normalizeMenuItems(settings.getBySpace("nav-helper", "menuItems") || []);
+  let customPresets: any[] = (settings.getBySpace("nav-helper", "customPresets") || []).map((preset: any) => {
+    if (preset && preset.menuItems) {
+      preset.menuItems = normalizeMenuItems(preset.menuItems);
+    }
+    return preset;
+  });
   let expandedIndex: string | null = null;
 
   const COMMON_ICONS = [
@@ -174,9 +180,10 @@
   function addMenuItem(parentGroup?: any) {
     const newItem = {
       id: generateId(),
-      type: "url",
+      type: "builtin",
+      value: "url",
+      param: "",
       title: "新动作",
-      value: "",
       icon: "#iconLink",
       showOn: "both"
     };

@@ -1,6 +1,7 @@
 import { Plugin, Dialog, openTab } from "siyuan";
 import { generateDefaultMenuItems } from "./config/presets";
 import { isMobile, setPlugin, mobileUtils } from "./utils";
+import { normalizeMenuItems } from "./normalize";
 import { navigation } from "./navigation";
 import { settings } from "./settings";
 import { getLogger } from "./libs/logger";
@@ -30,6 +31,19 @@ export class PandaNavigation extends Plugin {
     // 载入持久化配置
     const data = await this.loadData("config.json");
     settings.data = data || {};
+
+    // 规范化配置项
+    if (settings.data.menuItems) {
+      settings.data.menuItems = normalizeMenuItems(settings.data.menuItems);
+    }
+    if (settings.data.customPresets) {
+      settings.data.customPresets = settings.data.customPresets.map((preset: any) => {
+        if (preset && preset.menuItems) {
+          preset.menuItems = normalizeMenuItems(preset.menuItems);
+        }
+        return preset;
+      });
+    }
 
     // 初始化默认配置
     this.initDefaultSettings();
@@ -185,9 +199,10 @@ export class PandaNavigation extends Plugin {
 
       if (!params.menuItems) return;
 
+      const normalizedItems = normalizeMenuItems(params.menuItems);
       const oldItems = settings.getBySpace("nav-helper", "menuItems");
-      if (JSON.stringify(oldItems) !== JSON.stringify(params.menuItems)) {
-        settings.setBySpace("nav-helper", "menuItems", params.menuItems);
+      if (JSON.stringify(oldItems) !== JSON.stringify(normalizedItems)) {
+        settings.setBySpace("nav-helper", "menuItems", normalizedItems);
         settings.save();
         this.handleSettingsChange();
       }
