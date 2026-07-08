@@ -1,6 +1,6 @@
 <script lang="ts">
-import { getLogger } from "@/libs/logger";
-const log = getLogger("lets-nav-helper");
+  import { getLogger } from "@/libs/logger";
+  const log = getLogger("lets-nav-helper");
   import { onMount, onDestroy } from "svelte";
   import { fly } from "svelte/transition";
   import { isMobile } from "../utils";
@@ -43,7 +43,11 @@ const log = getLogger("lets-nav-helper");
 
     const target = event.target as HTMLElement;
     // 只响应 protyle 主内容区的滚动，忽略弹窗/侧边栏等区域
-    if (!target?.classList?.contains("protyle-content") && !target?.classList?.contains("protyle-scroll")) return;
+    if (
+      !target?.classList?.contains("protyle-content") &&
+      !target?.classList?.contains("protyle-scroll")
+    )
+      return;
 
     const currentScrollTop = target.scrollTop;
     if (currentScrollTop === undefined) return;
@@ -60,11 +64,13 @@ const log = getLogger("lets-nav-helper");
   }
 
   // 加载菜单配置
-  let menuItems: any[] = settings.getBySpace(pluginMetadata.name, "menuItems") || [];
+  let menuItems: any[] =
+    settings.getBySpace(pluginMetadata.name, "menuItems") || [];
 
-  $: visibleMenuItems = menuItems.filter(item => {
+  $: visibleMenuItems = menuItems.filter((item) => {
     if (item.showOn === "none") return false;
-    if (deviceType === "mobile") return item.showOn === "both" || item.showOn === "mobile";
+    if (deviceType === "mobile")
+      return item.showOn === "both" || item.showOn === "mobile";
     return item.showOn === "both" || item.showOn === "desktop";
   });
 
@@ -74,20 +80,22 @@ const log = getLogger("lets-nav-helper");
     }
     const type = item.type;
     // Fallback logic for legacy configs, map internal/url/sql/av-add/open-setting to builtin
-    const isBuiltin = type === "builtin" || ["internal", "url", "sql", "av-add", "open-setting"].includes(type);
-    
+    const isBuiltin =
+      type === "builtin" ||
+      ["internal", "url", "sql", "av-add", "open-setting"].includes(type);
+
     if (isBuiltin) {
       let cmdId = item.value;
       if (type !== "builtin" && type !== "internal") {
-          cmdId = type; // url, sql, av-add, open-setting
+        cmdId = type; // url, sql, av-add, open-setting
       }
 
       const cmd = builtinCommands[cmdId];
       if (cmd) {
-         const param = type === "builtin" ? item.param : item.value;
-         await cmd.execute(plugin, param);
+        const param = type === "builtin" ? item.param : item.value;
+        await cmd.execute(plugin, param);
       } else {
-         showMessage("未知的内置功能: " + cmdId);
+        showMessage("未知的内置功能: " + cmdId);
       }
       return;
     }
@@ -100,15 +108,23 @@ const log = getLogger("lets-nav-helper");
           const evt = new CustomEvent("click");
           const target = document.createElement("div");
           target.setAttribute("data-id", value);
-          Object.defineProperty(evt, "target", { value: target, enumerable: true });
-          (window as any).siyuan?.ws?.request("main", "getSysCommands", {}, (res: any) => {
-            console.log("sys commands loaded, dispatching", value);
+          Object.defineProperty(evt, "target", {
+            value: target,
+            enumerable: true,
           });
+          (window as any).siyuan?.ws?.request(
+            "main",
+            "getSysCommands",
+            {},
+            (res: any) => {
+              console.log("sys commands loaded, dispatching", value);
+            },
+          );
           // This relies on Siyuan's internal dispatching.
           globalCommand(value, plugin.app);
         } else if (value === "search") {
-          const searchDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
-            item.element?.querySelector("#searchList")
+          const searchDialog = (window as any).siyuan?.dialogs?.find(
+            (item: any) => item.element?.querySelector("#searchList"),
           );
           if (searchDialog) {
             searchDialog.destroy();
@@ -116,8 +132,9 @@ const log = getLogger("lets-nav-helper");
             globalCommand(value, plugin.app);
           }
         } else if (value === "recentDocs") {
-          const recentDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
-            item.element?.getAttribute("data-key") === "dialog-recentdocs"
+          const recentDialog = (window as any).siyuan?.dialogs?.find(
+            (item: any) =>
+              item.element?.getAttribute("data-key") === "dialog-recentdocs",
           );
           if (recentDialog) {
             recentDialog.destroy();
@@ -125,8 +142,8 @@ const log = getLogger("lets-nav-helper");
             globalCommand(value, plugin.app);
           }
         } else if (value === "config") {
-          const configDialog = (window as any).siyuan?.dialogs?.find((item: any) =>
-            item.element?.querySelector(".config__panel")
+          const configDialog = (window as any).siyuan?.dialogs?.find(
+            (item: any) => item.element?.querySelector(".config__panel"),
           );
           if (configDialog) {
             configDialog.destroy();
@@ -144,11 +161,11 @@ const log = getLogger("lets-nav-helper");
   }
 
   function handleActionClick(item: any, event: Event) {
-     if (item.type === "group") {
-        showGroupSubmenu(item, event);
-     } else {
-        executeCustomAction(item);
-     }
+    if (item.type === "group") {
+      showGroupSubmenu(item, event);
+    } else {
+      executeCustomAction(item);
+    }
   }
 
   $: allNavbarButtons = visibleMenuItems.map((item) => ({
@@ -156,13 +173,14 @@ const log = getLogger("lets-nav-helper");
     icon: item.icon,
     label: item.title,
     action: (e: Event) => handleActionClick(item, e),
-    hasSubmenu: item.type === "group"
+    hasSubmenu: item.type === "group",
   }));
 
   $: visibleButtons = allNavbarButtons;
 
   function shouldShowLabel(): boolean {
-    const setting = settings.getBySpace(pluginMetadata.name, "showButtonLabels") ?? "both";
+    const setting =
+      settings.getBySpace(pluginMetadata.name, "showButtonLabels") ?? "both";
     if (setting === "both") return true;
     if (setting === "mobile") return deviceType === "mobile";
     if (setting === "pc") return deviceType === "desktop";
@@ -172,11 +190,10 @@ const log = getLogger("lets-nav-helper");
   let showLabel: boolean = true;
   $: showLabel = shouldShowLabel();
 
-
-
-
   function showGroupSubmenu(group: any, event: Event) {
-    const triggerBtn = (event.currentTarget as HTMLElement).closest(".nav-button");
+    const triggerBtn = (event.currentTarget as HTMLElement).closest(
+      ".nav-button",
+    );
 
     if (submenuVisible && submenuType === "customLinks") {
       if (submenuTriggerButton === triggerBtn) {
@@ -185,12 +202,13 @@ const log = getLogger("lets-nav-helper");
       }
       // 如果点击的是另一个分组按钮，则不 hideSubmenu，直接切换内容
     }
-    
+
     // 过滤掉没显示的子动作
     const validChildren = (group.children || []).filter((child: any) => {
-       if (child.showOn === "none") return false;
-       if (deviceType === "mobile") return child.showOn === "both" || child.showOn === "mobile";
-       return child.showOn === "both" || child.showOn === "desktop";
+      if (child.showOn === "none") return false;
+      if (deviceType === "mobile")
+        return child.showOn === "both" || child.showOn === "mobile";
+      return child.showOn === "both" || child.showOn === "desktop";
     });
 
     if (validChildren.length === 0) {
@@ -206,7 +224,9 @@ const log = getLogger("lets-nav-helper");
       action: () => handleActionClick(child, event),
     }));
 
-    submenuTriggerButton = (event.currentTarget as HTMLElement).closest(".nav-button");
+    submenuTriggerButton = (event.currentTarget as HTMLElement).closest(
+      ".nav-button",
+    );
 
     if (deviceType === "mobile" && submenuLayout === "grid") {
       submenuVisible = true;
@@ -226,15 +246,132 @@ const log = getLogger("lets-nav-helper");
     submenuLayout = "list";
   }
 
-  $: showIconPanel = submenuVisible && submenuType === "customLinks" && submenuLayout === "grid" && deviceType === "mobile";
+  $: showIconPanel =
+    submenuVisible &&
+    submenuType === "customLinks" &&
+    submenuLayout === "grid" &&
+    deviceType === "mobile";
 
   function handleIconPanelOutsideClick(event: Event) {
     if (showIconPanel) {
       const target = event.target as HTMLElement;
-      if (!target.closest('.navigation-container')) {
+      if (!target.closest(".navigation-container")) {
         hideSubmenu();
       }
     }
+  }
+
+  // 拖拽相关状态
+  let navContainer: HTMLElement;
+  let navX = 0;
+  let navY = 0;
+  let isDragging = false;
+  let hasInitializedPosition = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let initialNavX = 0;
+  let initialNavY = 0;
+
+  function initNavPosition() {
+    if (deviceType !== "desktop" || !navContainer) return;
+    const saved = settings.getBySpace(pluginMetadata.name, "navPosition");
+    if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
+      navX = saved.x;
+      navY = saved.y;
+    } else {
+      // 默认底部居中
+      const rect = navContainer.getBoundingClientRect();
+      navX = (window.innerWidth - rect.width) / 2;
+      navY = window.innerHeight - 20 - rect.height;
+    }
+    clampNavPosition();
+    hasInitializedPosition = true;
+  }
+
+  function clampNavPosition() {
+    if (!navContainer) return;
+    const padding = 10;
+    const rect = navContainer.getBoundingClientRect();
+    if (navX < padding) navX = padding;
+    if (navY < padding) navY = padding;
+    if (navX + rect.width > window.innerWidth - padding) {
+      navX = window.innerWidth - rect.width - padding;
+    }
+    if (navY + rect.height > window.innerHeight - padding) {
+      navY = window.innerHeight - rect.height - padding;
+    }
+  }
+
+  function handlePointerDown(e: PointerEvent) {
+    if (deviceType !== "desktop") return;
+    // 忽略右键
+    if (e.button !== 0) return;
+    // 如果点击的是按钮内部，不触发拖拽
+    const target = e.target as HTMLElement;
+    if (target.closest(".nav-button")) return;
+
+    if (submenuVisible) hideSubmenu();
+    document.body.style.userSelect = "none";
+
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    initialNavX = navX;
+    initialNavY = navY;
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
+  }
+
+  function handlePointerMove(e: PointerEvent) {
+    if (!isDragging) return;
+    e.preventDefault();
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    let newX = initialNavX + dx;
+    let newY = initialNavY + dy;
+
+    // 直接在这里做轻量限制，防止鼠标拖出屏幕外太远
+    // 注意：虽然获取的是旧坐标的 DOM rect，但宽高是不变的，所以计算依然精准
+    const padding = 10;
+    const rect = navContainer.getBoundingClientRect();
+    if (newX < padding) newX = padding;
+    if (newY < padding) newY = padding;
+    if (newX + rect.width > window.innerWidth - padding)
+      newX = window.innerWidth - rect.width - padding;
+    if (newY + rect.height > window.innerHeight - padding)
+      newY = window.innerHeight - rect.height - padding;
+
+    // 直接操作 DOM 绕过 Svelte 响应式以获得极致性能，不更新 navX/navY 避免冗余的 Svelte 响应式开销
+    if (navContainer) {
+      navContainer.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
+    }
+  }
+
+  function handlePointerUp() {
+    if (!isDragging) return;
+    isDragging = false;
+    document.body.style.userSelect = "";
+    window.removeEventListener("pointermove", handlePointerMove);
+    window.removeEventListener("pointerup", handlePointerUp);
+    window.removeEventListener("pointercancel", handlePointerUp);
+
+    // 将最终渲染的坐标同步回 Svelte 状态
+    if (navContainer) {
+      const transform = navContainer.style.transform;
+      const match = transform.match(/translate3d\(([^px]+)px,\s*([^px]+)px/);
+      if (match) {
+        navX = parseFloat(match[1]);
+        navY = parseFloat(match[2]);
+      }
+    }
+
+    settings.setBySpace(pluginMetadata.name, "navPosition", {
+      x: navX,
+      y: navY,
+    });
+    settings.save();
   }
 
   // 过滤显示的按钮
@@ -248,6 +385,12 @@ const log = getLogger("lets-nav-helper");
         isVisible = false;
       } else {
         isVisible = true;
+        if (hasInitializedPosition) {
+          clampNavPosition();
+          if (navContainer && !isDragging) {
+            navContainer.style.transform = `translate3d(${navX}px, ${navY}px, 0)`;
+          }
+        }
       }
     }
   }
@@ -256,6 +399,11 @@ const log = getLogger("lets-nav-helper");
     window.addEventListener("resize", handleResize);
     window.addEventListener("scroll", handleScroll, true); // capture 捕获 protyle 内部滚动
     document.addEventListener("click", handleIconPanelOutsideClick);
+
+    // 使用 rAF 确保在下一帧绘制前 DOM 已经完全布局（比 setTimeout 更可靠）
+    requestAnimationFrame(() => {
+      initNavPosition();
+    });
     handleResize();
   });
 
@@ -270,9 +418,15 @@ const log = getLogger("lets-nav-helper");
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div
+    bind:this={navContainer}
     class="navigation-container {deviceType}"
     class:scrolling-down={isScrollingDown}
     class:expanded={showIconPanel}
+    class:is-dragging={isDragging}
+    on:pointerdown={handlePointerDown}
+    style={deviceType === "desktop" && hasInitializedPosition
+      ? `top: 0; left: 0; bottom: auto; transform: translate3d(${navX}px, ${navY}px, 0);`
+      : ""}
     on:click={(e) => {
       if (isScrollingDown && deviceType === "mobile") {
         isScrollingDown = false;
@@ -281,7 +435,10 @@ const log = getLogger("lets-nav-helper");
     }}
   >
     {#if showIconPanel}
-      <div class="nav-expansion" transition:fly={{ y: 15, duration: 200, opacity: 0 }}>
+      <div
+        class="nav-expansion"
+        transition:fly={{ y: 15, duration: 200, opacity: 0 }}
+      >
         <div class="expansion-icons">
           {#each submenuItems as item, idx (idx)}
             <button
@@ -290,7 +447,9 @@ const log = getLogger("lets-nav-helper");
               on:click={() => item.action?.()}
             >
               {#if item.icon && item.icon.startsWith("#icon")}
-                <svg class="expansion-svg"><use xlink:href={item.icon}></use></svg>
+                <svg class="expansion-svg"
+                  ><use xlink:href={item.icon}></use></svg
+                >
               {:else}
                 <span class="expansion-emoji">{item.icon || "🔗"}</span>
               {/if}
@@ -341,7 +500,15 @@ const log = getLogger("lets-nav-helper");
     display: flex;
     align-items: center;
     background-color: var(--nav-bg);
-    font-family: var(--b3-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif);
+    font-family: var(
+      --b3-font-family,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Microsoft YaHei",
+      sans-serif
+    );
   }
 
   .navigation-container.mobile {
@@ -356,17 +523,18 @@ const log = getLogger("lets-nav-helper");
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
-                height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
-                opacity 0.3s ease,
-                transform 0.3s ease,
-                border-radius 0.2s ease;
+    transition:
+      max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+      height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 0.3s ease,
+      transform 0.3s ease,
+      border-radius 0.2s ease;
     cursor: default;
   }
 
   /* Safari Pill Handle */
   .navigation-container.mobile::after {
-    content: '';
+    content: "";
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
@@ -393,7 +561,9 @@ const log = getLogger("lets-nav-helper");
 
   /* Hide buttons gracefully */
   .navigation-container.mobile :global(button) {
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
   }
 
   .navigation-container.mobile.scrolling-down :global(button) {
@@ -417,6 +587,15 @@ const log = getLogger("lets-nav-helper");
     -webkit-backdrop-filter: blur(20px);
     background-color: var(--nav-bg);
     border: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.15));
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: grab;
+  }
+
+  .navigation-container.desktop.is-dragging {
+    transition: none; /* Disable transition during drag for 0 latency */
+    cursor: grabbing;
+    opacity: 0.95;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   }
 
   .navigation-container.desktop :global(.nav-button) {
@@ -424,6 +603,7 @@ const log = getLogger("lets-nav-helper");
     min-height: 36px;
     padding: 6px;
     border-radius: 8px;
+    cursor: pointer;
   }
 
   .navigation-container.desktop :global(.nav-button .icon) {
@@ -469,7 +649,10 @@ const log = getLogger("lets-nav-helper");
   }
 
   .expansion-btn:hover {
-    background-color: var(--b3-theme-background-light, rgba(59, 130, 246, 0.12));
+    background-color: var(
+      --b3-theme-background-light,
+      rgba(59, 130, 246, 0.12)
+    );
   }
 
   .expansion-btn:active {
@@ -489,8 +672,6 @@ const log = getLogger("lets-nav-helper");
     line-height: 1;
     pointer-events: none;
   }
-
-
 
   /* 按钮包裹层 — 独立裁剪 hover 背景，不干涉展开层 */
   .buttons-wrapper {
