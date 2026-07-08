@@ -120,3 +120,10 @@ pnpm dev                # 开发模式（前端 watch + kernel watch，自动部
 pnpm build:kernel       # 仅构建 kernel.js（输出到 dist/）
 pnpm build:kernel:dev   # 仅构建 kernel.js（输出到 SiYuan 插件目录）
 ```**
+
+# 文档规范 (Documentation Style)
+
+当你被要求编写或更新面向用户的文档（如 `README.md`、`CHANGELOG.md`）时，**必须严格遵守以下“清爽克制”的风格**：
+1. **去黑话（No Jargon）**：绝对不要向普通用户暴露深层架构的技术名词，如 `DOM`、`AST`、`Vite`、`MCP`、`高内聚低耦合`。把它们翻译成大白话（例如：“原生支持 MCP” -> “全面接入 AI 助手”，“原生 DOM transform 硬件加速” -> “拖动流畅无延迟”）。
+2. **去浮夸（No Marketing Hype）**：禁止使用“革命性”、“神仙功能”、“极致的”、“无限潜能”等情绪化和夸张的带货词汇。保持描述客观、平实、简练。
+3. **面向用户价值**：用大白话解释功能为用户解决了什么痛点（例如“不用担心遮挡笔记内容”），而不是展示底层的技术实现有多复杂。
