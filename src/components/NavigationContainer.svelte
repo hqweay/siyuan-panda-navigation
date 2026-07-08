@@ -75,9 +75,6 @@
   });
 
   async function executeCustomAction(item: any) {
-    if (submenuVisible) {
-      hideSubmenu();
-    }
     const type = item.type;
     // Fallback logic for legacy configs, map internal/url/sql/av-add/open-setting to builtin
     const isBuiltin =
