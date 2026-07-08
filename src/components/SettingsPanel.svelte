@@ -1,7 +1,7 @@
 <script lang="ts">
   import { settings } from "../settings";
   import { plugin, generateId } from "../utils";
-  import { showMessage } from "siyuan";
+  import { showMessage, Dialog } from "siyuan";
   import { onMount } from "svelte";
   import { lsNotebooks, request } from "../api";
   import { builtinCommands, builtinCommandList } from "../builtins";
@@ -148,6 +148,7 @@
 
   // Menu Builder Variables
   let menuItems: any[] = settings.getBySpace("nav-helper", "menuItems") || [];
+  let customPresets: any[] = settings.getBySpace("nav-helper", "customPresets") || [];
   let expandedIndex: string | null = null;
 
   const COMMON_ICONS = [
@@ -186,6 +187,49 @@
     } else {
       menuItems = [...menuItems, newItem];
     }
+  }
+
+  function savePresetDialog() {
+    const dialog = new Dialog({
+      title: "保存预设",
+      content: `<div class="b3-dialog__content">
+        <input class="b3-text-field fn__block" id="presetNameInput" placeholder="请输入自定义预设名称 (保存当前所有按钮和分组)">
+      </div>
+      <div class="b3-dialog__action">
+        <button class="b3-button b3-button--cancel" id="presetCancelBtn">取消</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="presetConfirmBtn">确定</button>
+      </div>`,
+      width: "400px",
+    });
+    const input = dialog.element.querySelector("#presetNameInput") as HTMLInputElement;
+    const cancelBtn = dialog.element.querySelector("#presetCancelBtn");
+    const confirmBtn = dialog.element.querySelector("#presetConfirmBtn");
+    
+    setTimeout(() => input?.focus(), 100);
+
+    cancelBtn?.addEventListener("click", () => dialog.destroy());
+    
+    const savePreset = () => {
+      const name = input?.value;
+      if (name && name.trim()) {
+        const newPreset = {
+          id: "preset-custom-" + Date.now(),
+          name: name.trim(),
+          menuItems: JSON.parse(JSON.stringify(menuItems)) // 深拷贝去引用
+        };
+        customPresets = [...customPresets, newPreset];
+        settings.setBySpace("nav-helper", "customPresets", customPresets);
+        settings.save();
+        showMessage("预设保存成功");
+        dialog.destroy();
+      }
+    };
+    
+    confirmBtn?.addEventListener("click", savePreset);
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") savePreset();
+      if (e.key === "Escape") dialog.destroy();
+    });
   }
 
   function addGroup() {
@@ -331,6 +375,52 @@
                   e.currentTarget.value = ""; // Reset
                   return;
                 }
+
+                // Check custom presets first
+                const customPreset = customPresets.find(p => p.id === presetId);
+                if (customPreset) {
+                  const dialog = new Dialog({
+                    title: "加载自定义预设",
+                    content: `<div class="b3-dialog__content">
+                      <div class="b3-form__space">是否使用预设 <b>${customPreset.name}</b> 覆盖当前菜单？</div>
+                      <ul class="b3-list b3-list--background">
+                        <li class="b3-list-item"><span class="b3-list-item__text"><b>覆盖</b>：清空当前所有按钮，仅保留该预设</span></li>
+                        <li class="b3-list-item"><span class="b3-list-item__text"><b>追加</b>：将该预设作为一个独立分组，添加到现有按钮后面</span></li>
+                      </ul>
+                    </div>
+                    <div class="b3-dialog__action">
+                      <button class="b3-button b3-button--cancel" id="presetLoadCancelBtn">取消操作</button><div class="fn__space"></div>
+                      <button class="b3-button b3-button--outline" id="presetLoadAppendBtn">追加为分组</button><div class="fn__space"></div>
+                      <button class="b3-button b3-button--error" id="presetLoadReplaceBtn">覆盖当前</button>
+                    </div>`,
+                    width: "480px",
+                  });
+
+                  dialog.element.querySelector("#presetLoadCancelBtn")?.addEventListener("click", () => dialog.destroy());
+                  
+                  dialog.element.querySelector("#presetLoadAppendBtn")?.addEventListener("click", () => {
+                    const newGroup = {
+                      id: generateId(),
+                      type: "group",
+                      title: customPreset.name,
+                      icon: "#iconMenu",
+                      showOn: "both",
+                      submenuLayout: "list",
+                      children: JSON.parse(JSON.stringify(customPreset.menuItems))
+                    };
+                    menuItems = [...menuItems, newGroup];
+                    expandedIndex = newGroup.id;
+                    dialog.destroy();
+                  });
+
+                  dialog.element.querySelector("#presetLoadReplaceBtn")?.addEventListener("click", () => {
+                    menuItems = JSON.parse(JSON.stringify(customPreset.menuItems));
+                    dialog.destroy();
+                  });
+
+                  e.currentTarget.value = ""; // Reset
+                  return;
+                }
                 
                 const preset = PRESET_GROUPS.find(p => p.id === presetId);
                 if (preset) {
@@ -342,12 +432,22 @@
               }}
             >
               <option value="">导入预设...</option>
-              {#each PRESET_GROUPS as preset}
-                <option value={preset.id}>{preset.name}</option>
-              {/each}
+              <optgroup label="内置预设 (追加)">
+                {#each PRESET_GROUPS as preset}
+                  <option value={preset.id}>{preset.name}</option>
+                {/each}
+              </optgroup>
+              {#if customPresets.length > 0}
+                <optgroup label="自定义预设">
+                  {#each customPresets as preset}
+                    <option value={preset.id}>{preset.name}</option>
+                  {/each}
+                </optgroup>
+              {/if}
               <option disabled>──────────</option>
               <option value="RESTORE_DEFAULT" style="color: var(--b3-theme-error);">⚠️ 恢复默认配置 (覆盖)</option>
             </select>
+            <button class="b3-button b3-button--outline" on:click={savePresetDialog}>另存为预设</button>
             <button class="b3-button b3-button--outline" on:click={() => addGroup()}>添加分组</button>
             <button class="b3-button b3-button--outline" on:click={() => addMenuItem()}>添加动作</button>
           </div>

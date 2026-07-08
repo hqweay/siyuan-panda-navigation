@@ -34,6 +34,9 @@ class KernelPlugin {
     await this.registerBatchAddActionsTool();
     await this.registerRemoveActionTool();
     await this.registerUpdateActionTool();
+    await this.registerSavePresetTool();
+    await this.registerListPresetsTool();
+    await this.registerApplyPresetTool();
 
     await this.logger.info("[panda-nav] MCP tools registered");
   }
@@ -48,6 +51,9 @@ class KernelPlugin {
       "panda-nav:batch-add-actions",
       "panda-nav:remove-action",
       "panda-nav:update-action",
+      "panda-nav:save-preset",
+      "panda-nav:list-presets",
+      "panda-nav:apply-preset",
     ];
     for (const name of names) {
       try {
@@ -316,6 +322,87 @@ class KernelPlugin {
         await this.notifyUI(config.menuItems);
         return { success: true };
       },
+    );
+  }
+
+  private async registerSavePresetTool() {
+    await this.mcp.registerTool(
+      "panda-nav:save-preset",
+      {
+        title: "Save current navigation layout as a preset",
+        description: "Save the current menuItems layout as a custom preset",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Name of the preset" }
+          },
+          required: ["name"],
+        },
+        outputSchema: { type: "object" },
+      },
+      async (input: any) => {
+        const config = await this.loadConfig();
+        if (!config.customPresets) config.customPresets = [];
+        const newPreset = {
+          id: "preset-custom-" + Date.now(),
+          name: input.name,
+          menuItems: JSON.parse(JSON.stringify(config.menuItems || []))
+        };
+        config.customPresets.push(newPreset);
+        await this.saveConfig(config);
+        return { success: true, id: newPreset.id };
+      }
+    );
+  }
+
+  private async registerListPresetsTool() {
+    await this.mcp.registerTool(
+      "panda-nav:list-presets",
+      {
+        title: "List all custom presets",
+        description: "List all saved custom layout presets",
+        inputSchema: { type: "object" },
+        outputSchema: { type: "object" },
+      },
+      async () => {
+        const config = await this.loadConfig();
+        const presets = config.customPresets || [];
+        return { presets, total: presets.length };
+      }
+    );
+  }
+
+  private async registerApplyPresetTool() {
+    await this.mcp.registerTool(
+      "panda-nav:apply-preset",
+      {
+        title: "Apply a custom preset",
+        description: "Apply a saved custom preset to the navigation bar",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Name of the preset to apply" },
+            mode: { type: "string", enum: ["append", "replace"], description: "Whether to append to existing items or replace all items" }
+          },
+          required: ["name", "mode"],
+        },
+        outputSchema: { type: "object" },
+      },
+      async (input: any) => {
+        const config = await this.loadConfig();
+        const presets = config.customPresets || [];
+        const preset = presets.find((p: any) => p.name === input.name);
+        if (!preset) return { success: false, error: `Preset "${input.name}" not found` };
+
+        if (input.mode === "replace") {
+          config.menuItems = JSON.parse(JSON.stringify(preset.menuItems));
+        } else {
+          config.menuItems = [...(config.menuItems || []), ...JSON.parse(JSON.stringify(preset.menuItems))];
+        }
+        await this.saveConfig(config);
+        await this.notifyUI(config.menuItems);
+        return { success: true, total: config.menuItems.length };
+      }
     );
   }
 
