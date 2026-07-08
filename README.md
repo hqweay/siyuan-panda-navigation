@@ -4,8 +4,9 @@
 
 仓库地址：[GitHub - hqweay/siyuan-panda-navigation: 思源插件：熊猫导航 · GitHub](https://github.com/hqweay/siyuan-panda-navigation)
 
-![移动端效果](./screenshots/mobile.mov)
-![MCP 效果](./screenshots/mcp.mp4)
+https://github.com/user-attachments/assets/e38886d1-bf0f-4c03-95fc-914b25b09d3b
+
+https://github.com/user-attachments/assets/bfaf6d18-b34c-497d-a9a3-9bb7958c9b3f
 
 ## 功能亮点
 
