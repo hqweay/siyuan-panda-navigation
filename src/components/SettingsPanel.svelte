@@ -778,13 +778,6 @@
                                   {#each loadedOptions[item.value] || [] as opt}
                                     <option value={opt.value}>{opt.label}</option>
                                   {/each}
-                                  {#if customPresets.length > 0}
-                                    <optgroup label="自定义预设">
-                                      {#each customPresets as preset}
-                                        <option value={preset.name}>{preset.name}</option>
-                                      {/each}
-                                    </optgroup>
-                                  {/if}
                                 </select>
                               {:else if builtinCommands[item.value]?.inputType === "textarea"}
                               <textarea
@@ -1022,13 +1015,6 @@
                                         {#each loadedOptions[child.value] || [] as opt}
                                           <option value={opt.value}>{opt.label}</option>
                                         {/each}
-                                        {#if customPresets.length > 0}
-                                          <optgroup label="自定义预设">
-                                            {#each customPresets as preset}
-                                              <option value={preset.name}>{preset.name}</option>
-                                            {/each}
-                                          </optgroup>
-                                        {/if}
                                       </select>
                                     {:else if child.value === "sql"}
                                       <textarea

@@ -16,6 +16,11 @@ export const switchPreset: BuiltinCommand = {
     { label: "恢复出厂配置", value: "RESTORE_DEFAULT" },
     ...PRESET_GROUPS.map((p) => ({ label: p.name, value: p.name })),
   ],
+  loadParamOptions: async () => {
+    const customPresets =
+      settings.getBySpace("nav-helper", "customPresets") || [];
+    return customPresets.map((p: any) => ({ label: p.name, value: p.name }));
+  },
   execute: async (plugin: any, param?: string) => {
     if (!param) {
       showMessage("预设名称不能为空");
