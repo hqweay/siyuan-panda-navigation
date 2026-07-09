@@ -40,7 +40,22 @@ import { showMessage } from "siyuan";
 export const myCustomCommand: BuiltinCommand = {
   id: "myCustomCommand",           // 唯一 ID，供 menuItems 引用
   title: "自定义功能",              // 显示名称
-  requiresParam: false,             // 是否需要用户输入参数
+  requiresParam: false,            // 是否需要用户输入参数
+  // 可选：参数输入方式（"text" | "textarea" | "select"）
+  // inputType: "select",
+  // 可选：静态选项列表（inputType === "select" 时使用）
+  // paramOptions: [
+  //   { label: "选项A", value: "a" },
+  //   { label: "选项B", value: "b" },
+  // ],
+  // 可选：动态加载选项（如从 API 获取列表，inputType === "select" 时使用）
+  // loadParamOptions: async () => {
+  //   const res = await fetchSyncPost("/api/some/list", {});
+  //   return (res?.data || []).map((item: any) => ({
+  //     label: item.name,
+  //     value: item.id,
+  //   }));
+  // },
   execute: async (plugin, param) => {
     // plugin: PandaNavigation 实例
     // param: 用户输入的参数（requiresParam=true 时）
