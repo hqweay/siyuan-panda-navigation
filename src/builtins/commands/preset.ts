@@ -1,15 +1,21 @@
 import { BuiltinCommand } from "../types";
 import { settings } from "../../settings";
 import { showMessage } from "siyuan";
-import { PRESET_GROUPS, generateDefaultMenuItems } from "../../config/presets";
+import {
+  PRESET_GROUPS,
+  generateDefaultMenuItems,
+} from "../../config/presets";
 
 export const switchPreset: BuiltinCommand = {
   id: "switch-preset",
   title: "切换导航预设",
   requiresParam: true,
-  paramPlaceholder:
-    "填入预设名称 (如：RESTORE_DEFAULT、基础导航 (网格) 或 自定义预设名)",
+  paramPlaceholder: "选择预设",
   inputType: "select",
+  paramOptions: [
+    { label: "恢复出厂配置", value: "RESTORE_DEFAULT" },
+    ...PRESET_GROUPS.map((p) => ({ label: p.name, value: p.name })),
+  ],
   execute: async (plugin: any, param?: string) => {
     if (!param) {
       showMessage("预设名称不能为空");

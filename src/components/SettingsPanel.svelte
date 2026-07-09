@@ -779,17 +779,14 @@
                                     <option value={db.id}>{db.name}</option>
                                   {/each}
                                 </select>
-                              {:else if item.value === "switch-preset"}
+                              {:else if builtinCommands[item.value]?.inputType === "select"}
                                 <select
                                   class="b3-select fn__flex-1"
                                   bind:value={item.param}
                                 >
-                                  <option value="RESTORE_DEFAULT">恢复出厂配置</option>
-                                  <optgroup label="内置预设">
-                                    {#each PRESET_GROUPS as preset}
-                                      <option value={preset.name}>{preset.name}</option>
-                                    {/each}
-                                  </optgroup>
+                                  {#each builtinCommands[item.value]?.paramOptions || [] as opt}
+                                    <option value={opt.value}>{opt.label}</option>
+                                  {/each}
                                   {#if customPresets.length > 0}
                                     <optgroup label="自定义预设">
                                       {#each customPresets as preset}
@@ -1035,17 +1032,14 @@
                                           >
                                         {/each}
                                       </select>
-                                    {:else if child.value === "switch-preset"}
+                                    {:else if builtinCommands[child.value]?.inputType === "select"}
                                       <select
                                         class="b3-select fn__flex-1"
                                         bind:value={child.param}
                                       >
-                                        <option value="RESTORE_DEFAULT">恢复出厂配置</option>
-                                        <optgroup label="内置预设">
-                                          {#each PRESET_GROUPS as preset}
-                                            <option value={preset.name}>{preset.name}</option>
-                                          {/each}
-                                        </optgroup>
+                                        {#each builtinCommands[child.value]?.paramOptions || [] as opt}
+                                          <option value={opt.value}>{opt.label}</option>
+                                        {/each}
                                         {#if customPresets.length > 0}
                                           <optgroup label="自定义预设">
                                             {#each customPresets as preset}
