@@ -9,7 +9,7 @@ export const switchPreset: BuiltinCommand = {
   requiresParam: true,
   paramPlaceholder:
     "填入预设名称 (如：RESTORE_DEFAULT、基础导航 (网格) 或 自定义预设名)",
-  inputType: "text",
+  inputType: "select",
   execute: async (plugin: any, param?: string) => {
     if (!param) {
       showMessage("预设名称不能为空");

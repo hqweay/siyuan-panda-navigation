@@ -768,18 +768,37 @@
                               <option value={cmd.id}>{cmd.title}</option>
                             {/each}
                           </select>
-                          {#if builtinCommands[item.value]?.requiresParam}
-                            {#if item.value === "av-add"}
-                              <select
-                                class="b3-select fn__flex-1"
-                                bind:value={item.param}
-                              >
-                                <option value="">请选择数据库</option>
-                                {#each avDatabases as db}
-                                  <option value={db.id}>{db.name}</option>
-                                {/each}
-                              </select>
-                            {:else if builtinCommands[item.value]?.inputType === "textarea"}
+                            {#if builtinCommands[item.value]?.requiresParam}
+                              {#if item.value === "av-add"}
+                                <select
+                                  class="b3-select fn__flex-1"
+                                  bind:value={item.param}
+                                >
+                                  <option value="">请选择数据库</option>
+                                  {#each avDatabases as db}
+                                    <option value={db.id}>{db.name}</option>
+                                  {/each}
+                                </select>
+                              {:else if item.value === "switch-preset"}
+                                <select
+                                  class="b3-select fn__flex-1"
+                                  bind:value={item.param}
+                                >
+                                  <option value="RESTORE_DEFAULT">恢复出厂配置</option>
+                                  <optgroup label="内置预设">
+                                    {#each PRESET_GROUPS as preset}
+                                      <option value={preset.name}>{preset.name}</option>
+                                    {/each}
+                                  </optgroup>
+                                  {#if customPresets.length > 0}
+                                    <optgroup label="自定义预设">
+                                      {#each customPresets as preset}
+                                        <option value={preset.name}>{preset.name}</option>
+                                      {/each}
+                                    </optgroup>
+                                  {/if}
+                                </select>
+                              {:else if builtinCommands[item.value]?.inputType === "textarea"}
                               <textarea
                                 class="b3-text-field fn__flex-1"
                                 bind:value={item.param}
@@ -1015,6 +1034,25 @@
                                             >{db.name}</option
                                           >
                                         {/each}
+                                      </select>
+                                    {:else if child.value === "switch-preset"}
+                                      <select
+                                        class="b3-select fn__flex-1"
+                                        bind:value={child.param}
+                                      >
+                                        <option value="RESTORE_DEFAULT">恢复出厂配置</option>
+                                        <optgroup label="内置预设">
+                                          {#each PRESET_GROUPS as preset}
+                                            <option value={preset.name}>{preset.name}</option>
+                                          {/each}
+                                        </optgroup>
+                                        {#if customPresets.length > 0}
+                                          <optgroup label="自定义预设">
+                                            {#each customPresets as preset}
+                                              <option value={preset.name}>{preset.name}</option>
+                                            {/each}
+                                          </optgroup>
+                                        {/if}
                                       </select>
                                     {:else if child.value === "sql"}
                                       <textarea
