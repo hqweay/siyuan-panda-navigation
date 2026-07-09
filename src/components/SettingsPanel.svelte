@@ -744,7 +744,7 @@
                           on:change={() => handleTypeChange(item)}
                         >
                           <option value="builtin">内置功能</option>
-                          <option value="command">思源系统命令</option>
+                          <option value="command">思源系统/编辑器命令</option>
                           <option value="pluginCommand">第三方插件命令</option>
                         </select>
                       </div>
@@ -977,7 +977,7 @@
                                   on:change={() => handleTypeChange(child)}
                                 >
                                   <option value="builtin">内置功能</option>
-                                  <option value="command">系统命令</option>
+                                  <option value="command">系统/编辑器命令</option>
                                   <option value="pluginCommand"
                                     >第三方命令</option
                                   >

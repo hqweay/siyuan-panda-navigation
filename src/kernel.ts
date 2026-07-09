@@ -180,7 +180,7 @@ class KernelPlugin {
             types: {
               builtin: "Predefined action: use one of the builtinValues below (HIGHEST PRIORITY)",
               command:
-                "A registered SiYuan command (e.g. dailyNote, search). See commandValues below. Use if no builtin matches.",
+                "A registered SiYuan system command (e.g. dailyNote) or editor command (e.g. editor::general::bold). See commandValues below. Use if no builtin matches.",
               pluginCommand: "A command registered by another plugin. See pluginCommandValues below. Use as last resort.",
               group: "Submenu container with children array and submenuLayout",
             },
