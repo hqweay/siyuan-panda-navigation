@@ -1,0 +1,63 @@
+import { BuiltinCommand } from "../types";
+import { settings } from "../../settings";
+import { showMessage } from "siyuan";
+import { PRESET_GROUPS, generateDefaultMenuItems } from "../../config/presets";
+
+export const switchPreset: BuiltinCommand = {
+  id: "switch-preset",
+  title: "切换导航预设",
+  requiresParam: true,
+  paramPlaceholder:
+    "填入预设名称 (如：RESTORE_DEFAULT、基础导航 (网格) 或 自定义预设名)",
+  inputType: "text",
+  execute: async (plugin: any, param?: string) => {
+    if (!param) {
+      showMessage("预设名称不能为空");
+      return;
+    }
+
+    if (param === "RESTORE_DEFAULT") {
+      const defaultItems = generateDefaultMenuItems();
+      settings.setBySpace("nav-helper", "menuItems", defaultItems);
+      await settings.save();
+      if (plugin && typeof plugin.handleSettingsChange === "function") {
+        plugin.handleSettingsChange();
+      }
+      showMessage("已恢复出厂默认配置");
+      return;
+    }
+
+    // Check custom presets
+    const customPresets =
+      settings.getBySpace("nav-helper", "customPresets") || [];
+    const customPreset = customPresets.find((p: any) => p.name === param);
+    if (customPreset && customPreset.menuItems) {
+      settings.setBySpace(
+        "nav-helper",
+        "menuItems",
+        JSON.parse(JSON.stringify(customPreset.menuItems)),
+      );
+      await settings.save();
+      if (plugin && typeof plugin.handleSettingsChange === "function") {
+        plugin.handleSettingsChange();
+      }
+      showMessage(`已切换至预设: ${param}`);
+      return;
+    }
+
+    // Check builtin presets
+    const builtinPreset = PRESET_GROUPS.find((p) => p.name === param);
+    if (builtinPreset) {
+      const newItems = [builtinPreset.generate()];
+      settings.setBySpace("nav-helper", "menuItems", newItems);
+      await settings.save();
+      if (plugin && typeof plugin.handleSettingsChange === "function") {
+        plugin.handleSettingsChange();
+      }
+      showMessage(`已切换至内置预设: ${param}`);
+      return;
+    }
+
+    showMessage(`未找到名为 "${param}" 的预设`);
+  },
+};
