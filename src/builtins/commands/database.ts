@@ -15,7 +15,7 @@ export const avAddCommand: BuiltinCommand = {
                 keyword: "",
                 excludes: [],
             });
-            const results = res?.results || [];
+            const results = res?.data?.results || [];
             return results.map((b: any) => ({
                 label: b.avName || "未命名数据库",
                 value: b.blockID,
