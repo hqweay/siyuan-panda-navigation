@@ -154,6 +154,17 @@ class KernelPlugin {
               description: `System command: ${k}`
             }));
           }
+          if (siyuanObj?.config?.keymap?.editor) {
+            for (const category in siyuanObj.config.keymap.editor) {
+              const catCommands = siyuanObj.config.keymap.editor[category];
+              for (const key in catCommands) {
+                commandValues.push({
+                  value: `editor::${category}::${key}`,
+                  description: `Editor command: ${category} - ${key}`
+                });
+              }
+            }
+          }
           if (siyuanObj?.config?.keymap?.plugin) {
             pluginCommandValues = Object.keys(siyuanObj.config.keymap.plugin).map(k => ({
               value: k,

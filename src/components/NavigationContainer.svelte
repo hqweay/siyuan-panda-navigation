@@ -74,23 +74,23 @@
     return item.showOn === "both" || item.showOn === "desktop";
   });
 
-  async function executeCustomAction(item: any) {
+  async function handleActionClick(item: any, event: Event) {
     const type = item.type;
     // Fallback logic for legacy configs, map internal/url/sql/av-add/open-setting to builtin
-    const isBuiltin =
-      type === "builtin" ||
-      ["internal", "url", "sql", "av-add", "open-setting"].includes(type);
+    if (type === "group") {
+        showGroupSubmenu(item, event);
+        return;
+    }
 
-    if (isBuiltin) {
-      let cmdId = item.value;
-      if (type !== "builtin" && type !== "internal") {
-        cmdId = type; // url, sql, av-add, open-setting
-      }
-
+    if (type === "builtin" || ["internal", "url", "sql", "av-add", "open-setting"].includes(type)) {
+      const cmdId = type === "builtin" ? item.value : type;
       const cmd = builtinCommands[cmdId];
       if (cmd) {
         const param = type === "builtin" ? item.param : item.value;
-        await cmd.execute(plugin, param);
+        cmd.execute(plugin, param).catch((err) => {
+          log.error("执行内置命令失败:", err);
+          showMessage("执行内置命令失败");
+        });
       } else {
         showMessage("未知的内置功能: " + cmdId);
       }
@@ -101,24 +101,28 @@
     if (type === "command" || type === "pluginCommand") {
       try {
         if (value.startsWith("plugin::")) {
-          // Trigger plugin command
-          const evt = new CustomEvent("click");
-          const target = document.createElement("div");
-          target.setAttribute("data-id", value);
-          Object.defineProperty(evt, "target", {
-            value: target,
-            enumerable: true,
-          });
-          (window as any).siyuan?.ws?.request(
-            "main",
-            "getSysCommands",
-            {},
-            (res: any) => {
-              console.log("sys commands loaded, dispatching", value);
-            },
-          );
-          // This relies on Siyuan's internal dispatching.
-          globalCommand(value, plugin.app);
+          const parts = value.split("::");
+          const pluginName = parts[1];
+          const cmdKey = parts[2];
+          const targetPlugin = (window as any).siyuan?.ws?.app?.plugins?.find((p: any) => p.name === pluginName);
+          if (targetPlugin) {
+            const cmd = targetPlugin.commands.find((c: any) => c.customHotkey === cmdKey || c.langKey === cmdKey);
+            if (cmd) {
+              if (cmd.callback) cmd.callback();
+              else if (cmd.globalCallback) cmd.globalCallback();
+              else showMessage(`插件命令不支持外部直接调用: ${value}`);
+            }
+          }
+        } else if (value.startsWith("editor::")) {
+            const parts = value.split("::");
+            const category = parts[1];
+            const key = parts[2];
+            const hotkey = (window as any).siyuan?.config?.keymap?.editor?.[category]?.[key]?.custom;
+            if (hotkey) {
+                simulateHotkey(hotkey);
+            } else {
+                showMessage(`找不到对应的快捷键配置: ${value}`);
+            }
         } else if (value === "search") {
           const searchDialog = (window as any).siyuan?.dialogs?.find(
             (item: any) => item.element?.querySelector("#searchList"),
@@ -157,12 +161,47 @@
     }
   }
 
-  function handleActionClick(item: any, event: Event) {
-    if (item.type === "group") {
-      showGroupSubmenu(item, event);
+  function simulateHotkey(hotkeyStr: string) {
+    if (!hotkeyStr) return;
+    let ctrlKey = false, metaKey = false, shiftKey = false, altKey = false;
+    
+    if (hotkeyStr.includes("⌘")) metaKey = true;
+    if (hotkeyStr.includes("⇧")) shiftKey = true;
+    if (hotkeyStr.includes("⌥")) altKey = true;
+    if (hotkeyStr.includes("⌃")) ctrlKey = true;
+    if (hotkeyStr.includes("Ctrl+")) ctrlKey = true;
+    if (hotkeyStr.includes("Shift+")) shiftKey = true;
+    if (hotkeyStr.includes("Alt+")) altKey = true;
+    
+    let mainKey = hotkeyStr.replace(/(⌘|⇧|⌥|⌃|Ctrl\+|Shift\+|Alt\+)/g, "").trim().toUpperCase();
+    
+    let keyCode = 0;
+    if (mainKey.length === 1 && /[A-Z0-9]/.test(mainKey)) {
+        keyCode = mainKey.charCodeAt(0);
     } else {
-      executeCustomAction(item);
+        const specialKeys: Record<string, number> = {
+            "Enter": 13, "Escape": 27, "Space": 32, "Backspace": 8, "Tab": 9,
+            "ArrowLeft": 37, "ArrowUp": 38, "ArrowRight": 39, "ArrowDown": 40,
+            "-": 189, "=": 187, "[": 219, "]": 221, "\\": 220,
+            ";": 186, "'": 222, ",": 188, ".": 190, "/": 191, "`": 192
+        };
+        if (specialKeys[mainKey]) keyCode = specialKeys[mainKey];
     }
+    
+    const event = new KeyboardEvent("keydown", {
+      key: mainKey,
+      ctrlKey,
+      metaKey,
+      shiftKey,
+      altKey,
+      bubbles: true,
+      cancelable: true
+    });
+    Object.defineProperty(event, 'keyCode', { get: () => keyCode });
+    Object.defineProperty(event, 'which', { get: () => keyCode });
+    
+    const target = document.activeElement || document.body;
+    target.dispatchEvent(event);
   }
 
   $: allNavbarButtons = visibleMenuItems.map((item) => ({
@@ -197,10 +236,8 @@
         hideSubmenu();
         return;
       }
-      // 如果点击的是另一个分组按钮，则不 hideSubmenu，直接切换内容
     }
 
-    // 过滤掉没显示的子动作
     const validChildren = (group.children || []).filter((child: any) => {
       if (child.showOn === "none") return false;
       if (deviceType === "mobile")
@@ -213,7 +250,7 @@
       return;
     }
 
-    submenuType = "customLinks"; // Reuse customLinks CSS
+    submenuType = "customLinks";
     submenuLayout = group.submenuLayout || "list";
     submenuItems = validChildren.map((child: any) => ({
       icon: child.icon || "#iconLink",
@@ -441,6 +478,7 @@
             <button
               class="expansion-btn"
               title={item.label}
+              on:mousedown|preventDefault
               on:click={() => item.action?.()}
             >
               {#if item.icon && item.icon.startsWith("#icon")}

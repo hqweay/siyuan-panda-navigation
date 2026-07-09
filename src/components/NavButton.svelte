@@ -38,6 +38,7 @@
     --btn-active-color: var(--b3-theme-primary, #007aff);
   "
   title={!showLabel ? button.label : undefined}
+  on:mousedown|preventDefault
   on:click={handleClick}
   on:touchstart={handleTouchStart}
   on:touchend={handleTouchEnd}
