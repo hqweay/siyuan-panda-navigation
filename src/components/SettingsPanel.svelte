@@ -4,14 +4,14 @@
   import { normalizeMenuItems } from "../normalize";
   import { showMessage, Dialog } from "siyuan";
   import { onMount } from "svelte";
-  import { lsNotebooks, request } from "../api";
   import { builtinCommands, builtinCommandList } from "../builtins";
   import IconPicker from "./IconPicker.svelte";
   import { PRESET_GROUPS, generateDefaultMenuItems } from "../config/presets";
 
   export let closeDialog: () => void;
 
-  let avDatabases: { id: string; name: string }[] = [];
+  // 缓存动态加载的选项（如数据库列表）
+  let loadedOptions: Record<string, { label: string; value: string }[]> = {};
 
   // 图标选择弹窗相关的状态
   let allSiyuanIcons: string[] = [];
@@ -25,42 +25,40 @@
     commands: { value: string; label: string }[];
   }[] = [];
 
-  onMount(async () => {
-    try {
-      // 动态抓取当前思源中注册的所有 SVG symbol 图标 (比如 litheness 主题图标精灵)
-      const symbols = document.querySelectorAll("svg symbol");
-      const iconsSet = new Set<string>();
-      symbols.forEach((symbol) => {
-        const id = symbol.getAttribute("id");
-        if (id && id.startsWith("icon")) {
-          iconsSet.add(`#${id}`);
+    onMount(async () => {
+      try {
+        // 动态抓取当前思源中注册的所有 SVG symbol 图标 (比如 litheness 主题图标精灵)
+        const symbols = document.querySelectorAll("svg symbol");
+        const iconsSet = new Set<string>();
+        symbols.forEach((symbol) => {
+          const id = symbol.getAttribute("id");
+          if (id && id.startsWith("icon")) {
+            iconsSet.add(`#${id}`);
+          }
+        });
+        // 降级兜底方案
+        if (iconsSet.size === 0) {
+          COMMON_ICONS.forEach((i) => iconsSet.add(i));
         }
-      });
-      // 降级兜底方案
-      if (iconsSet.size === 0) {
-        COMMON_ICONS.forEach((i) => iconsSet.add(i));
+        allSiyuanIcons = Array.from(iconsSet).sort();
+      } catch (e) {
+        console.error("抓取思源系统图标失败，使用经典图标兜底:", e);
+        allSiyuanIcons = [...COMMON_ICONS];
       }
-      allSiyuanIcons = Array.from(iconsSet).sort();
-    } catch (e) {
-      console.error("抓取思源系统图标失败，使用经典图标兜底:", e);
-      allSiyuanIcons = [...COMMON_ICONS];
-    }
 
-    try {
-      const res = await request("/api/av/searchAttributeView", {
-        keyword: "",
-        excludes: [],
-      });
-      const results = res?.results || [];
-      avDatabases = results.map((b: any) => ({
-        id: b.blockID,
-        name: b.avName || "未命名数据库",
-      }));
-    } catch (e) {
-      console.error("加载数据库列表失败", e);
-    }
+      // 加载所有命令的动态选项
+      for (const cmd of Object.values(builtinCommands)) {
+        if (cmd.loadParamOptions) {
+          try {
+            loadedOptions[cmd.id] = await cmd.loadParamOptions();
+          } catch (e) {
+            console.error(`加载 "${cmd.title}" 选项失败:`, e);
+            loadedOptions[cmd.id] = [];
+          }
+        }
+      }
 
-    try {
+      try {
       if ((window as any).siyuan?.config?.keymap) {
         const langs = (window as any).siyuan.languages || {};
 
@@ -769,22 +767,15 @@
                             {/each}
                           </select>
                             {#if builtinCommands[item.value]?.requiresParam}
-                              {#if item.value === "av-add"}
-                                <select
-                                  class="b3-select fn__flex-1"
-                                  bind:value={item.param}
-                                >
-                                  <option value="">请选择数据库</option>
-                                  {#each avDatabases as db}
-                                    <option value={db.id}>{db.name}</option>
-                                  {/each}
-                                </select>
-                              {:else if builtinCommands[item.value]?.inputType === "select"}
+                              {#if builtinCommands[item.value]?.inputType === "select"}
                                 <select
                                   class="b3-select fn__flex-1"
                                   bind:value={item.param}
                                 >
                                   {#each builtinCommands[item.value]?.paramOptions || [] as opt}
+                                    <option value={opt.value}>{opt.label}</option>
+                                  {/each}
+                                  {#each loadedOptions[item.value] || [] as opt}
                                     <option value={opt.value}>{opt.label}</option>
                                   {/each}
                                   {#if customPresets.length > 0}
@@ -1020,24 +1011,15 @@
                                     {/each}
                                   </select>
                                   {#if builtinCommands[child.value]?.requiresParam}
-                                    {#if child.value === "av-add"}
-                                      <select
-                                        class="b3-select fn__flex-1"
-                                        bind:value={child.param}
-                                      >
-                                        <option value="">请选择数据库</option>
-                                        {#each avDatabases as db}
-                                          <option value={db.id}
-                                            >{db.name}</option
-                                          >
-                                        {/each}
-                                      </select>
-                                    {:else if builtinCommands[child.value]?.inputType === "select"}
+                                    {#if builtinCommands[child.value]?.inputType === "select"}
                                       <select
                                         class="b3-select fn__flex-1"
                                         bind:value={child.param}
                                       >
                                         {#each builtinCommands[child.value]?.paramOptions || [] as opt}
+                                          <option value={opt.value}>{opt.label}</option>
+                                        {/each}
+                                        {#each loadedOptions[child.value] || [] as opt}
                                           <option value={opt.value}>{opt.label}</option>
                                         {/each}
                                         {#if customPresets.length > 0}

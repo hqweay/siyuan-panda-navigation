@@ -1,5 +1,5 @@
 import { BuiltinCommand } from "../types";
-import { showMessage } from "siyuan";
+import { showMessage, fetchSyncPost } from "siyuan";
 import { createSiyuanAVHelper } from "../../myscripts/dbUtil";
 import { getCurrentDocId } from "../../myscripts/syUtils";
 
@@ -7,7 +7,24 @@ export const avAddCommand: BuiltinCommand = {
     id: "av-add",
     title: "添加到数据库",
     requiresParam: true,
-    paramPlaceholder: "数据库ID或名称",
+    paramPlaceholder: "选择数据库",
+    inputType: "select",
+    loadParamOptions: async () => {
+        try {
+            const res = await fetchSyncPost("/api/av/searchAttributeView", {
+                keyword: "",
+                excludes: [],
+            });
+            const results = res?.results || [];
+            return results.map((b: any) => ({
+                label: b.avName || "未命名数据库",
+                value: b.blockID,
+            }));
+        } catch (e) {
+            console.error("加载数据库列表失败", e);
+            return [];
+        }
+    },
     execute: async (plugin, param) => {
         if (!param) return;
         try {
