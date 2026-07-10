@@ -137,9 +137,6 @@
           class="submenu-item"
           style="
             padding: 12px 15px;
-            border-bottom: {index === items.length - 1
-            ? 'none'
-            : '1px solid var(--b3-border-color, #f0f0f0)'};
             border: none;
             background: none;
             cursor: pointer;
