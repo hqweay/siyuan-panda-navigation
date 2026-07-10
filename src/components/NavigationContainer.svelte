@@ -133,7 +133,7 @@
         const cmd = builtinCommands[cmdId];
         if (cmd) {
           const param = type === "builtin" ? item.param : item.value;
-          cmd.execute(plugin, param).catch((err) => {
+          Promise.resolve(cmd.execute(plugin, param)).catch((err) => {
             log.error("执行内置命令失败:", err);
             showMessage("执行内置命令失败");
           });

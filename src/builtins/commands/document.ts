@@ -136,12 +136,7 @@ export const scrollToTopCommand: BuiltinCommand = {
     requiresParam: false,
     execute: () => {
         const editor = getActiveEditor(false);
-        if (editor?.protyle?.contentElement) {
-            const scrollEle = editor.protyle.contentElement.parentElement;
-            if (scrollEle) {
-                scrollEle.scrollTo({ top: 0, behavior: "smooth" });
-            }
-        }
+        editor?.protyle?.contentElement?.scrollTo({ top: 0, behavior: "smooth" });
     }
 };
 
