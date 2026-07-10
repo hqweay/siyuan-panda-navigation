@@ -60,7 +60,7 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-    color: var(--btn-color);
+    color: var(--nav-btn-color, var(--btn-color));
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -100,13 +100,13 @@
   }
 
   .nav-button.mobile:active {
-    color: var(--btn-active-color);
+    color: var(--nav-btn-active-color, var(--btn-active-color));
     background-color: var(--b3-theme-background-light, rgba(0, 122, 255, 0.1));
   }
 
   .nav-button.desktop:hover {
     background-color: var(--b3-theme-background-light, rgba(59, 130, 246, 0.12));
-    color: var(--btn-active-color);
+    color: var(--nav-btn-active-color, var(--btn-active-color));
   }
 
   .icon {
@@ -114,18 +114,18 @@
   }
   
   .nav-button.mobile .icon {
-    font-size: 20px;
+    font-size: var(--nav-icon-size, 20px);
     margin-bottom: 2px;
   }
   
   .nav-button.desktop .icon {
-    font-size: 20px;
+    font-size: var(--nav-icon-size, 20px);
     margin-bottom: 0;
   }
 
   .label {
     pointer-events: none;
-    font-size: 10px;
+    font-size: var(--nav-font-size, 10px);
     font-weight: 500;
   }
 
@@ -141,8 +141,8 @@
   }
 
   .icon.svg-icon svg {
-    width: 20px;
-    height: 20px;
+    width: var(--nav-icon-size, 20px);
+    height: var(--nav-icon-size, 20px);
     fill: currentColor;
     display: block;
   }

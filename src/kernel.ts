@@ -3,6 +3,18 @@ import { builtinMetas } from "./utils/builtin-metas";
 import { scriptApiReference } from "./utils/script-api-reference";
 import { bundledDts } from "./utils/bundled-dts";
 import { normalizeMenuItems } from "./normalize";
+import { STYLE_TOKENS } from "./style-tokens";
+
+interface PluginConfig {
+  menuItems?: any[];
+  customPresets?: any[];
+  enableBottomNav?: string;
+  showButtonLabels?: string;
+  noteBookID?: string;
+  styleOverrides?: Record<string, string>;
+  stylePresets?: { name: string; overrides: Record<string, string> }[];
+  navPosition?: { x: number; y: number };
+}
 
 class KernelPlugin {
   private mcp: any;
@@ -45,6 +57,9 @@ class KernelPlugin {
     await this.registerSavePresetTool();
     await this.registerListPresetsTool();
     await this.registerApplyPresetTool();
+    await this.registerGetStyleSchemaTool();
+    await this.registerSetStyleTool();
+    await this.registerResetStyleTool();
 
     await this.logger.info("[panda-nav] MCP tools registered");
   }
@@ -62,6 +77,9 @@ class KernelPlugin {
       "panda-nav:save-preset",
       "panda-nav:list-presets",
       "panda-nav:apply-preset",
+      "panda-nav:get-style-schema",
+      "panda-nav:set-style",
+      "panda-nav:reset-style",
     ];
     for (const name of names) {
       try {
@@ -280,7 +298,7 @@ class KernelPlugin {
           }
         }
         await this.saveConfig(config);
-        await this.notifyUI(config.menuItems);
+        await this.notifyUI(config);
         return {
           success: true,
           total: config.menuItems.length,
@@ -353,7 +371,7 @@ class KernelPlugin {
         if (input.param) newItem.param = input.param;
         config.menuItems.push(newItem);
         await this.saveConfig(config);
-        await this.notifyUI(config.menuItems);
+        await this.notifyUI(config);
         return {
           success: true,
           id: newItem.id,
@@ -393,7 +411,7 @@ class KernelPlugin {
         }
         const removed = config.menuItems.splice(input.index, 1);
         await this.saveConfig(config);
-        await this.notifyUI(config.menuItems);
+        await this.notifyUI(config);
         return { success: true, removed: removed[0]?.title };
       },
     );
@@ -444,7 +462,7 @@ class KernelPlugin {
         if (input.showOn !== undefined) item.showOn = input.showOn;
         if (input.param !== undefined) item.param = input.param;
         await this.saveConfig(config);
-        await this.notifyUI(config.menuItems);
+        await this.notifyUI(config);
         return { success: true };
       },
     );
@@ -472,6 +490,7 @@ class KernelPlugin {
           id: "preset-custom-" + Date.now(),
           name: input.name,
           menuItems: JSON.parse(JSON.stringify(config.menuItems || [])),
+          styleOverrides: JSON.parse(JSON.stringify(config.styleOverrides || {})),
         };
         config.customPresets.push(newPreset);
         await this.saveConfig(config);
@@ -530,6 +549,9 @@ class KernelPlugin {
 
         if (input.mode === "replace") {
           config.menuItems = JSON.parse(JSON.stringify(preset.menuItems));
+          if (preset.styleOverrides) {
+            config.styleOverrides = JSON.parse(JSON.stringify(preset.styleOverrides));
+          }
         } else {
           config.menuItems = [
             ...(config.menuItems || []),
@@ -537,13 +559,127 @@ class KernelPlugin {
           ];
         }
         await this.saveConfig(config);
-        await this.notifyUI(config.menuItems);
+        await this.notifyUI(config);
         return { success: true, total: config.menuItems.length };
       },
     );
   }
 
-  private async loadConfig(): Promise<any> {
+  private async registerGetStyleSchemaTool() {
+    await this.mcp.registerTool(
+      "panda-nav:get-style-schema",
+      {
+        title: "Get style token schema",
+        description: "Returns all available CSS custom properties for styling the navigation bar, with type, default value, and constraints.",
+        inputSchema: { type: "object" },
+        outputSchema: { type: "object" },
+      },
+      async () => {
+        return {
+          tokens: STYLE_TOKENS.map(t => ({
+            variable: t.variable,
+            label: t.label,
+            description: t.description,
+            type: t.type,
+            defaultValue: t.defaultValue,
+            category: t.category,
+            min: t.min,
+            max: t.max,
+            step: t.step,
+          })),
+          hint: "Use panda-nav:set-style to change individual tokens. Use panda-nav:reset-style to revert to defaults.",
+        };
+      },
+    );
+  }
+
+  private async registerSetStyleTool() {
+    await this.mcp.registerTool(
+      "panda-nav:set-style",
+      {
+        title: "Set a navigation bar style",
+        description: "Set a single CSS custom property value for the navigation bar. Call get-style-schema first to see available variables and their constraints.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            variable: {
+              type: "string",
+              description: "The CSS variable name (e.g. --nav-bg, --nav-height). Call get-style-schema for the full list.",
+            },
+            value: {
+              type: "string",
+              description: "The CSS value (e.g. '#ff0000', '40px', '0.8').",
+            },
+          },
+          required: ["variable", "value"],
+        },
+        outputSchema: { type: "object" },
+      },
+      async (input: any) => {
+        const config = await this.loadConfig();
+        if (!config.styleOverrides) config.styleOverrides = {};
+
+        const token = STYLE_TOKENS.find(t => t.variable === input.variable);
+        if (!token) {
+          return { success: false, error: `Unknown variable: ${input.variable}. Call get-style-schema for valid options.` };
+        }
+
+        const value = String(input.value).trim();
+        if (!value) {
+          return { success: false, error: "Style value cannot be empty." };
+        }
+        const safe = /^[a-zA-Z0-9#%.,()\s\-\_]+$/;
+        if (!safe.test(value)) {
+          return { success: false, error: "Style value contains disallowed characters. Only alphanumeric, # % . , ( ) - _ and whitespace are allowed." };
+        }
+
+        config.styleOverrides[input.variable] = value;
+        await this.saveConfig(config);
+        await this.notifyUI(config);
+        return { success: true, variable: input.variable, value };
+      },
+    );
+  }
+
+  private async registerResetStyleTool() {
+    await this.mcp.registerTool(
+      "panda-nav:reset-style",
+      {
+        title: "Reset navigation bar styles",
+        description: "Reset one or all style tokens to their defaults. If variable is omitted, all styles are reset.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            variable: {
+              type: "string",
+              description: "Optional. The CSS variable name to reset (e.g. --nav-bg). If omitted, all style overrides are cleared.",
+            },
+          },
+        },
+        outputSchema: { type: "object" },
+      },
+      async (input: any) => {
+        const config = await this.loadConfig();
+        if (!config.styleOverrides) config.styleOverrides = {};
+
+        if (input.variable) {
+          const token = STYLE_TOKENS.find(t => t.variable === input.variable);
+          if (!token) {
+            return { success: false, error: `Unknown variable: ${input.variable}. Call get-style-schema for valid options.` };
+          }
+          delete config.styleOverrides[input.variable];
+        } else {
+          config.styleOverrides = {};
+        }
+
+        await this.saveConfig(config);
+        await this.notifyUI(config);
+        return { success: true, variable: input.variable || "all", reset: true };
+      },
+    );
+  }
+
+  private async loadConfig(): Promise<PluginConfig> {
     try {
       const obj = await this.storage.get("config.json");
       const text = await obj.text();
@@ -565,15 +701,16 @@ class KernelPlugin {
     }
   }
 
-  private async saveConfig(config: any) {
+  private async saveConfig(config: PluginConfig) {
     await this.storage.put("config.json", JSON.stringify(config, null, 2));
   }
 
-  private async notifyUI(menuItems: any[]) {
+  private async notifyUI(config: PluginConfig) {
     try {
       await this.rpc.broadcast("panda-nav:config-changed", {
         action: "mcp-update",
-        menuItems: menuItems || [],
+        menuItems: config.menuItems || [],
+        styleOverrides: config.styleOverrides || {},
       });
     } catch {}
   }

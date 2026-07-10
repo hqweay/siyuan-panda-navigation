@@ -18,6 +18,7 @@
   import { createSiyuanAVHelper } from "@/myscripts/dbUtil";
   import { goToRandomBlock } from "@/myscripts/randomDocCache";
   import { builtinCommands } from "../builtins";
+  import { STYLE_TOKENS } from "../style-tokens";
   import {
     getCurrentDocId,
     openBlockByID,
@@ -66,6 +67,24 @@
   // 加载菜单配置
   let menuItems: any[] =
     settings.getBySpace(pluginMetadata.name, "menuItems") || [];
+
+  let styleOverrides: Record<string, string> =
+    settings.getBySpace(pluginMetadata.name, "styleOverrides") || {};
+
+  $: styleString = buildStyleString(styleOverrides);
+
+  function buildStyleString(overrides: Record<string, string>): string {
+    const parts: string[] = [];
+    for (const token of STYLE_TOKENS) {
+      const val = overrides[token.variable];
+      if (!val) continue;
+      const trimmed = val.trim();
+      if (!trimmed) continue;
+      if (trimmed === token.cssFallback) continue;
+      parts.push(`${token.variable}: ${trimmed};`);
+    }
+    return parts.join(" ");
+  }
 
   $: visibleMenuItems = menuItems.filter((item) => {
     if (item.showOn === "none") return false;
@@ -458,9 +477,12 @@
     class:expanded={showIconPanel}
     class:is-dragging={isDragging}
     on:pointerdown={handlePointerDown}
-    style={deviceType === "desktop" && hasInitializedPosition
-      ? `top: 0; left: 0; bottom: auto; transform: translate3d(${navX}px, ${navY}px, 0);`
-      : ""}
+    style={[
+      deviceType === "desktop" && hasInitializedPosition
+        ? `top: 0; left: 0; bottom: auto; transform: translate3d(${navX}px, ${navY}px, 0);`
+        : "",
+      styleString,
+    ].filter(Boolean).join(" ")}
     on:click={(e) => {
       if (isScrollingDown && deviceType === "mobile") {
         isScrollingDown = false;
@@ -534,7 +556,9 @@
     z-index: 3;
     display: flex;
     align-items: center;
-    background-color: var(--nav-bg);
+    background-color: var(--nav-bg, transparent);
+    color: var(--nav-text-color, inherit);
+    opacity: var(--nav-opacity, 1);
     font-family: var(
       --b3-font-family,
       -apple-system,
@@ -552,9 +576,9 @@
     transform: translateX(-50%);
     width: calc(100vw - 32px);
     max-width: 500px;
-    height: var(--nav-height);
+    height: var(--nav-height, 52px);
     justify-content: space-around;
-    border-radius: 20px;
+    border-radius: var(--nav-radius, 20px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -613,14 +637,14 @@
     transform: translateX(-50%);
     width: auto;
     height: auto;
-    padding: 4px;
-    gap: 2px;
+    padding: var(--nav-padding, 4px);
+    gap: var(--nav-gap, 2px);
     justify-content: center;
-    border-radius: 20px;
+    border-radius: var(--nav-radius, 20px);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    background-color: var(--nav-bg);
+    background-color: var(--nav-bg, transparent);
     border: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.15));
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: grab;
@@ -653,7 +677,7 @@
     right: 0;
     padding: 8px 12px;
     background: var(--b3-theme-surface);
-    background-image: linear-gradient(var(--nav-bg), var(--nav-bg));
+    background-image: linear-gradient(var(--nav-bg, transparent), var(--nav-bg, transparent));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 20px 20px 0 0;

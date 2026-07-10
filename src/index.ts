@@ -194,15 +194,29 @@ export class PandaNavigation extends Plugin {
       return;
     }
 
-    kernel.rpc.bind("panda-nav:config-changed", async (params: { action: string; menuItems: any[] }) => {
+    kernel.rpc.bind("panda-nav:config-changed", async (params: { action: string; menuItems: any[]; styleOverrides: Record<string, string> }) => {
       log.info("收到内核配置变更通知:", params.action);
 
-      if (!params.menuItems) return;
+      let changed = false;
 
-      const normalizedItems = normalizeMenuItems(params.menuItems);
-      const oldItems = settings.getBySpace("nav-helper", "menuItems");
-      if (JSON.stringify(oldItems) !== JSON.stringify(normalizedItems)) {
-        settings.setBySpace("nav-helper", "menuItems", normalizedItems);
+      if (params.menuItems) {
+        const normalizedItems = normalizeMenuItems(params.menuItems);
+        const oldItems = settings.getBySpace("nav-helper", "menuItems");
+        if (JSON.stringify(oldItems) !== JSON.stringify(normalizedItems)) {
+          settings.setBySpace("nav-helper", "menuItems", normalizedItems);
+          changed = true;
+        }
+      }
+
+      if (params.styleOverrides) {
+        const oldStyles = settings.getBySpace("nav-helper", "styleOverrides") || {};
+        if (JSON.stringify(oldStyles) !== JSON.stringify(params.styleOverrides)) {
+          settings.setBySpace("nav-helper", "styleOverrides", params.styleOverrides);
+          changed = true;
+        }
+      }
+
+      if (changed) {
         settings.save();
         this.handleSettingsChange();
       }
@@ -213,15 +227,32 @@ export class PandaNavigation extends Plugin {
     if (settings.getBySpace("nav-helper", "menuItems") === undefined) {
       let menuItems: any[] = generateDefaultMenuItems();
 
-      // Cleanup old settings to avoid saving legacy bloat (optional, but good practice)
+      // Migrate old legacy style keys to new styleOverrides before deleting
+      const oldStyleKeyMap: Record<string, string> = {
+        backgroundColor: "--nav-bg",
+        buttonColor: "--nav-btn-color",
+        activeButtonColor: "--nav-btn-active-color",
+      };
+      const styleOverrides: Record<string, string> = {};
+      for (const [oldKey, varName] of Object.entries(oldStyleKeyMap)) {
+        const val = settings.data[oldKey];
+        if (val != null && val !== "") {
+          styleOverrides[varName] = String(val);
+        }
+      }
+      const existingOverrides = settings.getBySpace("nav-helper", "styleOverrides") || {};
+      settings.setBySpace("nav-helper", "styleOverrides", { ...styleOverrides, ...existingOverrides });
+
+      // Cleanup old settings to avoid saving legacy bloat
       const keysToRemove = [
-        "showBackButton", "showForwardButton", "showDailyNoteButton", 
-        "showNavigationMenuButton", "showCustomLinksButton", 
-        "buttonOrder", "customActions"
+        "showBackButton", "showForwardButton", "showDailyNoteButton",
+        "showNavigationMenuButton", "showCustomLinksButton",
+        "buttonOrder", "customActions",
+        "backgroundColor", "buttonColor", "activeButtonColor"
       ];
       keysToRemove.forEach(k => {
         // @ts-ignore - Assuming we can delete or set to undefined
-        delete settings.data[k]; 
+        delete settings.data[k];
       });
 
       settings.setBySpace("nav-helper", "menuItems", menuItems);
@@ -236,6 +267,9 @@ export class PandaNavigation extends Plugin {
          settings.setBySpace("nav-helper", "showButtonLabels", "both");
       }
 
+      if (settings.getBySpace("nav-helper", "stylePresets") === undefined) {
+        settings.setBySpace("nav-helper", "stylePresets", []);
+      }
       settings.save();
     }
   }

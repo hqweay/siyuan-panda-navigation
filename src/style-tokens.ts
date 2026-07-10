@@ -1,0 +1,135 @@
+export interface StyleToken {
+  variable: string
+  label: string
+  description: string
+  type: "color" | "size" | "number" | "opacity"
+  defaultValue: string
+  cssFallback: string
+  category: "core" | "advanced"
+  min?: number
+  max?: number
+  step?: number
+}
+
+export const STYLE_TOKENS: StyleToken[] = [
+  {
+    variable: "--nav-bg",
+    label: "导航栏背景色",
+    description: "导航栏的背景颜色",
+    type: "color",
+    defaultValue: "",
+    cssFallback: "transparent",
+    category: "core",
+  },
+  {
+    variable: "--nav-btn-color",
+    label: "按钮图标颜色",
+    description: "导航栏按钮的图标与文字颜色",
+    type: "color",
+    defaultValue: "",
+    cssFallback: "inherit",
+    category: "core",
+  },
+  {
+    variable: "--nav-btn-active-color",
+    label: "按钮激活颜色",
+    description: "按钮按下或激活时的图标与背景高亮色",
+    type: "color",
+    defaultValue: "",
+    cssFallback: "#007aff",
+    category: "core",
+  },
+  {
+    variable: "--nav-text-color",
+    label: "标签文字颜色",
+    description: "按钮下方标签文字的颜色",
+    type: "color",
+    defaultValue: "",
+    cssFallback: "inherit",
+    category: "core",
+  },
+  {
+    variable: "--nav-height",
+    label: "导航栏高度",
+    description: "移动端导航栏垂直高度",
+    type: "size",
+    defaultValue: "52px",
+    cssFallback: "52px",
+    category: "core",
+    min: 32,
+    max: 80,
+    step: 2,
+  },
+  {
+    variable: "--nav-radius",
+    label: "导航栏圆角",
+    description: "导航栏整体圆角大小",
+    type: "size",
+    defaultValue: "20px",
+    cssFallback: "20px",
+    category: "core",
+    min: 0,
+    max: 40,
+    step: 2,
+  },
+  {
+    variable: "--nav-gap",
+    label: "按钮间距",
+    description: "导航栏按钮之间的间距",
+    type: "size",
+    defaultValue: "2px",
+    cssFallback: "2px",
+    category: "advanced",
+    min: 0,
+    max: 16,
+    step: 1,
+  },
+  {
+    variable: "--nav-padding",
+    label: "导航栏内边距",
+    description: "导航栏内部边距",
+    type: "size",
+    defaultValue: "4px",
+    cssFallback: "4px",
+    category: "advanced",
+    min: 0,
+    max: 20,
+    step: 1,
+  },
+  {
+    variable: "--nav-font-size",
+    label: "标签字体大小",
+    description: "按钮下方标签文字大小",
+    type: "size",
+    defaultValue: "10px",
+    cssFallback: "10px",
+    category: "advanced",
+    min: 8,
+    max: 24,
+    step: 1,
+  },
+  {
+    variable: "--nav-icon-size",
+    label: "图标大小",
+    description: "导航栏图标大小",
+    type: "size",
+    defaultValue: "20px",
+    cssFallback: "20px",
+    category: "advanced",
+    min: 12,
+    max: 40,
+    step: 2,
+  },
+  {
+    variable: "--nav-opacity",
+    label: "导航栏不透明度",
+    description: "导航栏整体透明度 (1 = 完全不透明)",
+    type: "opacity",
+    defaultValue: "1",
+    cssFallback: "1",
+    category: "advanced",
+    min: 0.2,
+    max: 1,
+    step: 0.05,
+  },
+]
