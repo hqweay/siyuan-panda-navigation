@@ -54,26 +54,6 @@ export class PandaNavigation extends Plugin {
 
     this.setupKernelRpcListener();
 
-    this.addTab({
-      type: "panda_settings_tab",
-      init() {
-        this.element.innerHTML = `<div id="panda-nav-settings-tab" style="height: 100%; overflow: auto; background-color: var(--b3-theme-background);"></div>`;
-        (this as any).settingsPanel = new SettingsPanel({
-          target: this.element.querySelector("#panda-nav-settings-tab")!,
-          props: {
-            closeDialog: () => {
-              // Not used in Tab context
-            },
-          },
-        });
-      },
-      destroy() {
-        if ((this as any).settingsPanel) {
-          (this as any).settingsPanel.$destroy();
-        }
-      }
-    });
-
     // 注册键盘快捷命令
     this.addCommand({
       langKey: "lets-nav-helper.cmdRandom",
@@ -141,7 +121,7 @@ export class PandaNavigation extends Plugin {
   }
 
   // 插件设置面板入口
-  openSetting() {
+  async openSetting() {
     if (isMobile) {
       const dialog = new Dialog({
         title: "🐼 熊猫导航 设置",
@@ -157,13 +137,30 @@ export class PandaNavigation extends Plugin {
         },
       });
     } else {
+      const tabId = this.name + "panda_settings_tab";
       openTab({
         app: this.app,
         custom: {
           icon: "iconSettings",
           title: "熊猫导航 设置",
-          id: this.name + "panda_settings_tab",
+          id: tabId,
         }
+      }).then((tab) => {
+        new SettingsPanel({
+          target: tab.panelElement,
+          props: {
+            closeDialog: () => {
+              const closeBtn = tab.headElement?.querySelector(".item__close") as HTMLElement;
+              if (closeBtn) {
+                closeBtn.click();
+              } else {
+                tab.parent?.removeTab(tab.id);
+              }
+            },
+          },
+        });
+      }).catch((err) => {
+        console.error("panda-nav: failed to open settings tab", err);
       });
     }
   }
