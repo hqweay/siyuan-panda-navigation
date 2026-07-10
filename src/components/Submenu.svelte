@@ -6,6 +6,7 @@
   export let items: any[] = [];
   export let deviceType: "mobile" | "desktop";
   export let triggerButton: HTMLElement | null = null;
+  export let inlineStyle: string = "";
 
   const dispatch = createEventDispatcher();
 
@@ -85,6 +86,7 @@
     {Object.entries(position)
     .map(([key, value]) => `${key}: ${value};`)
     .join('')}
+    {inlineStyle}
     background: var(--submenu-bg, var(--b3-theme-surface, white));
     border-radius: var(--submenu-radius, 12px);
     box-shadow: var(--submenu-shadow, var(--b3-dialog-shadow, 0 4px 20px rgba(0, 0, 0, 0.15)));

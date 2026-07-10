@@ -75,10 +75,12 @@
     settings.getBySpace(pluginMetadata.name, "styleOverrides") || {};
 
   $: styleString = buildStyleString(styleOverrides);
+  $: submenuStyleString = buildStyleString(styleOverrides, "submenu");
 
-  function buildStyleString(overrides: Record<string, string>): string {
+  function buildStyleString(overrides: Record<string, string>, category?: string): string {
     const parts: string[] = [];
     for (const token of STYLE_TOKENS) {
+      if (category && token.category !== category) continue;
       const val = overrides[token.variable];
       if (!val) continue;
       const trimmed = val.trim();
@@ -619,6 +621,7 @@
       items={submenuItems}
       {deviceType}
       triggerButton={submenuTriggerButton}
+      inlineStyle={submenuStyleString}
       on:close={hideSubmenu}
     />
   {/if}
