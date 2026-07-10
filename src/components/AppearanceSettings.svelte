@@ -11,6 +11,7 @@
   let styleAdvancedOpen = settings.getBySpace("nav-helper", "styleAdvancedOpen") === true;
   $: coreTokens = STYLE_TOKENS.filter(t => t.category === "core");
   $: advancedTokens = STYLE_TOKENS.filter(t => t.category === "advanced");
+  $: submenuTokens = STYLE_TOKENS.filter(t => t.category === "submenu");
 
   function toggleAdvancedOpen() {
     styleAdvancedOpen = !styleAdvancedOpen;
@@ -183,6 +184,23 @@
           on:click={resetAllStyles}>全部重置</button
         >
       </div>
+    </div>
+  </details>
+
+  <details style="margin-top: 8px;">
+    <summary style="cursor: pointer; opacity: 0.6; font-size: 13px; padding: 8px 0;">二级菜单样式</summary>
+    <div style="display: flex; flex-direction: column; gap: 16px; padding: 4px 0;">
+      {#each submenuTokens as token}
+        <div class="setting-row" style="flex-wrap: wrap; gap: 12px;">
+          <div class="setting-info" style="flex: 1; min-width: 140px;">
+            <span class="setting-title">{token.label}</span>
+            <span class="setting-desc">{token.description}</span>
+          </div>
+          <div class="button-controls" style="flex-shrink: 0;">
+            <StyleTokenInput {token} value={styleOverrides[token.variable] || ""} onChange={(v) => handleStyleChange(token, v)} />
+          </div>
+        </div>
+      {/each}
     </div>
   </details>
 </div>

@@ -314,11 +314,18 @@ class KernelPlugin {
           return { success: false, error: "actions 必须是数组" };
         }
         if (Array.isArray(input.actions)) {
-          for (const a of input.actions) {
+          for (let i = 0; i < input.actions.length; i++) {
+            const a = input.actions[i];
             if (a.value) {
               const check = this.validateEditorValue(a.value);
               if (!check.valid) {
-                return { success: false, error: `无效的编辑器命令路径: ${a.value}。正确路径: ${check.suggestion}` };
+                return { success: false, error: `actions[${i}] 无效的编辑器命令路径: ${a.value}。正确路径: ${check.suggestion}` };
+              }
+            }
+            if (a.children) {
+              const check = this.validateChildren(a.children);
+              if (!check.valid) {
+                return { success: false, error: `actions[${i}] ${check.error}` };
               }
             }
           }
@@ -384,6 +391,22 @@ class KernelPlugin {
     return { valid: false, suggestion: `快捷键 "${key}" 未在任何编辑器分类中找到` };
   }
 
+  private validateChildren(children: any[]): { valid: boolean; error?: string } {
+    if (!Array.isArray(children)) {
+      return { valid: false, error: "children 必须是数组" };
+    }
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (!child || typeof child !== "object") {
+        return { valid: false, error: `children[${i}] 必须是对象` };
+      }
+      if (child.type === "group") {
+        return { valid: false, error: `children[${i}] 的 type 不能为 "group"（二级菜单只支持一层嵌套）` };
+      }
+    }
+    return { valid: true };
+  }
+
   private async registerAddActionTool() {
     await this.mcp.registerTool(
       "panda-nav:add-action",
@@ -411,6 +434,16 @@ class KernelPlugin {
               description:
                 "Parameter. For type=builtin value=script: JS code using plugin, siyuan, utils variables. Call get-script-context to discover the TypeScript environment and available SDK types.",
             },
+            children: {
+              type: "array",
+              description: "For type=group only: child action items (same schema as parent, without group type)",
+              items: { type: "object" },
+            },
+            submenuLayout: {
+              type: "string",
+              enum: ["list", "grid"],
+              description: "For type=group only: submenu layout mode. list=vertical with labels, grid=icon grid",
+            },
           },
           required: ["title", "type"],
         },
@@ -434,6 +467,12 @@ class KernelPlugin {
           showOn: input.showOn || "both",
         };
         if (input.param) newItem.param = input.param;
+        if (input.children) {
+          const check = this.validateChildren(input.children);
+          if (!check.valid) return { success: false, error: check.error };
+          newItem.children = input.children.map((c: any) => ({ ...c }));
+        }
+        if (input.submenuLayout) newItem.submenuLayout = input.submenuLayout;
         config.menuItems.push(newItem);
         await this.saveConfig(config);
         await this.notifyUI(config);
@@ -505,6 +544,16 @@ class KernelPlugin {
             icon: { type: "string", description: "New icon" },
             showOn: { type: "string", enum: ["both", "mobile", "desktop"] },
             param: { type: "string", description: "New parameter content" },
+            children: {
+              type: "array",
+              description: "For type=group only: child action items (same schema as parent)",
+              items: { type: "object" },
+            },
+            submenuLayout: {
+              type: "string",
+              enum: ["list", "grid"],
+              description: "For type=group only: submenu layout mode",
+            },
           },
           required: ["index"],
         },
@@ -532,6 +581,12 @@ class KernelPlugin {
         if (input.icon !== undefined) item.icon = input.icon;
         if (input.showOn !== undefined) item.showOn = input.showOn;
         if (input.param !== undefined) item.param = input.param;
+        if (input.children !== undefined) {
+          const check = this.validateChildren(input.children);
+          if (!check.valid) return { success: false, error: check.error };
+          item.children = input.children.map((c: any) => ({ ...c }));
+        }
+        if (input.submenuLayout !== undefined) item.submenuLayout = input.submenuLayout;
         await this.saveConfig(config);
         await this.notifyUI(config);
         return { success: true };

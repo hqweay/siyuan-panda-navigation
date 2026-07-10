@@ -2,10 +2,10 @@ export interface StyleToken {
   variable: string
   label: string
   description: string
-  type: "color" | "size" | "number" | "opacity"
+  type: "color" | "size" | "number" | "opacity" | "shadow"
   defaultValue: string
   cssFallback: string
-  category: "core" | "advanced"
+  category: "core" | "advanced" | "submenu"
   min?: number
   max?: number
   step?: number
@@ -131,5 +131,89 @@ export const STYLE_TOKENS: StyleToken[] = [
     min: 0.2,
     max: 1,
     step: 0.05,
+  },
+  {
+    variable: "--submenu-bg",
+    label: "弹窗背景色",
+    description: "二级菜单弹窗的背景颜色",
+    type: "color",
+    defaultValue: "",
+    cssFallback: "var(--b3-theme-surface, white)",
+    category: "submenu",
+  },
+  {
+    variable: "--submenu-text-color",
+    label: "弹窗文字颜色",
+    description: "二级菜单中文字的颜色",
+    type: "color",
+    defaultValue: "",
+    cssFallback: "var(--b3-theme-on-surface, #333)",
+    category: "submenu",
+  },
+  {
+    variable: "--submenu-radius",
+    label: "弹窗圆角",
+    description: "二级菜单弹窗的圆角大小",
+    type: "size",
+    defaultValue: "12px",
+    cssFallback: "12px",
+    category: "submenu",
+    min: 0,
+    max: 40,
+    step: 2,
+  },
+  {
+    variable: "--submenu-hover-bg",
+    label: "悬停高亮色",
+    description: "鼠标悬停在菜单项上时的背景色",
+    type: "color",
+    defaultValue: "",
+    cssFallback: "var(--b3-theme-background-light, #f8f9fa)",
+    category: "submenu",
+  },
+  {
+    variable: "--submenu-shadow",
+    label: "弹窗阴影",
+    description: "弹窗的阴影效果，例如 0 4px 20px rgba(0,0,0,0.15)",
+    type: "shadow",
+    defaultValue: "",
+    cssFallback: "var(--b3-dialog-shadow, 0 4px 20px rgba(0,0,0,0.15))",
+    category: "submenu",
+  },
+  {
+    variable: "--submenu-icon-size",
+    label: "网格图标大小",
+    description: "网格布局下每个图标的大小",
+    type: "size",
+    defaultValue: "18px",
+    cssFallback: "18px",
+    category: "submenu",
+    min: 12,
+    max: 40,
+    step: 2,
+  },
+  {
+    variable: "--submenu-min-width",
+    label: "弹窗最小宽度",
+    description: "弹窗的最小宽度（移动端 200px，桌面端 180px）",
+    type: "size",
+    defaultValue: "",
+    cssFallback: "180px",
+    category: "submenu",
+    min: 100,
+    max: 400,
+    step: 10,
+  },
+  {
+    variable: "--submenu-max-width",
+    label: "弹窗最大宽度",
+    description: "弹窗的最大宽度（移动端 250px，桌面端 200px）",
+    type: "size",
+    defaultValue: "",
+    cssFallback: "200px",
+    category: "submenu",
+    min: 150,
+    max: 500,
+    step: 10,
   },
 ]

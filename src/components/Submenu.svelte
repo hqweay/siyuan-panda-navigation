@@ -85,12 +85,12 @@
     {Object.entries(position)
     .map(([key, value]) => `${key}: ${value};`)
     .join('')}
-    background: var(--b3-theme-surface, white);
-    border-radius: 12px;
-    box-shadow: var(--b3-dialog-shadow, 0 4px 20px rgba(0, 0, 0, 0.15));
+    background: var(--submenu-bg, var(--b3-theme-surface, white));
+    border-radius: var(--submenu-radius, 12px);
+    box-shadow: var(--submenu-shadow, var(--b3-dialog-shadow, 0 4px 20px rgba(0, 0, 0, 0.15)));
     z-index: 1001;
-    min-width: {deviceType === 'mobile' ? '200px' : '180px'};
-    max-width: {deviceType === 'mobile' ? '250px' : '200px'};
+    min-width: var(--submenu-min-width, {deviceType === 'mobile' ? '200px' : '180px'});
+    max-width: var(--submenu-max-width, {deviceType === 'mobile' ? '250px' : '200px'});
     border: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.2));
   "
   on:introstart={() => {
@@ -114,19 +114,19 @@
             align-items: center;
             justify-content: center;
             transition: background 0.2s;
-            width: 36px;
-            height: 36px;
+            width: calc(var(--submenu-icon-size, 18px) + 18px);
+            height: calc(var(--submenu-icon-size, 18px) + 18px);
             border-radius: 8px;
             padding: 0;
           "
           on:click={() => handleItemClick(item)}
-          on:mouseenter={(e) => (e.target.style.backgroundColor = "var(--b3-theme-background-light, #f8f9fa)")}
+          on:mouseenter={(e) => (e.target.style.backgroundColor = "var(--submenu-hover-bg, var(--b3-theme-background-light, #f8f9fa))")}
           on:mouseleave={(e) => (e.target.style.backgroundColor = "transparent")}
           role="menuitem"
         >
-          <span style="font-size: 18px; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; line-height: 1;">
+          <span style="font-size: var(--submenu-icon-size, 18px); display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; line-height: 1;">
             {#if item.icon && item.icon.startsWith("#icon")}
-              <svg style="width: 18px; height: 18px; fill: currentColor; display: block;"><use xlink:href={item.icon}></use></svg>
+              <svg style="width: var(--submenu-icon-size, 18px); height: var(--submenu-icon-size, 18px); fill: currentColor; display: block;"><use xlink:href={item.icon}></use></svg>
             {:else}
               <span style="display: block; line-height: 1;">{item.icon ? item.icon : ""}</span>
             {/if}
@@ -147,7 +147,7 @@
             text-align: left;
           "
           on:click={() => handleItemClick(item)}
-          on:mouseenter={(e) => (e.target.style.backgroundColor = "var(--b3-theme-background-light, #f8f9fa)")}
+          on:mouseenter={(e) => (e.target.style.backgroundColor = "var(--submenu-hover-bg, var(--b3-theme-background-light, #f8f9fa))")}
           on:mouseleave={(e) => (e.target.style.backgroundColor = "transparent")}
           role="menuitem"
         >
@@ -158,7 +158,7 @@
               {item.icon ? item.icon : ""}
             {/if}
           </span>
-          <span style="flex: 1; color: var(--b3-theme-on-surface, #333); font-size: 13px;">
+          <span style="flex: 1; color: var(--submenu-text-color, var(--b3-theme-on-surface, #333)); font-size: 13px;">
             {item.title || item.label}
           </span>
           {#if type === "customLinks"}
