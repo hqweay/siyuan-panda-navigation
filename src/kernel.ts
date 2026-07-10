@@ -14,6 +14,24 @@ interface PluginConfig {
   styleOverrides?: Record<string, string>;
   stylePresets?: { name: string; overrides: Record<string, string> }[];
   navPosition?: { x: number; y: number };
+  globalClickHooks?: ClickHook[];
+}
+
+interface ClickHookMatch {
+  key?: string;
+  type?: string;
+  titleMatch?: string;
+}
+
+interface ClickHook {
+  id: string;
+  name: string;
+  enabled: boolean;
+  matchAll: boolean;
+  match?: ClickHookMatch;
+  mode: "before" | "after" | "replace";
+  priority: number;
+  script: string;
 }
 
 class KernelPlugin {
@@ -60,6 +78,9 @@ class KernelPlugin {
     await this.registerGetStyleSchemaTool();
     await this.registerSetStyleTool();
     await this.registerResetStyleTool();
+    await this.registerSetClickHookTool();
+    await this.registerRemoveClickHookTool();
+    await this.registerListClickHooksTool();
 
     await this.logger.info("[panda-nav] MCP tools registered");
   }
@@ -80,6 +101,9 @@ class KernelPlugin {
       "panda-nav:get-style-schema",
       "panda-nav:set-style",
       "panda-nav:reset-style",
+      "panda-nav:set-click-hook",
+      "panda-nav:remove-click-hook",
+      "panda-nav:list-click-hooks",
     ];
     for (const name of names) {
       try {
@@ -679,6 +703,122 @@ class KernelPlugin {
     );
   }
 
+  private async registerSetClickHookTool() {
+    await this.mcp.registerTool(
+      "panda-nav:set-click-hook",
+      {
+        title: "Create or update a click hook",
+        description: "Create a new global click hook or update an existing one by ID. Hooks intercept nav button clicks to run custom JS before, after, or instead of the original action.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "Omit to create new, or provide existing ID to update." },
+            name: { type: "string", description: "Human-readable name for the hook." },
+            mode: { type: "string", enum: ["before", "after", "replace"], description: "before: run before original action. after: run after original action. replace: run instead of original (call next() to invoke original)." },
+            script: { type: "string", description: "JavaScript code. Available variables: plugin, siyuan, utils, kits, item, event. In replace mode, call next() to execute original action. Max 10KB." },
+            matchAll: { type: "boolean", description: "Set to true to match every button click. Default false." },
+            match: { type: "object", description: "Filter when matchAll is false. Fields: key (exact ID), type (builtin/command/pluginCommand/group), titleMatch (substring). Empty object matches nothing." },
+            priority: { type: "number", description: "Lower runs first. Default 0." },
+            enabled: { type: "boolean", description: "Default true. Set false to disable without deleting." },
+          },
+        },
+        outputSchema: { type: "object" },
+      },
+      async (input: any) => {
+        if (!input.name || !input.script || !input.mode) {
+          return { success: false, error: "name, script, and mode are required." };
+        }
+        if (!["before", "after", "replace"].includes(input.mode)) {
+          return { success: false, error: "mode must be 'before', 'after', or 'replace'." };
+        }
+        const script = String(input.script).trim();
+        if (!script) return { success: false, error: "Script cannot be empty." };
+        const MAX_SCRIPT_BYTES = 10240;
+        if (new TextEncoder().encode(script).length > MAX_SCRIPT_BYTES) {
+          return { success: false, error: `Script exceeds 10KB limit.` };
+        }
+        const config = await this.loadConfig();
+        if (!config.globalClickHooks) config.globalClickHooks = [];
+        if (input.id) {
+          const idx = config.globalClickHooks.findIndex(h => h.id === input.id);
+          if (idx === -1) return { success: false, error: `Hook with id '${input.id}' not found.` };
+          config.globalClickHooks[idx] = {
+            ...config.globalClickHooks[idx],
+            name: input.name,
+            mode: input.mode,
+            script,
+            matchAll: input.matchAll === true,
+            match: input.match || undefined,
+            priority: input.priority != null ? input.priority : 0,
+            enabled: input.enabled !== false,
+          };
+        } else {
+          const hook: ClickHook = {
+            id: this.generateId(),
+            name: input.name,
+            mode: input.mode,
+            script,
+            matchAll: input.matchAll === true,
+            match: input.match || undefined,
+            priority: input.priority != null ? input.priority : 0,
+            enabled: input.enabled !== false,
+          };
+          config.globalClickHooks.push(hook);
+        }
+        await this.saveConfig(config);
+        await this.notifyUI(config);
+        return { success: true, id: input.id || config.globalClickHooks[config.globalClickHooks.length - 1].id };
+      },
+    );
+  }
+
+  private async registerRemoveClickHookTool() {
+    await this.mcp.registerTool(
+      "panda-nav:remove-click-hook",
+      {
+        title: "Remove a click hook",
+        description: "Delete a global click hook by its ID.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "The hook ID to remove." },
+          },
+          required: ["id"],
+        },
+        outputSchema: { type: "object" },
+      },
+      async (input: any) => {
+        if (!input.id) return { success: false, error: "id is required." };
+        const config = await this.loadConfig();
+        if (!config.globalClickHooks) config.globalClickHooks = [];
+        const before = config.globalClickHooks.length;
+        config.globalClickHooks = config.globalClickHooks.filter(h => h.id !== input.id);
+        if (config.globalClickHooks.length === before) {
+          return { success: false, error: `Hook with id '${input.id}' not found.` };
+        }
+        await this.saveConfig(config);
+        await this.notifyUI(config);
+        return { success: true };
+      },
+    );
+  }
+
+  private async registerListClickHooksTool() {
+    await this.mcp.registerTool(
+      "panda-nav:list-click-hooks",
+      {
+        title: "List all click hooks",
+        description: "Returns all registered global click hooks with their configuration.",
+        inputSchema: { type: "object", properties: {} },
+        outputSchema: { type: "object" },
+      },
+      async () => {
+        const config = await this.loadConfig();
+        return { hooks: config.globalClickHooks || [] };
+      },
+    );
+  }
+
   private async loadConfig(): Promise<PluginConfig> {
     try {
       const obj = await this.storage.get("config.json");
@@ -711,6 +851,7 @@ class KernelPlugin {
         action: "mcp-update",
         menuItems: config.menuItems || [],
         styleOverrides: config.styleOverrides || {},
+        globalClickHooks: config.globalClickHooks || [],
       });
     } catch {}
   }

@@ -194,7 +194,7 @@ export class PandaNavigation extends Plugin {
       return;
     }
 
-    kernel.rpc.bind("panda-nav:config-changed", async (params: { action: string; menuItems: any[]; styleOverrides: Record<string, string> }) => {
+    kernel.rpc.bind("panda-nav:config-changed", async (params: { action: string; menuItems: any[]; styleOverrides: Record<string, string>; globalClickHooks?: any[] }) => {
       log.info("收到内核配置变更通知:", params.action);
 
       let changed = false;
@@ -212,6 +212,14 @@ export class PandaNavigation extends Plugin {
         const oldStyles = settings.getBySpace("nav-helper", "styleOverrides") || {};
         if (JSON.stringify(oldStyles) !== JSON.stringify(params.styleOverrides)) {
           settings.setBySpace("nav-helper", "styleOverrides", params.styleOverrides);
+          changed = true;
+        }
+      }
+
+      if (params.globalClickHooks) {
+        const oldHooks = settings.getBySpace("nav-helper", "globalClickHooks") || [];
+        if (JSON.stringify(oldHooks) !== JSON.stringify(params.globalClickHooks)) {
+          settings.setBySpace("nav-helper", "globalClickHooks", params.globalClickHooks);
           changed = true;
         }
       }
@@ -265,6 +273,10 @@ export class PandaNavigation extends Plugin {
       }
       if (settings.getBySpace("nav-helper", "showButtonLabels") === undefined) {
          settings.setBySpace("nav-helper", "showButtonLabels", "both");
+      }
+
+      if (settings.getBySpace("nav-helper", "globalClickHooks") === undefined) {
+        settings.setBySpace("nav-helper", "globalClickHooks", []);
       }
 
       if (settings.getBySpace("nav-helper", "stylePresets") === undefined) {

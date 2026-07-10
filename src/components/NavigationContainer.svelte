@@ -13,6 +13,9 @@
   import { mobileUtils } from "../utils";
   import { createDailynote } from "@frostime/siyuan-plugin-kits";
   import { showMessage, Dialog, globalCommand } from "siyuan";
+  import * as siyuan from "siyuan";
+  import { pandaUtils } from "../utils/panda-utils";
+  import * as kits from "@frostime/siyuan-plugin-kits";
   import type { CustomAction } from "@/types";
   import { lsNotebooks } from "../api";
   import { createSiyuanAVHelper } from "@/myscripts/dbUtil";
@@ -93,91 +96,161 @@
     return item.showOn === "both" || item.showOn === "desktop";
   });
 
+  const hookUtils: Record<string, any> = {};
+  for (const [k, v] of Object.entries(pandaUtils)) {
+    hookUtils[k] = (...args: any[]) => (v as any).fn(siyuan, ...args);
+  }
+
   async function handleActionClick(item: any, event: Event) {
     const type = item.type;
-    // Fallback logic for legacy configs, map internal/url/sql/av-add/open-setting to builtin
-    if (type === "group") {
+
+    const hooks: any[] = settings.getBySpace("nav-helper", "globalClickHooks") || [];
+    const matchingHooks = hooks.filter(h => {
+      if (!h.enabled) return false;
+      if (h.matchAll) return true;
+      if (!h.match) return false;
+      const m = h.match;
+      if (m.key && item.id !== m.key) return false;
+      if (m.type && item.type !== m.type) return false;
+      if (m.titleMatch && item.title && !item.title.includes(m.titleMatch)) return false;
+      return true;
+    });
+    matchingHooks.sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0));
+
+    // Execute original action, extracted as a callable
+    let originalExecuted = false;
+    const runOriginal = async () => {
+      if (originalExecuted) return;
+      originalExecuted = true;
+      if (type === "group") {
         showGroupSubmenu(item, event);
         return;
-    }
-
-    if (type === "builtin" || ["internal", "url", "sql", "av-add", "open-setting"].includes(type)) {
-      const cmdId = type === "builtin" ? item.value : type;
-      const cmd = builtinCommands[cmdId];
-      if (cmd) {
-        const param = type === "builtin" ? item.param : item.value;
-        cmd.execute(plugin, param).catch((err) => {
-          log.error("执行内置命令失败:", err);
-          showMessage("执行内置命令失败");
-        });
-      } else {
-        showMessage("未知的内置功能: " + cmdId);
       }
-      return;
-    }
-
-    const value = item.value;
-    if (type === "command" || type === "pluginCommand") {
-      try {
-        if (value.startsWith("plugin::")) {
-          const parts = value.split("::");
-          const pluginName = parts[1];
-          const cmdKey = parts[2];
-          const targetPlugin = (window as any).siyuan?.ws?.app?.plugins?.find((p: any) => p.name === pluginName);
-          if (targetPlugin) {
-            const cmd = targetPlugin.commands.find((c: any) => c.customHotkey === cmdKey || c.langKey === cmdKey);
-            if (cmd) {
-              if (cmd.callback) cmd.callback();
-              else if (cmd.globalCallback) cmd.globalCallback();
-              else showMessage(`插件命令不支持外部直接调用: ${value}`);
+      if (type === "builtin" || ["internal", "url", "sql", "av-add", "open-setting"].includes(type)) {
+        const cmdId = type === "builtin" ? item.value : type;
+        const cmd = builtinCommands[cmdId];
+        if (cmd) {
+          const param = type === "builtin" ? item.param : item.value;
+          cmd.execute(plugin, param).catch((err) => {
+            log.error("执行内置命令失败:", err);
+            showMessage("执行内置命令失败");
+          });
+        } else {
+          showMessage("未知的内置功能: " + cmdId);
+        }
+        return;
+      }
+      const value = item.value;
+      if (type === "command" || type === "pluginCommand") {
+        try {
+          if (value.startsWith("plugin::")) {
+            const parts = value.split("::");
+            const pluginName = parts[1];
+            const cmdKey = parts[2];
+            const targetPlugin = (window as any).siyuan?.ws?.app?.plugins?.find((p: any) => p.name === pluginName);
+            if (targetPlugin) {
+              const cmd = targetPlugin.commands.find((c: any) => c.customHotkey === cmdKey || c.langKey === cmdKey);
+              if (cmd) {
+                if (cmd.callback) cmd.callback();
+                else if (cmd.globalCallback) cmd.globalCallback();
+                else showMessage(`插件命令不支持外部直接调用: ${value}`);
+              }
             }
-          }
-        } else if (value.startsWith("editor::")) {
+          } else if (value.startsWith("editor::")) {
             const parts = value.split("::");
             const category = parts[1];
             const key = parts[2];
             const hotkey = (window as any).siyuan?.config?.keymap?.editor?.[category]?.[key]?.custom;
             if (hotkey) {
-                simulateHotkey(hotkey);
+              simulateHotkey(hotkey);
             } else {
-                showMessage(`找不到对应的快捷键配置: ${value}`);
+              showMessage(`找不到对应的快捷键配置: ${value}`);
             }
-        } else if (value === "search") {
-          const searchDialog = (window as any).siyuan?.dialogs?.find(
-            (item: any) => item.element?.querySelector("#searchList"),
-          );
-          if (searchDialog) {
-            searchDialog.destroy();
+          } else if (value === "search") {
+            const searchDialog = (window as any).siyuan?.dialogs?.find(
+              (item: any) => item.element?.querySelector("#searchList"),
+            );
+            if (searchDialog) {
+              searchDialog.destroy();
+            } else {
+              globalCommand(value, plugin.app);
+            }
+          } else if (value === "recentDocs") {
+            const recentDialog = (window as any).siyuan?.dialogs?.find(
+              (item: any) => item.element?.getAttribute("data-key") === "dialog-recentdocs",
+            );
+            if (recentDialog) {
+              recentDialog.destroy();
+            } else {
+              globalCommand(value, plugin.app);
+            }
+          } else if (value === "config") {
+            const configDialog = (window as any).siyuan?.dialogs?.find(
+              (item: any) => item.element?.querySelector(".config__panel"),
+            );
+            if (configDialog) {
+              configDialog.destroy();
+            } else {
+              globalCommand(value, plugin.app);
+            }
           } else {
             globalCommand(value, plugin.app);
           }
-        } else if (value === "recentDocs") {
-          const recentDialog = (window as any).siyuan?.dialogs?.find(
-            (item: any) =>
-              item.element?.getAttribute("data-key") === "dialog-recentdocs",
-          );
-          if (recentDialog) {
-            recentDialog.destroy();
-          } else {
-            globalCommand(value, plugin.app);
-          }
-        } else if (value === "config") {
-          const configDialog = (window as any).siyuan?.dialogs?.find(
-            (item: any) => item.element?.querySelector(".config__panel"),
-          );
-          if (configDialog) {
-            configDialog.destroy();
-          } else {
-            globalCommand(value, plugin.app);
-          }
-        } else {
-          globalCommand(value, plugin.app);
+        } catch (err) {
+          log.error("执行命令失败:", err);
+          showMessage("执行命令失败");
         }
+      }
+    };
+
+    // Run before hooks — they cannot trigger original action
+    for (const hook of matchingHooks) {
+      if (hook.mode !== "before") continue;
+      try {
+        await executeHookScript(hook, item, event, () => {});
       } catch (err) {
-        log.error("执行命令失败:", err);
-        showMessage("执行命令失败");
+        log.error(`全局钩子执行失败 [${hook.name}]:`, err);
       }
     }
+
+    // Check replace hooks — if any, only run original if the hook calls next()
+    const replaceHooks = matchingHooks.filter(h => h.mode === "replace");
+    if (replaceHooks.length > 0) {
+      let nextCalled = false;
+      const next = () => { nextCalled = true; };
+      for (const hook of replaceHooks) {
+        try {
+          await executeHookScript(hook, item, event, next);
+        } catch (err) {
+          log.error(`全局钩子执行失败 [${hook.name}]:`, err);
+        }
+      }
+      if (nextCalled) {
+        await runOriginal();
+      }
+    } else {
+      await runOriginal();
+    }
+
+    // Run after hooks
+    for (const hook of matchingHooks) {
+      if (hook.mode !== "after") continue;
+      try {
+        await executeHookScript(hook, item, event, () => {});
+      } catch (err) {
+        log.error(`全局钩子执行失败 [${hook.name}]:`, err);
+      }
+    }
+  }
+
+  function executeHookScript(hook: any, item: any, event: Event, next: () => void): Promise<any> {
+    if (hook.script && new TextEncoder().encode(hook.script).length > 10240) {
+      log.error(`钩子脚本超限 [${hook.name}]: 超过 10KB`);
+      return Promise.resolve();
+    }
+    const asyncScript = `return (async () => { \n${hook.script || ""}\n })();`;
+    const runner = new Function("plugin", "siyuan", "utils", "kits", "item", "event", "next", asyncScript);
+    return runner(plugin, siyuan, hookUtils, kits, item, event, next);
   }
 
   function simulateHotkey(hotkeyStr: string) {
