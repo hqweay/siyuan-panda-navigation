@@ -172,6 +172,8 @@
             }
             if (hotkey) {
               simulateHotkey(hotkey);
+            } else if (editor?.[category]?.[key] || Object.values(editor || {}).some((cat: any) => cat?.[key])) {
+              showMessage(`快捷键 "${key}" 存在但未设置自定义快捷键，请先在思源设置中为其分配快捷键`);
             } else {
               showMessage(`找不到对应的快捷键配置: ${value}`);
             }

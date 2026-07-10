@@ -201,10 +201,12 @@ class KernelPlugin {
             for (const category in siyuanObj.config.keymap.editor) {
               const catCommands = siyuanObj.config.keymap.editor[category];
               for (const key in catCommands) {
-                commandValues.push({
-                  value: `editor::${category}::${key}`,
-                  description: `Editor command: ${category} - ${key}`
-                });
+                if (catCommands[key]?.custom) {
+                  commandValues.push({
+                    value: `editor::${category}::${key}`,
+                    description: `Editor command: ${category} - ${key}`
+                  });
+                }
               }
             }
           }
@@ -223,7 +225,7 @@ class KernelPlugin {
             types: {
               builtin: "Predefined action: use one of the builtinValues below (HIGHEST PRIORITY)",
               command:
-                "A registered SiYuan system command (e.g. dailyNote) or editor command (e.g. editor::general::bold). See commandValues below. Use if no builtin matches.",
+                "A registered SiYuan system command (e.g. dailyNote). Use if no builtin matches. WARNING: editor commands (editor::category::key) require the user to have set a custom hotkey in SiYuan settings first — if no custom hotkey is configured, the button will not work. Prefer builtin over editor commands.",
               pluginCommand: "A command registered by another plugin. See pluginCommandValues below. Use as last resort.",
               group: "Submenu container with children array and submenuLayout",
             },
@@ -382,11 +384,14 @@ class KernelPlugin {
     if (!available.includes(category)) {
       return { valid: false, suggestion: `分类 "${category}" 不存在，可用分类: ${available.join(", ")}` };
     }
-    if (siyuan.config.keymap.editor[category]?.[key]) return { valid: true };
+    if (siyuan.config.keymap.editor[category]?.[key]?.custom) return { valid: true };
     for (const cat of available) {
-      if (cat !== category && siyuan.config.keymap.editor[cat]?.[key]) {
+      if (cat !== category && siyuan.config.keymap.editor[cat]?.[key]?.custom) {
         return { valid: false, suggestion: `editor::${cat}::${key}` };
       }
+    }
+    if (siyuan.config.keymap.editor[category]?.[key]) {
+      return { valid: false, suggestion: `快捷键 "${key}" 存在于 "${category}" 分类中，但未设置自定义快捷键。请先在思源设置中为其分配快捷键` };
     }
     return { valid: false, suggestion: `快捷键 "${key}" 未在任何编辑器分类中找到` };
   }
