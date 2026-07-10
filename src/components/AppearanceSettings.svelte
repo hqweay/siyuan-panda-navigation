@@ -147,7 +147,7 @@
     <div class="setting-row" style="margin-top: 8px; gap: 8px; flex-wrap: wrap;">
       <div class="setting-info">
         <span class="setting-title">管理样式预设</span>
-        <span class="setting-desc">将当前样式保存为预设，方便快速切换</span>
+        <span class="setting-desc">将当前样式保存为预设，方便快速切换{stylePresets.length > 0 ? '。点击预设名称可删除' : ''}</span>
       </div>
       <div class="button-controls" style="gap: 8px; flex-wrap: wrap;">
         <button
@@ -170,6 +170,12 @@
               <option value={preset.name}>{preset.name}</option>
             {/each}
           </select>
+          {#each stylePresets as preset}
+            <button
+              class="b3-button b3-button--outline"
+              style="padding: 2px 8px; font-size: 12px; color: var(--b3-theme-error);"
+              on:click={() => deleteStylePreset(preset.name)}>{preset.name} ✕</button>
+          {/each}
         {/if}
         <button
           class="b3-button b3-button--outline"
@@ -178,23 +184,5 @@
         >
       </div>
     </div>
-
-    {#if stylePresets.length > 0}
-      <div class="setting-row" style="margin-top: 4px;">
-        <div class="setting-info">
-          <span class="setting-title">删除预设</span>
-          <span class="setting-desc">点击预设名称即可删除</span>
-        </div>
-        <div class="button-controls" style="gap: 4px; flex-wrap: wrap;">
-          {#each stylePresets as preset}
-            <button
-              class="b3-button b3-button--outline"
-              style="padding: 2px 8px; font-size: 12px; color: var(--b3-theme-error);"
-              on:click={() => deleteStylePreset(preset.name)}>{preset.name} ✕</button
-            >
-          {/each}
-        </div>
-      </div>
-    {/if}
   </details>
 </div>

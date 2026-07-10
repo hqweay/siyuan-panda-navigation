@@ -266,6 +266,49 @@
     });
   }
 
+  function deleteCustomPreset(id: string, name: string) {
+    const dialog = new Dialog({
+      title: "删除预设",
+      content: `<div class="b3-dialog__content">
+        <p style="margin: 16px;">确定要删除自定义预设 <strong>"${name}"</strong> 吗？</p>
+      </div>
+      <div class="b3-dialog__action">
+        <button class="b3-button b3-button--cancel" id="deletePresetCancelBtn">取消</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="deletePresetConfirmBtn">确定删除</button>
+      </div>`,
+      width: "360px",
+    });
+    const cancelBtn = dialog.element.querySelector("#deletePresetCancelBtn");
+    const confirmBtn = dialog.element.querySelector("#deletePresetConfirmBtn");
+    cancelBtn?.addEventListener("click", () => dialog.destroy());
+    confirmBtn?.addEventListener("click", () => {
+      customPresets = customPresets.filter((p) => p.id !== id);
+      settings.setBySpace("nav-helper", "customPresets", customPresets);
+      settings.save();
+      showMessage(`预设 "${name}" 已删除`);
+      dialog.destroy();
+    });
+  }
+
+  function restoreDefaults() {
+    const dialog = new Dialog({
+      title: "恢复默认配置",
+      content: `<div class="b3-dialog__content">
+        <div class="b3-form__space">⚠️ 确定要恢复出厂默认配置吗？这将会覆盖您当前的所有导航配置，并且无法撤销！</div>
+      </div>
+      <div class="b3-dialog__action" style="display: flex; align-items: center;">
+        <button class="b3-button b3-button--cancel" id="restoreCancelBtn">取消</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--error" id="restoreConfirmBtn">确定恢复</button>
+      </div>`,
+      width: "420px",
+    });
+    dialog.element.querySelector("#restoreCancelBtn")?.addEventListener("click", () => dialog.destroy());
+    dialog.element.querySelector("#restoreConfirmBtn")?.addEventListener("click", () => {
+      updateMenuItems(generateDefaultMenuItems());
+      dialog.destroy();
+    });
+  }
+
   function addGroup() {
     const newGroup = {
       id: generateId(),
@@ -351,32 +394,6 @@
           const presetId = e.currentTarget.value;
           if (!presetId) return;
 
-          if (presetId === "RESTORE_DEFAULT") {
-            const restoreDialog = new Dialog({
-              title: "恢复默认配置",
-              content: `<div class="b3-dialog__content">
-                <div class="b3-form__space">⚠️ 确定要恢复出厂默认配置吗？这将会覆盖您当前的所有导航配置，并且无法撤销！</div>
-              </div>
-              <div class="b3-dialog__action" style="display: flex; align-items: center;">
-                <button class="b3-button b3-button--cancel" id="restoreCancelBtn">取消</button><div class="fn__space"></div>
-                <button class="b3-button b3-button--error" id="restoreConfirmBtn">确定恢复</button>
-              </div>`,
-              width: "420px",
-            });
-
-            restoreDialog.element.querySelector("#restoreCancelBtn")?.addEventListener("click", () => {
-              restoreDialog.destroy();
-            });
-
-            restoreDialog.element.querySelector("#restoreConfirmBtn")?.addEventListener("click", () => {
-              updateMenuItems(generateDefaultMenuItems());
-              restoreDialog.destroy();
-            });
-
-            e.currentTarget.value = "";
-            return;
-          }
-
           const customPreset = customPresets.find((p) => p.id === presetId);
           if (customPreset) {
             const dialog = new Dialog({
@@ -389,39 +406,11 @@
                 </ul>
               </div>
               <div class="b3-dialog__action" style="display: flex; align-items: center;">
-                <button class="b3-button b3-button--text" id="presetLoadDeleteBtn" style="color: var(--b3-theme-error); margin-right: auto;">删除此预设</button>
                 <button class="b3-button b3-button--cancel" id="presetLoadCancelBtn">取消操作</button><div class="fn__space"></div>
                 <button class="b3-button b3-button--outline" id="presetLoadAppendBtn">追加为分组</button><div class="fn__space"></div>
                 <button class="b3-button b3-button--error" id="presetLoadReplaceBtn">覆盖当前</button>
               </div>`,
               width: "480px",
-            });
-
-            dialog.element.querySelector("#presetLoadDeleteBtn")?.addEventListener("click", () => {
-              const deleteDialog = new Dialog({
-                title: "删除预设",
-                content: `<div class="b3-dialog__content">
-                  <div class="b3-form__space">确定要删除自定义预设 [${customPreset.name}] 吗？</div>
-                </div>
-                <div class="b3-dialog__action" style="display: flex; align-items: center;">
-                  <button class="b3-button b3-button--cancel" id="deleteCancelBtn">取消</button><div class="fn__space"></div>
-                  <button class="b3-button b3-button--error" id="deleteConfirmBtn">确定删除</button>
-                </div>`,
-                width: "420px",
-              });
-
-              deleteDialog.element.querySelector("#deleteCancelBtn")?.addEventListener("click", () => {
-                deleteDialog.destroy();
-              });
-
-              deleteDialog.element.querySelector("#deleteConfirmBtn")?.addEventListener("click", () => {
-                customPresets = customPresets.filter((p) => p.id !== presetId);
-                settings.setBySpace("nav-helper", "customPresets", customPresets);
-                settings.save();
-                showMessage("预设已删除");
-                deleteDialog.destroy();
-                dialog.destroy();
-              });
             });
 
             dialog.element.querySelector("#presetLoadCancelBtn")?.addEventListener("click", () => dialog.destroy());
@@ -472,16 +461,23 @@
             {/each}
           </optgroup>
         {/if}
-        <option disabled>──────────</option>
-        <option
-          value="RESTORE_DEFAULT"
-          style="color: var(--b3-theme-error);"
-          >⚠️ 恢复默认配置 (覆盖)</option
-        >
       </select>
       <button
         class="b3-button b3-button--outline"
         on:click={savePresetDialog}>另存为预设</button
+      >
+      {#if customPresets.length > 0}
+        {#each customPresets as preset}
+          <button
+            class="b3-button b3-button--outline"
+            style="padding: 2px 8px; font-size: 12px; color: var(--b3-theme-error);"
+            on:click={() => deleteCustomPreset(preset.id, preset.name)}>{preset.name} ✕</button>
+        {/each}
+      {/if}
+      <button
+        class="b3-button b3-button--outline"
+        style="color: var(--b3-theme-error);"
+        on:click={restoreDefaults}>⚠️ 恢复默认</button
       >
       <button
         class="b3-button b3-button--outline"
@@ -624,10 +620,10 @@
                       })}>🎨 选择图标</button
                   >
                 </div>
-              </div>
-            </div>
+    </div>
+  </div>
 
-            <div
+  <div
               class="form-row fn__flex"
               style="gap: 12px; flex-wrap: wrap; margin-bottom: 12px;"
             >
