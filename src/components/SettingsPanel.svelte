@@ -5,10 +5,11 @@
   import { showMessage } from "siyuan";
   import AppearanceSettings from "./AppearanceSettings.svelte";
   import ButtonSettings from "./ButtonSettings.svelte";
+  import HookSettings from "./HookSettings.svelte";
 
   export let closeDialog: () => void;
 
-  let activeTab: "general" | "buttons" | "appearance" = "general";
+  let activeTab: "general" | "buttons" | "appearance" | "hooks" = "general";
 
   let enableBottomNav =
     settings.getBySpace("nav-helper", "enableBottomNav") ?? "both";
@@ -71,6 +72,13 @@
     >
       外观
     </button>
+    <button
+      class="tab-btn"
+      class:active={activeTab === "hooks"}
+      on:click={() => (activeTab = "hooks")}
+    >
+      钩子
+    </button>
   </div>
 
   <!-- Content -->
@@ -99,11 +107,15 @@
         onChange={handleButtonSettingsChange}
       />
     {/if}
-  </div>
 
-  {#if activeTab === "appearance"}
-    <AppearanceSettings {styleOverrides} onChange={handleAppearanceChange} />
-  {/if}
+    {#if activeTab === "appearance"}
+      <AppearanceSettings {styleOverrides} onChange={handleAppearanceChange} />
+    {/if}
+
+    {#if activeTab === "hooks"}
+      <HookSettings />
+    {/if}
+  </div>
 
   <!-- Footer Actions -->
   <div class="settings-footer fn__flex justify-end">

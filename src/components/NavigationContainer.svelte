@@ -244,13 +244,19 @@
   }
 
   function executeHookScript(hook: any, item: any, event: Event, next: () => void): Promise<any> {
-    if (hook.script && new TextEncoder().encode(hook.script).length > 10240) {
+    const MAX_SCRIPT_LEN = 10 * 1024;
+    if (hook.script && hook.script.length > MAX_SCRIPT_LEN) {
       log.error(`钩子脚本超限 [${hook.name}]: 超过 10KB`);
       return Promise.resolve();
     }
-    const asyncScript = `return (async () => { \n${hook.script || ""}\n })();`;
-    const runner = new Function("plugin", "siyuan", "utils", "kits", "item", "event", "next", asyncScript);
-    return runner(plugin, siyuan, hookUtils, kits, item, event, next);
+    try {
+      const asyncScript = `return (async () => { \n${hook.script || ""}\n })();`;
+      const runner = new Function("plugin", "siyuan", "utils", "kits", "item", "event", "next", asyncScript);
+      return runner(plugin, siyuan, hookUtils, kits, item, event, next);
+    } catch (err) {
+      log.error(`钩子脚本创建失败 [${hook.name}]:`, err);
+      return Promise.resolve();
+    }
   }
 
   function simulateHotkey(hotkeyStr: string) {

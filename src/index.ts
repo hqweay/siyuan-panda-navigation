@@ -104,6 +104,9 @@ export class PandaNavigation extends Plugin {
     if (siyuan?.mcp?.unregisterTool) {
       await siyuan.mcp.unregisterTool("panda-nav:navigate");
       await siyuan.mcp.unregisterTool("panda-nav:random");
+      await siyuan.mcp.unregisterTool("panda-nav:set-click-hook");
+      await siyuan.mcp.unregisterTool("panda-nav:remove-click-hook");
+      await siyuan.mcp.unregisterTool("panda-nav:list-click-hooks");
     }
 
     // 销毁 Svelte 实例

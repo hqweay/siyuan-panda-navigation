@@ -81,6 +81,7 @@ class KernelPlugin {
     await this.registerSetClickHookTool();
     await this.registerRemoveClickHookTool();
     await this.registerListClickHooksTool();
+    await this.registerHookRpcHandler();
 
     await this.logger.info("[panda-nav] MCP tools registered");
   }
@@ -717,57 +718,66 @@ class KernelPlugin {
             mode: { type: "string", enum: ["before", "after", "replace"], description: "before: run before original action. after: run after original action. replace: run instead of original (call next() to invoke original)." },
             script: { type: "string", description: "JavaScript code. Available variables: plugin, siyuan, utils, kits, item, event. In replace mode, call next() to execute original action. Max 10KB." },
             matchAll: { type: "boolean", description: "Set to true to match every button click. Default false." },
-            match: { type: "object", description: "Filter when matchAll is false. Fields: key (exact ID), type (builtin/command/pluginCommand/group), titleMatch (substring). Empty object matches nothing." },
+            match: { type: "object", properties: {
+              key: { type: "string", description: "Button ID to match exactly." },
+              type: { type: "string", description: "Button type: builtin, command, pluginCommand, group." },
+              titleMatch: { type: "string", description: "Substring to match against button title." },
+            }, description: "Filter when matchAll is false. Empty object matches nothing." },
             priority: { type: "number", description: "Lower runs first. Default 0." },
             enabled: { type: "boolean", description: "Default true. Set false to disable without deleting." },
           },
+          required: ["name", "script", "mode"],
         },
         outputSchema: { type: "object" },
       },
       async (input: any) => {
-        if (!input.name || !input.script || !input.mode) {
-          return { success: false, error: "name, script, and mode are required." };
+        try {
+          if (!input.name || !input.script || !input.mode) {
+            return { success: false, error: "name, script, and mode are required." };
+          }
+          if (!["before", "after", "replace"].includes(input.mode)) {
+            return { success: false, error: "mode must be 'before', 'after', or 'replace'." };
+          }
+          const script = String(input.script).trim();
+          if (!script) return { success: false, error: "Script cannot be empty." };
+          const MAX_SCRIPT_LEN = 10 * 1024;
+          if (script.length > MAX_SCRIPT_LEN) {
+            return { success: false, error: `Script exceeds 10KB limit.` };
+          }
+          const config = await this.loadConfig();
+          if (!config.globalClickHooks) config.globalClickHooks = [];
+          if (input.id) {
+            const idx = config.globalClickHooks.findIndex(h => h.id === input.id);
+            if (idx === -1) return { success: false, error: `Hook with id '${input.id}' not found.` };
+            config.globalClickHooks[idx] = {
+              ...config.globalClickHooks[idx],
+              name: input.name,
+              mode: input.mode,
+              script,
+              matchAll: input.matchAll === true,
+              match: input.match || undefined,
+              priority: input.priority != null ? input.priority : 0,
+              enabled: input.enabled !== false,
+            };
+          } else {
+            const hook: ClickHook = {
+              id: this.generateId(),
+              name: input.name,
+              mode: input.mode,
+              script,
+              matchAll: input.matchAll === true,
+              match: input.match || undefined,
+              priority: input.priority != null ? input.priority : 0,
+              enabled: input.enabled !== false,
+            };
+            config.globalClickHooks.push(hook);
+          }
+          await this.saveConfig(config);
+          await this.notifyUI(config);
+          return { success: true, id: input.id || config.globalClickHooks[config.globalClickHooks.length - 1].id };
+        } catch (err: any) {
+          return { success: false, error: `Internal error: ${err?.message || err}` };
         }
-        if (!["before", "after", "replace"].includes(input.mode)) {
-          return { success: false, error: "mode must be 'before', 'after', or 'replace'." };
-        }
-        const script = String(input.script).trim();
-        if (!script) return { success: false, error: "Script cannot be empty." };
-        const MAX_SCRIPT_BYTES = 10240;
-        if (new TextEncoder().encode(script).length > MAX_SCRIPT_BYTES) {
-          return { success: false, error: `Script exceeds 10KB limit.` };
-        }
-        const config = await this.loadConfig();
-        if (!config.globalClickHooks) config.globalClickHooks = [];
-        if (input.id) {
-          const idx = config.globalClickHooks.findIndex(h => h.id === input.id);
-          if (idx === -1) return { success: false, error: `Hook with id '${input.id}' not found.` };
-          config.globalClickHooks[idx] = {
-            ...config.globalClickHooks[idx],
-            name: input.name,
-            mode: input.mode,
-            script,
-            matchAll: input.matchAll === true,
-            match: input.match || undefined,
-            priority: input.priority != null ? input.priority : 0,
-            enabled: input.enabled !== false,
-          };
-        } else {
-          const hook: ClickHook = {
-            id: this.generateId(),
-            name: input.name,
-            mode: input.mode,
-            script,
-            matchAll: input.matchAll === true,
-            match: input.match || undefined,
-            priority: input.priority != null ? input.priority : 0,
-            enabled: input.enabled !== false,
-          };
-          config.globalClickHooks.push(hook);
-        }
-        await this.saveConfig(config);
-        await this.notifyUI(config);
-        return { success: true, id: input.id || config.globalClickHooks[config.globalClickHooks.length - 1].id };
       },
     );
   }
@@ -817,6 +827,23 @@ class KernelPlugin {
         return { hooks: config.globalClickHooks || [] };
       },
     );
+  }
+
+  private async registerHookRpcHandler() {
+    try {
+      this.rpc.bind("panda-nav:update-hooks", async (params: { hooks: any[] }) => {
+        if (!params || !Array.isArray(params.hooks)) {
+          return { success: false, error: "Invalid hooks payload." };
+        }
+        const config = await this.loadConfig();
+        config.globalClickHooks = params.hooks;
+        await this.saveConfig(config);
+        await this.notifyUI(config);
+        return { success: true };
+      });
+    } catch (e) {
+      await this.logger.warn("[panda-nav] 注册钩子 RPC 处理器失败:", e);
+    }
   }
 
   private async loadConfig(): Promise<PluginConfig> {
