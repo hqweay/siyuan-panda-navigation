@@ -140,6 +140,19 @@ export const scrollToTopCommand: BuiltinCommand = {
     }
 };
 
+export const scrollToBottomCommand: BuiltinCommand = {
+    id: "scrollToBottom",
+    title: "滚动到底部",
+    requiresParam: false,
+    execute: () => {
+        const editor = getActiveEditor(false);
+        const el = editor?.protyle?.contentElement;
+        if (el) {
+            el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+        }
+    }
+};
+
 export const randomCommand: BuiltinCommand = {
     id: "random",
     title: "随机文档",
@@ -152,5 +165,5 @@ export const randomCommand: BuiltinCommand = {
 export const documentCommands = [
     goBackCommand, goForwardCommand, goParentCommand, 
     goChildCommand, goNextCommand, goPrevCommand,
-    scrollToTopCommand, randomCommand
+    scrollToTopCommand, scrollToBottomCommand, randomCommand
 ];
