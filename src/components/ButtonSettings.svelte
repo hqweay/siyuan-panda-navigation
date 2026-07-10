@@ -3,6 +3,7 @@
   import { generateId } from "../utils";
   import { normalizeMenuItems } from "../normalize";
   import { showMessage, Dialog } from "siyuan";
+  import { plugin } from "../utils";
   import { onMount } from "svelte";
   import { builtinCommands, builtinCommandList } from "../builtins";
   import IconPicker from "./IconPicker.svelte";
