@@ -310,6 +310,19 @@ class KernelPlugin {
         outputSchema: { type: "object" },
       },
       async (input: any) => {
+        if (input.actions && !Array.isArray(input.actions)) {
+          return { success: false, error: "actions 必须是数组" };
+        }
+        if (Array.isArray(input.actions)) {
+          for (const a of input.actions) {
+            if (a.value) {
+              const check = this.validateEditorValue(a.value);
+              if (!check.valid) {
+                return { success: false, error: `无效的编辑器命令路径: ${a.value}。正确路径: ${check.suggestion}` };
+              }
+            }
+          }
+        }
         const config = await this.loadConfig();
         if (input.mode === "replace") {
           config.menuItems = input.actions.map((a: any) => ({
@@ -350,6 +363,27 @@ class KernelPlugin {
     );
   }
 
+  private validateEditorValue(value: string): { valid: boolean; suggestion?: string } {
+    if (!value || !value.startsWith("editor::")) return { valid: true };
+    const parts = value.split("::");
+    if (parts.length < 3) return { valid: false, suggestion: `格式错误，应为 editor::category::key` };
+    const category = parts[1];
+    const key = parts[2];
+    const siyuan = (globalThis as any).siyuan;
+    if (!siyuan?.config?.keymap?.editor) return { valid: true };
+    const available = Object.keys(siyuan.config.keymap.editor);
+    if (!available.includes(category)) {
+      return { valid: false, suggestion: `分类 "${category}" 不存在，可用分类: ${available.join(", ")}` };
+    }
+    if (siyuan.config.keymap.editor[category]?.[key]) return { valid: true };
+    for (const cat of available) {
+      if (cat !== category && siyuan.config.keymap.editor[cat]?.[key]) {
+        return { valid: false, suggestion: `editor::${cat}::${key}` };
+      }
+    }
+    return { valid: false, suggestion: `快捷键 "${key}" 未在任何编辑器分类中找到` };
+  }
+
   private async registerAddActionTool() {
     await this.mcp.registerTool(
       "panda-nav:add-action",
@@ -383,6 +417,12 @@ class KernelPlugin {
         outputSchema: { type: "object" },
       },
       async (input: any) => {
+        if (input.value) {
+          const check = this.validateEditorValue(input.value);
+          if (!check.valid) {
+            return { success: false, error: `无效的编辑器命令路径: ${input.value}。正确路径: ${check.suggestion}` };
+          }
+        }
         const config = await this.loadConfig();
         if (!config.menuItems) config.menuItems = [];
         const newItem: any = {
@@ -471,6 +511,12 @@ class KernelPlugin {
         outputSchema: { type: "object" },
       },
       async (input: any) => {
+        if (input.value) {
+          const check = this.validateEditorValue(input.value);
+          if (!check.valid) {
+            return { success: false, error: `无效的编辑器命令路径: ${input.value}。正确路径: ${check.suggestion}` };
+          }
+        }
         const config = await this.loadConfig();
         if (
           !config.menuItems ||

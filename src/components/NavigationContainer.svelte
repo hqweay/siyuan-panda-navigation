@@ -147,7 +147,7 @@
             const parts = value.split("::");
             const pluginName = parts[1];
             const cmdKey = parts[2];
-            const targetPlugin = (window as any).siyuan?.ws?.app?.plugins?.find((p: any) => p.name === pluginName);
+            const targetPlugin = (globalThis as any).siyuan?.ws?.app?.plugins?.find((p: any) => p.name === pluginName);
             if (targetPlugin) {
               const cmd = targetPlugin.commands.find((c: any) => c.customHotkey === cmdKey || c.langKey === cmdKey);
               if (cmd) {
@@ -160,14 +160,23 @@
             const parts = value.split("::");
             const category = parts[1];
             const key = parts[2];
-            const hotkey = (window as any).siyuan?.config?.keymap?.editor?.[category]?.[key]?.custom;
+            const editor = (globalThis as any).siyuan?.config?.keymap?.editor;
+            let hotkey = editor?.[category]?.[key]?.custom;
+            if (!hotkey) {
+              for (const cat of Object.keys(editor || {})) {
+                if (cat !== category) {
+                  hotkey = editor[cat]?.[key]?.custom;
+                  if (hotkey) break;
+                }
+              }
+            }
             if (hotkey) {
               simulateHotkey(hotkey);
             } else {
               showMessage(`找不到对应的快捷键配置: ${value}`);
             }
           } else if (value === "search") {
-            const searchDialog = (window as any).siyuan?.dialogs?.find(
+            const searchDialog = (globalThis as any).siyuan?.dialogs?.find(
               (item: any) => item.element?.querySelector("#searchList"),
             );
             if (searchDialog) {
@@ -176,7 +185,7 @@
               globalCommand(value, plugin.app);
             }
           } else if (value === "recentDocs") {
-            const recentDialog = (window as any).siyuan?.dialogs?.find(
+            const recentDialog = (globalThis as any).siyuan?.dialogs?.find(
               (item: any) => item.element?.getAttribute("data-key") === "dialog-recentdocs",
             );
             if (recentDialog) {
@@ -185,7 +194,7 @@
               globalCommand(value, plugin.app);
             }
           } else if (value === "config") {
-            const configDialog = (window as any).siyuan?.dialogs?.find(
+            const configDialog = (globalThis as any).siyuan?.dialogs?.find(
               (item: any) => item.element?.querySelector(".config__panel"),
             );
             if (configDialog) {
