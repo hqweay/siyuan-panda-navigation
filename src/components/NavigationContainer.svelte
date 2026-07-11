@@ -4,6 +4,7 @@
   import { onMount, onDestroy } from "svelte";
   import { fly } from "svelte/transition";
   import { isMobile } from "../utils";
+  import { getActionKey } from "../utils";
   import NavButton from "./NavButton.svelte";
   import Submenu from "./Submenu.svelte";
   import { navigation } from "../navigation";
@@ -130,7 +131,7 @@
       if (h.matchAll) return true;
       if (!h.match) return false;
       const m = h.match;
-      if (m.key && item.id !== m.key) return false;
+      if (m.key && getActionKey(item) !== m.key) return false;
       if (m.type && item.type !== m.type) return false;
       if (m.titleMatch && item.title && !item.title.includes(m.titleMatch)) return false;
       if (m.actionValue && item.value !== m.actionValue) return false;

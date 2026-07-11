@@ -4,6 +4,7 @@ import { scriptApiReference } from "./utils/script-api-reference";
 import { bundledDts } from "./utils/bundled-dts";
 import { normalizeMenuItems } from "./normalize";
 import { STYLE_TOKENS } from "./style-tokens";
+import { generateActionKey, getActionKey } from "./utils";
 
 interface PluginConfig {
   menuItems?: any[];
@@ -334,14 +335,17 @@ class KernelPlugin {
         }
         const config = await this.loadConfig();
         if (input.mode === "replace") {
-          config.menuItems = input.actions.map((a: any) => ({
-            ...a,
-            id: this.generateId(),
-          }));
+          config.menuItems = input.actions.map((a: any) => {
+            const item = { ...a };
+            this.assignButtonIds(item);
+            return item;
+          });
         } else {
           if (!config.menuItems) config.menuItems = [];
           for (const a of input.actions) {
-            config.menuItems.push({ ...a, id: this.generateId() });
+            const item = { ...a };
+            this.assignButtonIds(item);
+            config.menuItems.push(item);
           }
         }
         await this.saveConfig(config);
@@ -464,18 +468,22 @@ class KernelPlugin {
         const config = await this.loadConfig();
         if (!config.menuItems) config.menuItems = [];
         const newItem: any = {
-          id: this.generateId(),
           type: input.type,
           title: input.title,
           icon: input.icon || "#iconLink",
           value: input.value || "",
           showOn: input.showOn || "both",
         };
+        this.assignButtonIds(newItem);
         if (input.param) newItem.param = input.param;
         if (input.children) {
           const check = this.validateChildren(input.children);
           if (!check.valid) return { success: false, error: check.error };
-          newItem.children = input.children.map((c: any) => ({ ...c }));
+          newItem.children = input.children.map((c: any) => {
+            const child = { ...c };
+            this.assignButtonIds(child);
+            return child;
+          });
         }
         if (input.submenuLayout) newItem.submenuLayout = input.submenuLayout;
         config.menuItems.push(newItem);
@@ -592,6 +600,9 @@ class KernelPlugin {
           item.children = input.children.map((c: any) => ({ ...c }));
         }
         if (input.submenuLayout !== undefined) item.submenuLayout = input.submenuLayout;
+        if (input.title !== undefined || input.type !== undefined || input.value !== undefined) {
+          item.actionKey = generateActionKey(item);
+        }
         await this.saveConfig(config);
         await this.notifyUI(config);
         return { success: true };
@@ -994,6 +1005,14 @@ class KernelPlugin {
     return (
       Math.random().toString(36).substring(2, 10) + Date.now().toString(36)
     );
+  }
+
+  private assignButtonIds(item: any) {
+    item.id = this.generateId();
+    item.actionKey = generateActionKey(item);
+    if (Array.isArray(item.children)) {
+      item.children.forEach((c: any) => this.assignButtonIds(c));
+    }
   }
 }
 

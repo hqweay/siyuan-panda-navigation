@@ -1,7 +1,7 @@
 <script lang="ts">
   import { showMessage, Dialog } from "siyuan";
   import { settings } from "../settings";
-  import { plugin } from "../utils";
+  import { plugin, getActionKey } from "../utils";
   import { builtinMetas } from "../utils/builtin-metas";
 
   let hooks: any[] = settings.getBySpace("nav-helper", "globalClickHooks") || [];
@@ -87,9 +87,19 @@
 
     const isEdit = !!existingHook;
 
-    const btnOptions = allButtons.map((b: any) =>
-      `<option value="${b.id}" ${matchKey === b.id ? "selected" : ""}>${b.title || "(未命名)"} (${b.id})</option>`
-    ).join("");
+    const seen = new Set<string>();
+    const btnOptions = allButtons
+      .filter((b: any) => {
+        const key = getActionKey(b);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((b: any) => {
+        const key = getActionKey(b);
+        return `<option value="${key}" ${matchKey === key ? "selected" : ""}>${b.title || "(未命名)"} (${b.type})</option>`;
+      })
+      .join("");
     const valueOptions = Array.from(usedValues).sort().map(v =>
       `<option value="${v}" ${matchActionValue === v ? "selected" : ""}>${v}</option>`
     ).join("");
@@ -225,8 +235,9 @@
     if (hook.matchAll) return "匹配所有按键";
     const parts: string[] = [];
     if (hook.match?.key) {
-      const btn = (settings.getBySpace("nav-helper", "menuItems") || []).find((i: any) => i.id === hook.match.key);
-      parts.push(`按钮: ${btn ? btn.title : hook.match.key}`);
+      const all = (settings.getBySpace("nav-helper", "menuItems") || []);
+      const btn = all.find((i: any) => getActionKey(i) === hook.match.key);
+      parts.push(`按钮: ${btn ? btn.title : "(已删除的按钮)"}`);
     }
     if (hook.match?.type) parts.push(`类型: ${hook.match.type}`);
     if (hook.match?.titleMatch) parts.push(`标题包含: ${hook.match.titleMatch}`);

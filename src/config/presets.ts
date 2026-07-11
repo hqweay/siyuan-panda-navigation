@@ -1,65 +1,64 @@
-import { generateId } from "@/utils";
+import { assignButtonIds } from "@/utils";
 
 export const PRESET_GROUPS = [
   {
     id: "preset-nav-basic",
     name: "基础导航 (网格)",
     description: "包含上下左右文档跳转的九宫格菜单",
-    generate: () => ({
-      id: generateId(),
-      type: "group",
-      title: "基础导航",
-      icon: "#iconMenu",
-      showOn: "both",
-      submenuLayout: "grid",
-      children: [
-        {
-          id: generateId(),
-          type: "builtin",
-          value: "goParent",
-          title: "父文档",
-          icon: "#iconUp",
-          showOn: "both",
-        },
-        {
-          id: generateId(),
-          type: "builtin",
-          value: "goPrev",
-          title: "上一个",
-          icon: "#iconLeft",
-          showOn: "both",
-        },
-        {
-          id: generateId(),
-          type: "builtin",
-          value: "goNext",
-          title: "下一个",
-          icon: "#iconRight",
-          showOn: "both",
-        },
-        {
-          id: generateId(),
-          type: "builtin",
-          value: "goChild",
-          title: "子文档",
-          icon: "#iconDown",
-          showOn: "both",
-        },
-      ],
-    }),
+    generate: () => {
+      const result = {
+        type: "group",
+        title: "基础导航",
+        icon: "#iconMenu",
+        showOn: "both",
+        submenuLayout: "grid",
+        children: [
+          {
+            type: "builtin",
+            value: "goParent",
+            title: "父文档",
+            icon: "#iconUp",
+            showOn: "both",
+          },
+          {
+            type: "builtin",
+            value: "goPrev",
+            title: "上一个",
+            icon: "#iconLeft",
+            showOn: "both",
+          },
+          {
+            type: "builtin",
+            value: "goNext",
+            title: "下一个",
+            icon: "#iconRight",
+            showOn: "both",
+          },
+          {
+            type: "builtin",
+            value: "goChild",
+            title: "子文档",
+            icon: "#iconDown",
+            showOn: "both",
+          },
+        ],
+      };
+      assignButtonIds(result);
+      return result;
+    },
   },
   {
     id: "preset-script-example",
     name: "自定义脚本示例 (高级)",
     description: "演示如何使用内置脚本引擎执行原生 JS 代码",
-    generate: () => ({
-      id: generateId(),
-      type: "builtin",
-      value: "script",
-      title: "弹出问候语",
-      icon: "#iconInfo",
-      showOn: "both",
-      param: `// 这是一个在 Siyuan 环境执行的脚本示例
+    generate: () => {
+      const result = {
+        type: "builtin",
+        value: "script",
+        title: "弹出问候语",
+        icon: "#iconInfo",
+        showOn: "both",
+        param: `// 这是一个在 Siyuan 环境执行的脚本示例
 // 你可以直接使用 siyuan 和 plugin 变量
 // utils 为熊猫导航提供的工具函数（目前为空，后续版本会添加）
 siyuan.showMessage("Hello World! 🐼 熊猫导航脚本执行成功");
@@ -81,7 +80,10 @@ if (res && res.data && res.data.length > 0) {
     }
 }
 `,
-    }),
+      };
+      assignButtonIds(result);
+      return result;
+    },
   },
 ];
 
@@ -90,10 +92,8 @@ if (res && res.data && res.data.length > 0) {
  */
 export function generateDefaultMenuItems() {
   const basicNavPreset = PRESET_GROUPS.find(p => p.id === "preset-nav-basic");
-  
-  return [
+  const items = [
     {
-      id: generateId(),
       type: "builtin",
       value: "goBack",
       title: "返回",
@@ -101,7 +101,6 @@ export function generateDefaultMenuItems() {
       showOn: "both",
     },
     {
-      id: generateId(),
       type: "command",
       value: "dailyNote",
       title: "今日日记",
@@ -110,7 +109,6 @@ export function generateDefaultMenuItems() {
     },
     basicNavPreset ? basicNavPreset.generate() : null,
     {
-      id: generateId(),
       type: "builtin",
       value: "goForward",
       title: "前进",
@@ -118,16 +116,13 @@ export function generateDefaultMenuItems() {
       showOn: "both",
     },
     {
-      id: generateId(),
       type: "group",
       value: "",
       title: "快捷动作",
       icon: "#iconStar",
       showOn: "both",
       children: [
-        //  { id: generateId(), type: "builtin", title: "首页", value: "url", param: "siyuan://common/dashboard", icon: "#iconWorkspace", showOn: "both" },
         {
-          id: generateId(),
           type: "command",
           title: "全局搜索",
           value: "globalSearch",
@@ -135,7 +130,6 @@ export function generateDefaultMenuItems() {
           showOn: "mobile",
         },
         {
-          id: generateId(),
           type: "builtin",
           title: "随机漫游",
           value: "sql",
@@ -144,7 +138,6 @@ export function generateDefaultMenuItems() {
           showOn: "both",
         },
         {
-          id: generateId(),
           type: "builtin",
           title: "作者博客",
           value: "url",
@@ -155,4 +148,6 @@ export function generateDefaultMenuItems() {
       ],
     },
   ].filter(Boolean);
+  items.forEach(assignButtonIds);
+  return items;
 }

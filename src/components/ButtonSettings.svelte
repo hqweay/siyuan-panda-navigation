@@ -1,6 +1,6 @@
 <script lang="ts">
   import { settings } from "../settings";
-  import { generateId } from "../utils";
+  import { assignButtonIds, generateActionKey } from "../utils";
   import { normalizeMenuItems } from "../normalize";
   import { showMessage, Dialog } from "siyuan";
   import { plugin } from "../utils";
@@ -173,6 +173,13 @@
   let expandedIndex: string | null = null;
 
   function updateMenuItems(items: any[]) {
+    const recalc = (item: any) => {
+      item.actionKey = generateActionKey(item);
+      if (Array.isArray(item.children)) {
+        item.children.forEach(recalc);
+      }
+    };
+    items.forEach(recalc);
     menuItems = items;
     onChange(menuItems, showButtonLabels);
   }
@@ -206,15 +213,14 @@
   }
 
   function addMenuItem(parentGroup?: any) {
-    const newItem = {
-      id: generateId(),
+    const newItem = assignButtonIds({
       type: "builtin",
       value: "url",
       param: "",
       title: "新动作",
       icon: "#iconLink",
       showOn: "both",
-    };
+    });
     if (parentGroup) {
       if (!parentGroup.children) parentGroup.children = [];
       parentGroup.children = [...parentGroup.children, newItem];
@@ -311,8 +317,7 @@
   }
 
   function addGroup() {
-    const newGroup = {
-      id: generateId(),
+    const newGroup = assignButtonIds({
       type: "group",
       title: "新分组",
       value: "",
@@ -320,7 +325,7 @@
       showOn: "both",
       submenuLayout: "list",
       children: [],
-    };
+    });
     updateMenuItems([...menuItems, newGroup]);
   }
 
@@ -354,11 +359,7 @@
   }
 
   function duplicateMenuItem(item: any, parentGroup?: any) {
-    const duplicated = JSON.parse(JSON.stringify(item));
-    duplicated.id = generateId();
-    if (duplicated.children) {
-      duplicated.children.forEach((c: any) => (c.id = generateId()));
-    }
+    const duplicated = assignButtonIds(JSON.parse(JSON.stringify(item)));
 
     if (parentGroup) {
       const idx = parentGroup.children.findIndex((c: any) => c.id === item.id);
@@ -417,15 +418,14 @@
             dialog.element.querySelector("#presetLoadCancelBtn")?.addEventListener("click", () => dialog.destroy());
 
             dialog.element.querySelector("#presetLoadAppendBtn")?.addEventListener("click", () => {
-              const newGroup = {
-                id: generateId(),
+              const newGroup = assignButtonIds({
                 type: "group",
                 title: customPreset.name,
                 icon: "#iconMenu",
                 showOn: "both",
                 submenuLayout: "list",
                 children: JSON.parse(JSON.stringify(customPreset.menuItems)),
-              };
+              });
               updateMenuItems([...menuItems, newGroup]);
               expandedIndex = newGroup.id;
               dialog.destroy();
