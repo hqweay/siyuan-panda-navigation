@@ -98,12 +98,30 @@
     return item.showOn === "both" || item.showOn === "desktop";
   });
 
+  let hookDepth = 0;
+  const MAX_HOOK_DEPTH = 5;
+
+  const trigger = async (targetId: string) => {
+    const targetItem = menuItems.find(i => i.id === targetId);
+    if (!targetItem) {
+      showMessage(`找不到按钮: ${targetId}`);
+      return;
+    }
+    await handleActionClick(targetItem, new Event("hook-trigger"));
+  };
+
   const hookUtils: Record<string, any> = {};
   for (const [k, v] of Object.entries(pandaUtils)) {
     hookUtils[k] = (...args: any[]) => (v as any).fn(siyuan, ...args);
   }
 
   async function handleActionClick(item: any, event: Event) {
+    if (hookDepth >= MAX_HOOK_DEPTH) {
+      showMessage("编排链过深，已自动阻断");
+      return;
+    }
+    hookDepth++;
+
     const type = item.type;
 
     const hooks: any[] = settings.getBySpace("nav-helper", "globalClickHooks") || [];
@@ -115,6 +133,7 @@
       if (m.key && item.id !== m.key) return false;
       if (m.type && item.type !== m.type) return false;
       if (m.titleMatch && item.title && !item.title.includes(m.titleMatch)) return false;
+      if (m.actionValue && item.value !== m.actionValue) return false;
       return true;
     });
     matchingHooks.sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0));
@@ -254,6 +273,8 @@
         log.error(`全局钩子执行失败 [${hook.name}]:`, err);
       }
     }
+
+    hookDepth--;
   }
 
   function executeHookScript(hook: any, item: any, event: Event, next: () => void): Promise<any> {
@@ -264,8 +285,8 @@
     }
     try {
       const asyncScript = `return (async () => { \n${hook.script || ""}\n })();`;
-      const runner = new Function("plugin", "siyuan", "utils", "kits", "item", "event", "next", asyncScript);
-      return runner(plugin, siyuan, hookUtils, kits, item, event, next);
+      const runner = new Function("plugin", "siyuan", "utils", "kits", "item", "event", "next", "trigger", asyncScript);
+      return runner(plugin, siyuan, hookUtils, kits, item, event, next, trigger);
     } catch (err) {
       log.error(`钩子脚本创建失败 [${hook.name}]:`, err);
       return Promise.resolve();

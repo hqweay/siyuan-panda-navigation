@@ -2,6 +2,7 @@
   import { showMessage, Dialog } from "siyuan";
   import { settings } from "../settings";
   import { plugin } from "../utils";
+  import { builtinMetas } from "../utils/builtin-metas";
 
   let hooks: any[] = settings.getBySpace("nav-helper", "globalClickHooks") || [];
   let expandedScripts: Set<string> = new Set();
@@ -66,13 +67,171 @@
     });
   }
 
+  function openHookEditor(existingHook?: any) {
+    const menuItems: any[] = settings.getBySpace("nav-helper", "menuItems") || [];
+    const allButtons = menuItems.filter((i: any) => i.id);
+    const usedValues = new Set<string>();
+    menuItems.forEach((i: any) => { if (i.value) usedValues.add(i.value); });
+    Object.keys(builtinMetas).forEach(k => usedValues.add(k));
+
+    let name = existingHook?.name || "";
+    let mode = existingHook?.mode || "after";
+    let matchAll = existingHook?.matchAll ?? false;
+    let matchKey = existingHook?.match?.key || "";
+    let matchType = existingHook?.match?.type || "";
+    let matchTitle = existingHook?.match?.titleMatch || "";
+    let matchActionValue = existingHook?.match?.actionValue || "";
+    let priority = existingHook?.priority ?? 0;
+    let enabled = existingHook?.enabled ?? true;
+    let script = existingHook?.script || "";
+
+    const isEdit = !!existingHook;
+
+    const btnOptions = allButtons.map((b: any) =>
+      `<option value="${b.id}" ${matchKey === b.id ? "selected" : ""}>${b.title || "(未命名)"} (${b.id})</option>`
+    ).join("");
+    const valueOptions = Array.from(usedValues).sort().map(v =>
+      `<option value="${v}" ${matchActionValue === v ? "selected" : ""}>${v}</option>`
+    ).join("");
+
+    const dialog = new Dialog({
+      title: isEdit ? "编辑全局钩子" : "新建全局钩子",
+      content: `<div class="b3-dialog__content" style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <label style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 12px; opacity: 0.7;">名称</span>
+          <input class="b3-text-field" id="hookName" value="${name.replace(/"/g, "&quot;")}" style="width: 100%;" />
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 12px; opacity: 0.7;">模式</span>
+          <select class="b3-select" id="hookMode" style="width: 100%;">
+            <option value="before" ${mode === "before" ? "selected" : ""}>before（执行前）</option>
+            <option value="replace" ${mode === "replace" ? "selected" : ""}>replace（替换）</option>
+            <option value="after" ${mode === "after" ? "selected" : ""}>after（执行后）</option>
+          </select>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="hookMatchAll" ${matchAll ? "checked" : ""} />
+          <span style="font-size: 12px;">匹配所有按钮</span>
+        </label>
+        <div id="matchFields" style="display: flex; flex-direction: column; gap: 8px; ${matchAll ? "display: none;" : ""}">
+          <span style="font-size: 11px; opacity: 0.6;">多个条件需同时满足（AND）</span>
+          <label style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮</span>
+            <select class="b3-select" id="hookMatchKey" style="width: 100%;">
+              <option value="">（不限）</option>
+              ${btnOptions}
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮类型</span>
+            <select class="b3-select" id="hookMatchType" style="width: 100%;">
+              <option value="">（不限）</option>
+              <option value="builtin" ${matchType === "builtin" ? "selected" : ""}>builtin（内置功能）</option>
+              <option value="command" ${matchType === "command" ? "selected" : ""}>command（系统命令）</option>
+              <option value="pluginCommand" ${matchType === "pluginCommand" ? "selected" : ""}>pluginCommand（第三方命令）</option>
+              <option value="group" ${matchType === "group" ? "selected" : ""}>group（分组）</option>
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮标题（包含）</span>
+            <input class="b3-text-field" id="hookMatchTitle" value="${matchTitle.replace(/"/g, "&quot;")}" style="width: 100%;" />
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 12px; opacity: 0.7;">匹配 - 功能值</span>
+            <select class="b3-select" id="hookMatchActionValue" style="width: 100%;">
+              <option value="">（不限）</option>
+              ${valueOptions}
+            </select>
+          </label>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 12px; opacity: 0.7;">优先级（数值越小越先执行）</span>
+          <input class="b3-text-field" id="hookPriority" type="number" value="${priority}" style="width: 100%;" />
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 12px; opacity: 0.7;">脚本（可用变量: plugin, siyuan, utils, kits, item, event, next, trigger）</span>
+          <textarea class="b3-text-field" id="hookScript" rows="8" style="width: 100%; font-family: monospace; font-size: 11px;">${script.replace(/"/g, "&quot;")}</textarea>
+          <span style="font-size: 11px; opacity: 0.5;">上限 10KB。after/before 可调 trigger("按钮ID") 链式触发其他按钮。</span>
+        </label>
+      </div>
+      <div class="b3-dialog__action" style="padding: 16px 16px 0;">
+        <button class="b3-button b3-button--cancel" id="hookCancelBtn">取消</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="hookSaveBtn">${isEdit ? "保存" : "创建"}</button>
+      </div>`,
+      width: "520px",
+    });
+
+    const cancelBtn = dialog.element.querySelector("#hookCancelBtn");
+    const saveBtn = dialog.element.querySelector("#hookSaveBtn");
+    const matchAllCheckbox = dialog.element.querySelector("#hookMatchAll") as HTMLInputElement;
+    const matchFields = dialog.element.querySelector("#matchFields") as HTMLElement;
+
+    matchAllCheckbox?.addEventListener("change", () => {
+      matchFields.style.display = matchAllCheckbox.checked ? "none" : "flex";
+    });
+
+    cancelBtn?.addEventListener("click", () => dialog.destroy());
+
+    saveBtn?.addEventListener("click", async () => {
+      const el = (id: string) => dialog.element.querySelector(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+      const newName = (el("#hookName") as HTMLInputElement).value.trim();
+      if (!newName) { showMessage("请输入名称"); return; }
+
+      const newScript = (el("#hookScript") as HTMLTextAreaElement).value.trim();
+      if (!newScript) { showMessage("请输入脚本"); return; }
+      if (newScript.length > 10 * 1024) { showMessage("脚本超过 10KB 限制"); return; }
+
+      const newMatchAll = (el("#hookMatchAll") as HTMLInputElement).checked;
+      const mKey = (el("#hookMatchKey") as HTMLInputElement).value.trim();
+      const mType = (el("#hookMatchType") as HTMLSelectElement).value;
+      const mTitle = (el("#hookMatchTitle") as HTMLInputElement).value.trim();
+      const mActionValue = (el("#hookMatchActionValue") as HTMLInputElement).value.trim();
+      const newPriority = parseInt((el("#hookPriority") as HTMLInputElement).value) || 0;
+      const newMode = (el("#hookMode") as HTMLSelectElement).value;
+
+      const match: any = {};
+      if (mKey) match.key = mKey;
+      if (mType) match.type = mType;
+      if (mTitle) match.titleMatch = mTitle;
+      if (mActionValue) match.actionValue = mActionValue;
+
+      const hookData = {
+        name: newName,
+        mode: newMode,
+        matchAll: newMatchAll,
+        match: Object.keys(match).length > 0 ? match : undefined,
+        priority: newPriority,
+        enabled: true,
+        script: newScript,
+      };
+
+      if (isEdit) {
+        hooks = hooks.map(h => h.id === existingHook.id ? { ...h, ...hookData } : h);
+      } else {
+        hookData.id = Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+        hooks = [...hooks, hookData];
+      }
+
+      settings.setBySpace("nav-helper", "globalClickHooks", hooks);
+      await settings.save();
+      await syncHooksToKernel();
+      showMessage(isEdit ? `钩子 "${newName}" 已更新` : `钩子 "${newName}" 已创建`);
+      dialog.destroy();
+    });
+  }
+
   function matchSummary(hook: any): string {
-    const parts: string[] = [];
     if (hook.matchAll) return "匹配所有按键";
-    if (hook.match?.key) parts.push(`按键ID: ${hook.match.key}`);
+    const parts: string[] = [];
+    if (hook.match?.key) {
+      const btn = (settings.getBySpace("nav-helper", "menuItems") || []).find((i: any) => i.id === hook.match.key);
+      parts.push(`按钮: ${btn ? btn.title : hook.match.key}`);
+    }
     if (hook.match?.type) parts.push(`类型: ${hook.match.type}`);
-    if (hook.match?.titleMatch) parts.push(`标题: ${hook.match.titleMatch}`);
-    return parts.join(" | ") || "无匹配条件";
+    if (hook.match?.titleMatch) parts.push(`标题包含: ${hook.match.titleMatch}`);
+    if (hook.match?.actionValue) parts.push(`功能值: ${hook.match.actionValue}`);
+    return parts.length > 0 ? "条件全满足: " + parts.join("，") : "无匹配条件";
   }
 
   function priorityClass(p: number): string {
@@ -84,12 +243,15 @@
 </script>
 
 <div class="tab-pane">
+  <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center;">
+    <span class="setting-title">全局钩子（{hooks.length}）</span>
+    <button class="b3-button b3-button--outline" on:click={() => openHookEditor()}>+ 新建钩子</button>
+  </div>
   {#if hooks.length === 0}
     <div class="setting-row" style="flex-direction: column; align-items: center; gap: 8px; padding: 24px;">
-      <span class="setting-title" style="opacity: 0.6;">暂无全局钩子</span>
       <span class="setting-desc" style="text-align: center;">
-        通过 MCP 工具 <code>set-click-hook</code> 创建钩子后，可在此管理。<br>
-        示例：<code>panda-nav:set-click-hook</code> 创建烟花、确认对话框等行为。
+        点击上方「新建钩子」开始配置。<br>
+        示例：创建一个 after 钩子，脚本写 <code>showMessage("✨")</code>，实现统一点击动效。
       </span>
     </div>
   {:else}
@@ -130,6 +292,10 @@
             />
             <span class="toggle-slider"></span>
           </label>
+          <button
+            class="b3-button b3-button--outline"
+            style="padding: 2px 8px; font-size: 12px;"
+            on:click={() => openHookEditor(hook)}>编辑</button>
           <button
             class="b3-button b3-button--outline"
             style="padding: 2px 8px; font-size: 12px; color: var(--b3-theme-error);"

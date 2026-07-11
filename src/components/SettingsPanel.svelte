@@ -39,7 +39,6 @@
 
     await settings.save();
     showMessage("熊猫导航配置已保存");
-    closeDialog();
 
     // 触发插件实例更新
     if (plugin && (plugin as any).handleSettingsChange) {
