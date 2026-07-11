@@ -124,7 +124,7 @@
           <span style="font-size: 12px;">匹配所有按钮</span>
         </label>
         <div id="matchFields" style="display: flex; flex-direction: column; gap: 8px; ${matchAll ? "display: none;" : ""}">
-          <span style="font-size: 11px; opacity: 0.6;">多个条件需同时满足（AND）</span>
+          <span id="andHint" style="font-size: 11px; opacity: 0.6;">多个条件需同时满足（AND）</span>
           <label style="display: flex; flex-direction: column; gap: 4px;">
             <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮</span>
             <select class="b3-select" id="hookMatchKey" style="width: 100%;">
@@ -132,27 +132,29 @@
               ${btnOptions}
             </select>
           </label>
-          <label style="display: flex; flex-direction: column; gap: 4px;">
-            <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮类型</span>
-            <select class="b3-select" id="hookMatchType" style="width: 100%;">
-              <option value="">（不限）</option>
-              <option value="builtin" ${matchType === "builtin" ? "selected" : ""}>builtin（内置功能）</option>
-              <option value="command" ${matchType === "command" ? "selected" : ""}>command（系统命令）</option>
-              <option value="pluginCommand" ${matchType === "pluginCommand" ? "selected" : ""}>pluginCommand（第三方命令）</option>
-              <option value="group" ${matchType === "group" ? "selected" : ""}>group（分组）</option>
-            </select>
-          </label>
-          <label style="display: flex; flex-direction: column; gap: 4px;">
-            <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮标题（包含）</span>
-            <input class="b3-text-field" id="hookMatchTitle" value="${matchTitle.replace(/"/g, "&quot;")}" style="width: 100%;" />
-          </label>
-          <label style="display: flex; flex-direction: column; gap: 4px;">
-            <span style="font-size: 12px; opacity: 0.7;">匹配 - 功能值</span>
-            <select class="b3-select" id="hookMatchActionValue" style="width: 100%;">
-              <option value="">（不限）</option>
-              ${valueOptions}
-            </select>
-          </label>
+          <div id="otherMatchFields" style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮类型</span>
+              <select class="b3-select" id="hookMatchType" style="width: 100%;">
+                <option value="">（不限）</option>
+                <option value="builtin" ${matchType === "builtin" ? "selected" : ""}>builtin（内置功能）</option>
+                <option value="command" ${matchType === "command" ? "selected" : ""}>command（系统命令）</option>
+                <option value="pluginCommand" ${matchType === "pluginCommand" ? "selected" : ""}>pluginCommand（第三方命令）</option>
+                <option value="group" ${matchType === "group" ? "selected" : ""}>group（分组）</option>
+              </select>
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮标题（包含）</span>
+              <input class="b3-text-field" id="hookMatchTitle" value="${matchTitle.replace(/"/g, "&quot;")}" style="width: 100%;" />
+            </label>
+            <label style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 12px; opacity: 0.7;">匹配 - 功能值</span>
+              <select class="b3-select" id="hookMatchActionValue" style="width: 100%;">
+                <option value="">（不限）</option>
+                ${valueOptions}
+              </select>
+            </label>
+          </div>
         </div>
         <label style="display: flex; flex-direction: column; gap: 4px;">
           <span style="font-size: 12px; opacity: 0.7;">优先级（数值越小越先执行）</span>
@@ -179,6 +181,23 @@
     matchAllCheckbox?.addEventListener("change", () => {
       matchFields.style.display = matchAllCheckbox.checked ? "none" : "flex";
     });
+
+    const hookMatchKey = dialog.element.querySelector("#hookMatchKey") as HTMLSelectElement;
+    const otherMatchFields = dialog.element.querySelector("#otherMatchFields") as HTMLElement;
+    const andHint = dialog.element.querySelector("#andHint") as HTMLElement;
+    function toggleOtherFields() {
+      const locked = hookMatchKey.value !== "";
+      otherMatchFields.style.opacity = locked ? "0.35" : "1";
+      otherMatchFields.style.pointerEvents = locked ? "none" : "auto";
+      andHint.textContent = locked ? "已锁定（选中特定按钮后其余条件自动忽略）" : "多个条件需同时满足（AND）";
+      if (locked) {
+        (dialog.element.querySelector("#hookMatchType") as HTMLSelectElement).value = "";
+        (dialog.element.querySelector("#hookMatchTitle") as HTMLInputElement).value = "";
+        (dialog.element.querySelector("#hookMatchActionValue") as HTMLSelectElement).value = "";
+      }
+    }
+    hookMatchKey?.addEventListener("change", toggleOtherFields);
+    toggleOtherFields();
 
     cancelBtn?.addEventListener("click", () => dialog.destroy());
 
