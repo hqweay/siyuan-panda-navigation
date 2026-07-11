@@ -1,6 +1,17 @@
 # siyuan-panda-navigation
 
-## 0.7.0
+## 0.8.0
+
+### Minor Changes
+
+- **稳定的按钮标识（actionKey）**：按钮 ID 体系重构。新增 `actionKey` 字段，基于按钮内容（标题+类型+功能值）的哈希值，跨预设稳定。钩子的 `match.key` 改为匹配 `actionKey`，预设切换后钩子自动跟随，不再因 ID 随机失效。
+- **钩子匹配条件智能锁定**：选择「匹配 - 按钮」后，其余条件（类型、标题包含、功能值）自动灰显并清空，避免误设冲突的 AND 逻辑。
+- **MCP 文档修正**：`set-click-hook` 的 `match.key` 说明从"Button ID"修正为"Button actionKey"，`trigger()` 参数增加 `id` 与 `actionKey` 的区分提示。
+
+### Patch Changes
+
+- **修复 kernel 启动报错 `Invalid module`**：将 ID/actionKey 生成函数抽取为 `src/hash.ts`（零依赖），`kernel.ts` 改为从 `hash.ts` 导入，避免内联浏览器端代码导致 goja 运行时报错。
+- **消除哈希实现重复**：之前 `utils.ts` 和 `kernel.ts` 各维护一份相同的 hash 函数，存在静默不同步的风险。统一收敛到 `src/hash.ts`。
 
 ### Minor Changes
 
