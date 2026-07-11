@@ -101,7 +101,7 @@ export const scriptApiReference = {
     description: "当编写钩子（hook）脚本时，以下参数可直接使用（无需声明）:",
     parameters: {
       next: "() => void - 仅在 replace 模式可用。调用 next() 表示执行原始按钮行为。不调则完全替换。",
-      trigger: "(buttonId: string) => Promise<void> - 触发另一个导航按钮的动作。按按钮 ID 查找。支持链式调用（深度上限 5 层）。"
+      trigger: "(buttonId: string) => Promise<void> - 触发另一个导航按钮的动作。按随机唯一 ID 查找（不是钩子匹配用的 actionKey）。支持链式调用（深度上限 5 层）。"
     }
   },
   referenceUrls: {

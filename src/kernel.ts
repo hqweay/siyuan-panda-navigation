@@ -4,7 +4,7 @@ import { scriptApiReference } from "./utils/script-api-reference";
 import { bundledDts } from "./utils/bundled-dts";
 import { normalizeMenuItems } from "./normalize";
 import { STYLE_TOKENS } from "./style-tokens";
-import { generateActionKey, getActionKey } from "./utils";
+import { generateActionKey, assignButtonIds } from "./hash";
 
 interface PluginConfig {
   menuItems?: any[];
@@ -337,14 +337,14 @@ class KernelPlugin {
         if (input.mode === "replace") {
           config.menuItems = input.actions.map((a: any) => {
             const item = { ...a };
-            this.assignButtonIds(item);
+            assignButtonIds(item);
             return item;
           });
         } else {
           if (!config.menuItems) config.menuItems = [];
           for (const a of input.actions) {
             const item = { ...a };
-            this.assignButtonIds(item);
+            assignButtonIds(item);
             config.menuItems.push(item);
           }
         }
@@ -474,14 +474,14 @@ class KernelPlugin {
           value: input.value || "",
           showOn: input.showOn || "both",
         };
-        this.assignButtonIds(newItem);
+        assignButtonIds(newItem);
         if (input.param) newItem.param = input.param;
         if (input.children) {
           const check = this.validateChildren(input.children);
           if (!check.valid) return { success: false, error: check.error };
           newItem.children = input.children.map((c: any) => {
             const child = { ...c };
-            this.assignButtonIds(child);
+            assignButtonIds(child);
             return child;
           });
         }
@@ -833,10 +833,10 @@ class KernelPlugin {
             id: { type: "string", description: "Omit to create new, or provide existing ID to update." },
             name: { type: "string", description: "Human-readable name for the hook." },
             mode: { type: "string", enum: ["before", "after", "replace"], description: "before: run before original action. after: run after original action. replace: run instead of original (call next() to invoke original)." },
-            script: { type: "string", description: "JavaScript code. Available variables: plugin, siyuan, utils, kits, item, event, next (replace mode), trigger(buttonId) (chain to another button by ID). Max 10KB." },
+            script: { type: "string", description: "JavaScript code. Available variables: plugin, siyuan, utils, kits, item, event, next (replace mode), trigger(buttonId) (chain to another button by its unique id; NOT the actionKey used in match.key). Max 10KB." },
             matchAll: { type: "boolean", description: "Set to true to match every button click. Default false." },
             match: { type: "object", properties: {
-              key: { type: "string", description: "Button ID to match exactly." },
+              key: { type: "string", description: "Button actionKey (stable hash of title+type+value) to match exactly. Use list-actions to see actionKey values (NOT the button's unique id)." },
               type: { type: "string", description: "Button type: builtin, command, pluginCommand, group." },
               titleMatch: { type: "string", description: "Substring to match against button title." },
               actionValue: { type: "string", description: "Match by action value (e.g. 'scrollToTop' matches any button running scroll to top)." },
@@ -1005,14 +1005,6 @@ class KernelPlugin {
     return (
       Math.random().toString(36).substring(2, 10) + Date.now().toString(36)
     );
-  }
-
-  private assignButtonIds(item: any) {
-    item.id = this.generateId();
-    item.actionKey = generateActionKey(item);
-    if (Array.isArray(item.children)) {
-      item.children.forEach((c: any) => this.assignButtonIds(c));
-    }
   }
 }
 

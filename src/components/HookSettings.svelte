@@ -163,7 +163,7 @@
         <label style="display: flex; flex-direction: column; gap: 4px;">
           <span style="font-size: 12px; opacity: 0.7;">脚本（可用变量: plugin, siyuan, utils, kits, item, event, next, trigger）</span>
           <textarea class="b3-text-field" id="hookScript" rows="8" style="width: 100%; font-family: monospace; font-size: 11px;">${script.replace(/"/g, "&quot;")}</textarea>
-          <span style="font-size: 11px; opacity: 0.5;">上限 10KB。after/before 可调 trigger("按钮ID") 链式触发其他按钮。</span>
+          <span style="font-size: 11px; opacity: 0.5;">上限 10KB。after/before 可调 trigger("按钮唯一ID") 链式触发其他按钮（注意: match.key 匹配的是 actionKey 而非此 ID）。</span>
         </label>
       </div>
       <div class="b3-dialog__action" style="padding: 16px 16px 0;">
