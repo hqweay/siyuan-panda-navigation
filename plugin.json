@@ -43,7 +43,7 @@
   },
   "readme": {
     "default": "README.md",
-    "zh-CN": "README.md"
+    "zh-CN": "README.zh-CN.md"
   },
   "funding": {
     "custom": []

@@ -1,14 +1,12 @@
-# 🐼 熊猫导航
+> [🇨🇳 中文](./README.zh-CN.md)
 
-专为思源笔记打造的移动端/桌面端自适应导航栏，让你在思源中浏览文档时操作更顺手。
+# 🐼 Panda Navigation
 
-仓库地址：[GitHub - hqweay/siyuan-panda-navigation: 思源插件：熊猫导航 · GitHub](https://github.com/hqweay/siyuan-panda-navigation)
+A sleek, adaptive floating navigation bar for SiYuan Note, designed for both mobile and desktop. Makes browsing documents in SiYuan feel natural and efficient.
+
+Repository: [GitHub - hqweay/siyuan-panda-navigation](https://github.com/hqweay/siyuan-panda-navigation)
 
 https://github.com/user-attachments/assets/e38886d1-bf0f-4c03-95fc-914b25b09d3b
-
-
-
-
 
 https://github.com/user-attachments/assets/b157746c-7deb-480a-aa9e-c83bbefb468a
 
@@ -16,80 +14,74 @@ https://github.com/user-attachments/assets/85b66ecc-f7dd-4228-8c3d-02895e31998c
 
 https://github.com/user-attachments/assets/55950d50-a6b8-4c3c-8f0a-1f3da14294f1
 
+## Features
 
+- **Drag anywhere on desktop**: A minimal floating icon — no clutter, no space wasted. Drag it to any corner; the position is remembered automatically.
+- **Pill-shaped nav on mobile**: Sits at the bottom, auto-collapses into a tiny pill when scrolling down so it never blocks your content. Tap to expand.
+- **Smooth panel transitions**: Menus and groups glide in and out like a dynamic island, adapting width to button count.
+- **Scroll to top & random roam**: One tap to jump back to the top of the current doc, or open a random note and wander your knowledge base.
+- **Freely customizable menu**: No rigid hierarchy. Create groups (list or grid layout) and arrange shortcuts however you like.
+- **One-tap preset switching**: Presets aren't just backups — "Switch Preset" is designed as a live button you can trigger anytime. Set up different presets for reading, writing, or exploring, then switch between them like changing channels.
+- **Built-in preset templates**: Not sure where to start? Import a ready-made preset (like the basic 9-grid layout) with one click. You can also save your own setup as a custom preset for backup or scene switching.
+- **Per-device visibility**: Control which buttons show on mobile, desktop, or both. Labels can be toggled independently per device.
 
+## Quick Start
 
+The plugin is pending marketplace review. Install it manually:
 
-## 功能亮点
+- Use the [Install Marketplace Plugin](https://github.com/TCOTC/install-package) helper and enter `hqweay/siyuan-panda-navigation`
+- Or download the latest release from the [GitHub Releases page](https://github.com/hqweay/siyuan-panda-navigation/releases), unzip it, and place it in your SiYuan plugins directory
 
-- **桌面端自由拖拽**：纯图标悬浮导航，不占空间，支持拖拽到屏幕任意角落。拖动流畅无延迟，松开后自动记忆位置。
-- **移动端药丸导航**：底部悬浮导航栏，向下滚动时自动收起为贴边小药丸，不遮挡笔记内容，点击即可展开。
-- **丝滑的面板切换**：展开菜单和切换分组时，面板会像灵动岛一样平滑移动，并自动适应按钮数量调整宽度。
-- **返回顶部与随机漫游**：一键回到当前文档顶部，或随机打开一篇笔记，漫游你的知识库。
-- **高度自由的菜单编排**：没有死板的层级限制，你可以自由创建分组（支持列表或网格显示），随心所欲地排列你需要的快捷操作。
-- **一键切换预设——秒换工作台**：不只是一个预设库！“切换导航预设”已经被设计成可以随时触发的一个导航按钮。你可以为不同的使用场景（阅读、写作、知识库漫游）配好不同的预设，然后像点按钮换台一样无缝切换。
-- **自定义与预设模版**：如果不想从头配置，插件自带多款常用预设（如基础九宫格）可一键导入。你也可以一键将自己精心搭配的菜单“另存为预设”，方便随时备份或切换工作场景。
-- **多端设备独立设置**：你可以控制某个按钮“仅在手机端”或“仅在电脑端”显示，也可以针对不同设备单独开关文字标签，满足多端使用习惯。
+## Configuration
 
-## 快速开始
+### Basic Appearance
 
-集市上架审核中，你可以通过以下方式安装：
+- **Enable Navigation Bar**: Choose to show on mobile, desktop, or both.
+- **Button Labels**: Toggle text labels below buttons on or off.
 
-- 使用[安装集市包插件](https://github.com/TCOTC/install-package)，输入 `hqweay/siyuan-panda-navigation` 安装
-- 或去[GitHub发布页](https://github.com/hqweay/siyuan-panda-navigation/releases)，下载最新版本压缩包，解压后放入思源笔记插件目录
+### Presets & Reset
 
-## 轻松配置
+- **Save & Load Presets**: Import built-in presets (e.g., "Basic Grid") directly from settings, or save your current navigation layout as a custom preset. When loading a custom preset, you can either **overwrite** the current menu or **append** it as a new group.
+- **Restore Defaults**: Messed up your menu? Find the option in the preset dropdown and restore factory defaults instantly.
 
-### 基础外观设置
+### Action Types
 
-- **启用悬浮导航栏**：自由选择是在手机端、电脑端还是两端同时显示导航栏。
-- **按钮标签文字**：随时控制按钮下方是否显示文字说明。
+Create buttons as individual actions or group them. Supported action types:
 
-### 高级玩法与重置
+| Type | Description |
+|------|-------------|
+| **Built-in** | Enhanced navigation features: document tree traversal (parent/child/sibling/back/forward), scroll to top, random doc, custom links / doc IDs, SQL-powered random roam, add current doc to an attribute view, execute custom JS scripts |
+| **System Command** | Trigger any global SiYuan system command directly |
+| **Editor Command** | Works as a floating format brush on mobile — trigger native editor actions (bold, list, heading, etc.), great for tablets and phones |
+| **Plugin Command** | Trigger commands registered by **other SiYuan plugins** (e.g., open today's daily note) |
 
-- **保存与加载预设**：直接在设置里选择导入内置的“基础导航网格”等预设，也可以通过“另存为预设”把你当前的导航栏备份下来。加载你自己的预设时，你可以选择直接“覆盖”当前菜单，或者将预设“追加”成一个新分组。
-- **恢复默认配置**：如果平时折腾菜单不小心弄乱了，可以在预设下拉框里找到这个选项，点一下就能瞬间恢复出厂设定，不用有任何心理负担。
+### 🤖 AI Agent Support (MCP + Skill)
 
-### 快捷动作与分组组合
+Don't know how to code but want to write custom JS scripts for advanced automation? Panda Navigation has deep integration with external AI assistants (Cline, Cursor, Antigravity, etc.):
 
-你可以把常用操作做成"动作"，或者把它们丢进"分组"里折叠起来。插件支持的超强操作类型：
+1. **Built-in AI Skill**: The plugin ships a specially tuned prompt file (`skills/siyuan-panda-navigation/SKILL.md` under the plugin directory). Tell your AI: **"Load the skill from the Panda Navigation plugin directory, then help me write a script..."** — the AI immediately enters a disciplined programming mode.
+2. **MCP Tool Mounting**: Once activated by the Skill, the AI automatically calls Panda Navigation's MCP tools to read SiYuan's native TypeScript source code, the full `kits` development toolkit, and a pitfall-avoidance guide.
+3. **Conversation = Code**: Describe what you want in plain language (e.g., "Write a script that counts all today's unfinished todos and shows them in a popup"). The AI generates accurate code from the complete API context — no more guessing.
 
-| 类型                    | 说明                                                                                                                                                                                                                                                                                                                                                                                        |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **内置功能 (Builtins)** | 插件自带的加强版功能，包括：<br/>• **文档层级漫游**：快速跳转父级、子级、相邻文档、后退/前进<br/>• **返回顶部与随机文档**：一键回到顶部，或随机打开一篇笔记<br/>• **自定义链接/文档ID**：打开外部网页或思源某篇文档，完美兼容移动端<br/>• **随机漫游 (SQL)**：用自定义 SQL 从笔记海里随机翻阅<br/>• **添加到数据库**：一键把当前文章添加进指定的属性视图里<br/>• **执行自定义 JS 脚本**：在思源环境中直接运行代码，内置封装了常用的思源工具箱，方便快速实现复杂逻辑 |
-| **系统命令 (System)**   | 直接触发思源笔记本体自带的任意全局系统快捷命令                                                                                                                                                                                                                                                                                                                                              |
-| **编辑器命令 (Editor)** | 化身移动端悬浮格式刷！能触发思源笔记原生的编辑器快捷操作（例如加粗、添加列表、设为标题等），非常适合在平板和手机上排版打字时使用                                                                                                                                                                                                                                                            |
-| **第三方命令 (Plugin)** | 神仙功能！能直接触发你安装的**其他思源插件**里注册的任意命令（例如一键打开"今日日记"等）                                                                                                                                                                                                                                                                                                    |
-
-### 🤖 AI 智能体支持 (MCP + Skill)
-
-如果你想通过“自定义 JS 脚本”实现一些复杂的自动化操作，但又完全不懂编程，也不用担心。
-熊猫导航已经深度集成了面向外部 AI 助手（如 Cline、Cursor、Antigravity）的支持：
-
-1. **附带原生 AI Skill**：插件内置了一份经过专门调优的 AI 提示词（位于插件安装目录下的 `skills/siyuan-panda-navigation/SKILL.md`）。你只需告诉你的 AI 助手："**加载熊猫导航插件目录下的 skill，然后帮我写个脚本...**"，AI 就能立刻进入极度严谨的编程模式。
-2. **MCP 全局挂载能力**：AI 在被 Skill 唤醒后，会自动调用熊猫导航提供的 MCP 工具，瞬间读取思源底层大量的原生 TypeScript 源码、丰富的 `kits` 开发套件和防踩坑指南。
-3. **对话即编程**：你只需要用大白话描述需求（例如："写个一键统计今天所有待办事项数量的弹窗"），AI 就会根据完整的 API 上下文写出准确的代码，不再靠猜。
-
-完全零代码基础的用户，也能通过这套 `Skill + MCP` 的组合拳，轻松打造私人订制的高级动作。
+Zero coding experience required. The `Skill + MCP` combo lets anyone build custom advanced actions.
 
 ---
 
-## 🛠 开发者指南
+## 🛠 Developer Guide
 
-熊猫导航在底层自动化了新功能的接入流程。你可以很方便地为插件扩展内置命令或增加新的 AI 接口。
+Panda Navigation automates the integration of new features. Extending built-in commands or adding AI capabilities is straightforward.
 
-### 1. 扩展内置命令
+### 1. Add a Built-in Command
 
-1. 在 `src/builtins/commands/` 目录下新建文件。
-2. 实现 `BuiltinCommand` 接口并导出。
+1. Create a new `.ts` file under `src/builtins/commands/`.
+2. Implement and export a `BuiltinCommand` object.
 
-你可以在定义中指定设置界面应该显示的输入框类型（如普通文本框或多行文本域）。在项目构建时，系统会自动扫描并注册这些命令，无需手动去多处添加代码。
+You can specify the input type (text field or textarea) for user parameters. The build system automatically scans and registers your command — no manual wiring needed.
 
-### 2. 为 AI 添加新能力
+### 2. Add New AI Capabilities
 
-插件不仅封装了 `utils` 常用函数库供脚本使用，还支持将这些工具自动导出给大模型。
-当你在 `commands` 或 `panda-utils.ts` 中新增功能时，编译系统会自动提取它们的参数和说明，并整理成标准工具供 AI 调用。只要写好功能逻辑，AI 就能自动学会并使用它们。
+The plugin wraps a `utils` library for scripts and auto-exports these tools to AI models. When you add a function in `commands/` or `panda-utils.ts`, the build system extracts its parameters and descriptions, then formats them as standard tools for AI consumption. Write the logic, and the AI learns to use it automatically.
 
-## 反馈
+## Feedback
 
-遇到问题或有建议，欢迎在 GitHub 提交 Issue。
+Found a bug or have a suggestion? Open an issue on [GitHub](https://github.com/hqweay/siyuan-panda-navigation/issues).
