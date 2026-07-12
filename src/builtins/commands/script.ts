@@ -7,6 +7,7 @@ import * as kits from "@frostime/siyuan-plugin-kits";
 export const scriptCommand: BuiltinCommand = {
   id: "script",
   title: "执行自定义 JS 脚本",
+  i18nKey: "lets-nav-helper.builtin.script",
   requiresParam: true,
   inputType: "textarea",
   paramPlaceholder:
@@ -35,7 +36,7 @@ export const scriptCommand: BuiltinCommand = {
     } catch (err) {
       console.error("自定义脚本执行报错:", err);
       siyuan.showMessage(
-        "自定义脚本执行报错，请查看控制台: " + (err as Error).message,
+        plugin.i18n["lets-nav-helper.scriptExecError"].replace("{msg}", (err as Error).message),
         6000,
         "error",
       );

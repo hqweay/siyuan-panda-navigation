@@ -1,5 +1,6 @@
 <script lang="ts">
   import { showMessage, Dialog } from "siyuan";
+  import { plugin } from "@/utils";
   import { settings } from "../settings";
   import { STYLE_TOKENS, type StyleToken } from "../style-tokens";
   import StyleTokenInput from "./StyleTokenInput.svelte";
@@ -21,13 +22,13 @@
 
   function saveStylePreset() {
     const dialog = new Dialog({
-      title: "保存样式预设",
+      title: plugin.i18n["lets-nav-helper.appearance.savePresetTitle"],
       content: `<div class="b3-dialog__content">
-        <input class="b3-text-field fn__block" id="stylePresetNameInput" placeholder="请输入样式预设名称">
+        <input class="b3-text-field fn__block" id="stylePresetNameInput" placeholder="${plugin.i18n["lets-nav-helper.appearance.presetNamePlaceholder"]}">
       </div>
       <div class="b3-dialog__action">
-        <button class="b3-button b3-button--cancel" id="stylePresetCancelBtn">取消</button><div class="fn__space"></div>
-        <button class="b3-button b3-button--text" id="stylePresetConfirmBtn">确定</button>
+        <button class="b3-button b3-button--cancel" id="stylePresetCancelBtn">${plugin.i18n["lets-nav-helper.cancelBtn"]}</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="stylePresetConfirmBtn">${plugin.i18n["lets-nav-helper.preset.confirm"]}</button>
       </div>`,
       width: "400px",
     });
@@ -43,13 +44,13 @@
       const name = input?.value?.trim();
       if (name) {
         if (stylePresets.some(p => p.name === name)) {
-          showMessage(`预设 "${name}" 已存在，请使用其他名称`);
+          showMessage(plugin.i18n["lets-nav-helper.appearance.presetExists"].replace("{name}", name));
           return;
         }
         stylePresets = [...stylePresets, { name, overrides: { ...styleOverrides } }];
         settings.setBySpace("nav-helper", "stylePresets", stylePresets);
         settings.save();
-        showMessage("样式预设已保存");
+        showMessage(plugin.i18n["lets-nav-helper.appearance.presetSaved"]);
         dialog.destroy();
       }
     };
@@ -63,13 +64,13 @@
 
   function deleteStylePreset(name: string) {
     const confirmDialog = new Dialog({
-      title: "删除样式预设",
+      title: plugin.i18n["lets-nav-helper.appearance.deletePresetTitle"],
       content: `<div class="b3-dialog__content" style="padding: 16px;">
-        <p style="margin: 0;">确定要删除样式预设 <strong>"${name}"</strong> 吗？</p>
+        <p style="margin: 0;">${plugin.i18n["lets-nav-helper.appearance.deletePresetConfirm"].replace("{name}", name)}</p>
       </div>
       <div class="b3-dialog__action">
-        <button class="b3-button b3-button--cancel" id="deletePresetCancelBtn">取消</button><div class="fn__space"></div>
-        <button class="b3-button b3-button--text" id="deletePresetConfirmBtn">确定删除</button>
+        <button class="b3-button b3-button--cancel" id="deletePresetCancelBtn">${plugin.i18n["lets-nav-helper.cancelBtn"]}</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="deletePresetConfirmBtn">${plugin.i18n["lets-nav-helper.preset.deleteConfirmBtn"]}</button>
       </div>`,
       width: "360px",
     });
@@ -80,7 +81,7 @@
       stylePresets = stylePresets.filter(p => p.name !== name);
       settings.setBySpace("nav-helper", "stylePresets", stylePresets);
       settings.save();
-      showMessage(`样式预设 "${name}" 已删除`);
+      showMessage(plugin.i18n["lets-nav-helper.appearance.presetDeleted"].replace("{name}", name));
       confirmDialog.destroy();
     });
   }
@@ -95,7 +96,7 @@
 
   function resetAllStyles() {
     onChange({});
-    showMessage("所有样式已重置");
+    showMessage(plugin.i18n["lets-nav-helper.appearance.allReset"]);
   }
 
   function handleStyleChange(token: StyleToken, val: string) {
@@ -112,16 +113,16 @@
 <div class="tab-pane">
   <div class="setting-row" style="flex-direction: column; align-items: stretch; gap: 8px;">
     <div class="setting-info">
-      <span class="setting-title">导航栏样式</span>
-      <span class="setting-desc">自定义导航栏的颜色、大小和间距。留空则使用思源主题默认值。</span>
+      <span class="setting-title">{plugin.i18n["lets-nav-helper.appearance.navStyle"]}</span>
+      <span class="setting-desc">{plugin.i18n["lets-nav-helper.appearance.navStyleDesc"]}</span>
     </div>
   </div>
 
   {#each coreTokens as token}
     <div class="setting-row" style="flex-wrap: wrap; gap: 12px;">
       <div class="setting-info" style="flex: 1; min-width: 140px;">
-        <span class="setting-title">{token.label}</span>
-        <span class="setting-desc">{token.description}</span>
+        <span class="setting-title">{plugin.i18n[token.labelKey] || token.label}</span>
+        <span class="setting-desc">{plugin.i18n[token.descriptionKey] || token.description}</span>
       </div>
       <div class="button-controls" style="flex-shrink: 0;">
         <StyleTokenInput {token} value={styleOverrides[token.variable] || ""} onChange={(v) => handleStyleChange(token, v)} />
@@ -130,7 +131,7 @@
   {/each}
 
   <details open={styleAdvancedOpen} style="margin-top: 8px;">
-    <summary on:click|preventDefault={toggleAdvancedOpen} style="cursor: pointer; opacity: 0.6; font-size: 13px; padding: 8px 0;">高级选项</summary>
+    <summary on:click|preventDefault={toggleAdvancedOpen} style="cursor: pointer; opacity: 0.6; font-size: 13px; padding: 8px 0;">{plugin.i18n["lets-nav-helper.appearance.advancedOptions"]}</summary>
     <div style="display: flex; flex-direction: column; gap: 16px; padding: 4px 0;">
       {#each advancedTokens as token}
         <div class="setting-row" style="flex-wrap: wrap; gap: 12px;">
@@ -147,13 +148,13 @@
 
     <div class="setting-row" style="margin-top: 8px; gap: 8px; flex-wrap: wrap;">
       <div class="setting-info">
-        <span class="setting-title">管理样式预设</span>
-        <span class="setting-desc">将当前样式保存为预设，方便快速切换{stylePresets.length > 0 ? '。点击预设名称可删除' : ''}</span>
+        <span class="setting-title">{plugin.i18n["lets-nav-helper.appearance.managePresets"]}</span>
+        <span class="setting-desc">{plugin.i18n["lets-nav-helper.appearance.managePresetsDesc"]}</span>
       </div>
       <div class="button-controls" style="gap: 8px; flex-wrap: wrap;">
         <button
           class="b3-button b3-button--outline"
-          on:click={saveStylePreset}>保存为预设</button
+          on:click={saveStylePreset}>{plugin.i18n["lets-nav-helper.appearance.saveAsPreset"]}</button
         >
         {#if stylePresets.length > 0}
           <select
@@ -166,7 +167,7 @@
               e.currentTarget.value = "";
             }}
           >
-            <option value="">应用预设...</option>
+            <option value="">{plugin.i18n["lets-nav-helper.appearance.applyPreset"]}</option>
             {#each stylePresets as preset}
               <option value={preset.name}>{preset.name}</option>
             {/each}
@@ -181,14 +182,14 @@
         <button
           class="b3-button b3-button--outline"
           style="color: var(--b3-theme-error);"
-          on:click={resetAllStyles}>全部重置</button
+          on:click={resetAllStyles}>{plugin.i18n["lets-nav-helper.appearance.resetAll"]}</button
         >
       </div>
     </div>
   </details>
 
   <details style="margin-top: 8px;">
-    <summary style="cursor: pointer; opacity: 0.6; font-size: 13px; padding: 8px 0;">二级菜单样式</summary>
+    <summary style="cursor: pointer; opacity: 0.6; font-size: 13px; padding: 8px 0;">{plugin.i18n["lets-nav-helper.appearance.submenuStyle"]}</summary>
     <div style="display: flex; flex-direction: column; gap: 16px; padding: 4px 0;">
       {#each submenuTokens as token}
         <div class="setting-row" style="flex-wrap: wrap; gap: 12px;">

@@ -124,7 +124,7 @@ export class PandaNavigation extends Plugin {
   async openSetting() {
     if (isMobile) {
       const dialog = new Dialog({
-        title: "🐼 熊猫导航 设置",
+        title: this.i18n["lets-nav-helper.settings.dialogTitle"],
         content: `<div id="panda-nav-settings" style="height: 100%; overflow: auto;"></div>`,
         width: "92vw",
         height: "80vh",
@@ -142,7 +142,7 @@ export class PandaNavigation extends Plugin {
         app: this.app,
         custom: {
           icon: "iconSettings",
-          title: "熊猫导航 设置",
+          title: this.i18n["lets-nav-helper.settings.tabTitle"],
           id: tabId,
         }
       }).then((tab) => {

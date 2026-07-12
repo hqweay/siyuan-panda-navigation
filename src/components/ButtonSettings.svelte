@@ -217,7 +217,7 @@
       type: "builtin",
       value: "url",
       param: "",
-      title: "新动作",
+      title: plugin.i18n["lets-nav-helper.buttonSettings.newAction"],
       icon: "#iconLink",
       showOn: "both",
     });
@@ -232,13 +232,13 @@
 
   function savePresetDialog() {
     const dialog = new Dialog({
-      title: "保存预设",
+      title: plugin.i18n["lets-nav-helper.preset.saveTitle"],
       content: `<div class="b3-dialog__content">
-        <input class="b3-text-field fn__block" id="presetNameInput" placeholder="请输入自定义预设名称 (保存当前所有按钮和分组)">
+        <input class="b3-text-field fn__block" id="presetNameInput" placeholder="${plugin.i18n["lets-nav-helper.preset.inputPlaceholder"]}">
       </div>
       <div class="b3-dialog__action">
-        <button class="b3-button b3-button--cancel" id="presetCancelBtn">取消</button><div class="fn__space"></div>
-        <button class="b3-button b3-button--text" id="presetConfirmBtn">确定</button>
+        <button class="b3-button b3-button--cancel" id="presetCancelBtn">${plugin.i18n["lets-nav-helper.cancelBtn"]}</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="presetConfirmBtn">${plugin.i18n["lets-nav-helper.preset.confirm"]}</button>
       </div>`,
       width: "400px",
     });
@@ -261,7 +261,7 @@
         customPresets = [...customPresets, newPreset];
         settings.setBySpace("nav-helper", "customPresets", customPresets);
         settings.save();
-        showMessage("预设保存成功");
+        showMessage(plugin.i18n["lets-nav-helper.preset.saved"]);
         dialog.destroy();
       }
     };
@@ -275,13 +275,13 @@
 
   function deleteCustomPreset(id: string, name: string) {
     const dialog = new Dialog({
-      title: "删除预设",
+      title: plugin.i18n["lets-nav-helper.preset.deleteTitle"],
       content: `<div class="b3-dialog__content">
-        <p style="margin: 16px;">确定要删除自定义预设 <strong>"${name}"</strong> 吗？</p>
+        <p style="margin: 16px;">${plugin.i18n["lets-nav-helper.preset.deleteConfirm"]} <strong>"${name}"</strong>？</p>
       </div>
       <div class="b3-dialog__action">
-        <button class="b3-button b3-button--cancel" id="deletePresetCancelBtn">取消</button><div class="fn__space"></div>
-        <button class="b3-button b3-button--text" id="deletePresetConfirmBtn">确定删除</button>
+        <button class="b3-button b3-button--cancel" id="deletePresetCancelBtn">${plugin.i18n["lets-nav-helper.cancelBtn"]}</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="deletePresetConfirmBtn">${plugin.i18n["lets-nav-helper.preset.deleteConfirmBtn"]}</button>
       </div>`,
       width: "360px",
     });
@@ -292,20 +292,20 @@
       customPresets = customPresets.filter((p) => p.id !== id);
       settings.setBySpace("nav-helper", "customPresets", customPresets);
       settings.save();
-      showMessage(`预设 "${name}" 已删除`);
+      showMessage(`${plugin.i18n["lets-nav-helper.preset.deleted"]} "${name}"`);
       dialog.destroy();
     });
   }
 
   function restoreDefaults() {
     const dialog = new Dialog({
-      title: "恢复默认配置",
+      title: plugin.i18n["lets-nav-helper.restore.title"],
       content: `<div class="b3-dialog__content">
-        <div class="b3-form__space">⚠️ 确定要恢复出厂默认配置吗？这将会覆盖您当前的所有导航配置，并且无法撤销！</div>
+        <div class="b3-form__space">${plugin.i18n["lets-nav-helper.restore.confirm"]}</div>
       </div>
       <div class="b3-dialog__action" style="display: flex; align-items: center;">
-        <button class="b3-button b3-button--cancel" id="restoreCancelBtn">取消</button><div class="fn__space"></div>
-        <button class="b3-button b3-button--error" id="restoreConfirmBtn">确定恢复</button>
+        <button class="b3-button b3-button--cancel" id="restoreCancelBtn">${plugin.i18n["lets-nav-helper.restore.cancelBtn"]}</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--error" id="restoreConfirmBtn">${plugin.i18n["lets-nav-helper.restore.confirmBtn"]}</button>
       </div>`,
       width: "420px",
     });
@@ -319,7 +319,7 @@
   function addGroup() {
     const newGroup = assignButtonIds({
       type: "group",
-      title: "新分组",
+      title: plugin.i18n["lets-nav-helper.buttonSettings.newGroup"],
       value: "",
       icon: "#iconMenu",
       showOn: "both",
@@ -372,10 +372,9 @@
   }
 
   function getPlaceholder(type: string) {
-    if (type === "url") return "输入 https:// 、 siyuan:// 链接或文档 ID";
-    if (type === "sql") return "输入 SQL 查询语句，例如 SELECT id FROM blocks WHERE type = 'd'";
-    if (type === "av-add") return "选择或输入数据库块 ID";
-    if (type === "open-setting") return "";
+    if (type === "url") return plugin.i18n["lets-nav-helper.buttonSettings.placeholderUrl"];
+    if (type === "sql") return plugin.i18n["lets-nav-helper.buttonSettings.placeholderSql"];
+    if (type === "av-add") return plugin.i18n["lets-nav-helper.buttonSettings.placeholderAvAdd"];
     return "";
   }
 </script>
@@ -386,7 +385,7 @@
     style="margin-bottom: 12px; flex-wrap: wrap; gap: 8px;"
   >
     <span class="setting-desc" style="margin: 0; min-width: 200px;"
-      >配置您的导航菜单。支持动作和分组（最多2层）。</span
+      >{plugin.i18n["lets-nav-helper.buttonSettings.desc"]}</span
     >
     <div class="fn__flex" style="gap: 8px; flex-wrap: wrap;">
       <select
@@ -399,18 +398,18 @@
           const customPreset = customPresets.find((p) => p.id === presetId);
           if (customPreset) {
             const dialog = new Dialog({
-              title: "加载自定义预设",
+              title: plugin.i18n["lets-nav-helper.preset.loadTitle"],
               content: `<div class="b3-dialog__content">
-                <div class="b3-form__space">是否使用预设 <b>${customPreset.name}</b> 覆盖当前菜单？</div>
+                <div class="b3-form__space">${plugin.i18n["lets-nav-helper.preset.loadPrompt"]} <b>${customPreset.name}</b></div>
                 <ul class="b3-list b3-list--background">
-                  <li class="b3-list-item"><span class="b3-list-item__text"><b>覆盖</b>：清空当前所有按钮，仅保留该预设</span></li>
-                  <li class="b3-list-item"><span class="b3-list-item__text"><b>追加</b>：将该预设作为一个独立分组，添加到现有按钮后面</span></li>
+                  <li class="b3-list-item"><span class="b3-list-item__text"><b>${plugin.i18n["lets-nav-helper.preset.overwrite"]}</b>：${plugin.i18n["lets-nav-helper.preset.overwriteDesc"]}</span></li>
+                  <li class="b3-list-item"><span class="b3-list-item__text"><b>${plugin.i18n["lets-nav-helper.preset.append"]}</b>：${plugin.i18n["lets-nav-helper.preset.appendDesc"]}</span></li>
                 </ul>
               </div>
               <div class="b3-dialog__action" style="display: flex; align-items: center;">
-                <button class="b3-button b3-button--cancel" id="presetLoadCancelBtn">取消操作</button><div class="fn__space"></div>
-                <button class="b3-button b3-button--outline" id="presetLoadAppendBtn">追加为分组</button><div class="fn__space"></div>
-                <button class="b3-button b3-button--error" id="presetLoadReplaceBtn">覆盖当前</button>
+                <button class="b3-button b3-button--cancel" id="presetLoadCancelBtn">${plugin.i18n["lets-nav-helper.preset.cancelOp"]}</button><div class="fn__space"></div>
+                <button class="b3-button b3-button--outline" id="presetLoadAppendBtn">${plugin.i18n["lets-nav-helper.preset.append"]}</button><div class="fn__space"></div>
+                <button class="b3-button b3-button--error" id="presetLoadReplaceBtn">${plugin.i18n["lets-nav-helper.preset.overwrite"]}</button>
               </div>`,
               width: "480px",
             });
@@ -449,14 +448,14 @@
           e.currentTarget.value = "";
         }}
       >
-        <option value="">导入预设...</option>
-        <optgroup label="内置预设 (追加)">
+        <option value="">{plugin.i18n["lets-nav-helper.buttonSettings.importPreset"]}</option>
+        <optgroup label={plugin.i18n["lets-nav-helper.buttonSettings.builtinPresets"]}>
           {#each PRESET_GROUPS as preset}
             <option value={preset.id}>{preset.name}</option>
           {/each}
         </optgroup>
         {#if customPresets.length > 0}
-          <optgroup label="自定义预设">
+          <optgroup label={plugin.i18n["lets-nav-helper.buttonSettings.customPresets"]}>
             {#each customPresets as preset}
               <option value={preset.id}>{preset.name}</option>
             {/each}
@@ -465,7 +464,7 @@
       </select>
       <button
         class="b3-button b3-button--outline"
-        on:click={savePresetDialog}>另存为预设</button
+        on:click={savePresetDialog}>{plugin.i18n["lets-nav-helper.buttonSettings.saveAsPreset"]}</button
       >
       {#if customPresets.length > 0}
         {#each customPresets as preset}
@@ -478,15 +477,15 @@
       <button
         class="b3-button b3-button--outline"
         style="color: var(--b3-theme-error);"
-        on:click={restoreDefaults}>⚠️ 恢复默认</button
+        on:click={restoreDefaults}>{plugin.i18n["lets-nav-helper.buttonSettings.restoreDefault"]}</button
       >
       <button
         class="b3-button b3-button--outline"
-        on:click={() => addGroup()}>添加分组</button
+        on:click={() => addGroup()}>{plugin.i18n["lets-nav-helper.buttonSettings.addGroup"]}</button
       >
       <button
         class="b3-button b3-button--outline"
-        on:click={() => addMenuItem()}>添加动作</button
+        on:click={() => addMenuItem()}>{plugin.i18n["lets-nav-helper.buttonSettings.addAction"]}</button
       >
     </div>
   </div>
@@ -496,9 +495,9 @@
     style="margin-bottom: 16px;"
   >
     <div class="button-info">
-      <span class="setting-title">按钮标签文字</span>
+      <span class="setting-title">{plugin.i18n["lets-nav-helper.buttonSettings.labelTitle"]}</span>
       <span class="setting-desc" style="margin: 0;"
-        >控制按钮下方文字标签的显示</span
+        >{plugin.i18n["lets-nav-helper.buttonSettings.labelDesc"]}</span
       >
     </div>
     <div class="button-controls">
@@ -506,10 +505,10 @@
         showButtonLabels = e.currentTarget.value;
         onChange(menuItems, showButtonLabels);
       }}>
-        <option value="both">移动端与 PC 端</option>
-        <option value="mobile">仅移动端</option>
-        <option value="pc">仅 PC 端</option>
-        <option value="none">禁用</option>
+        <option value="both">{plugin.i18n["lets-nav-helper.showOnBoth"]}</option>
+        <option value="mobile">{plugin.i18n["lets-nav-helper.showOnMobile"]}</option>
+        <option value="pc">{plugin.i18n["lets-nav-helper.showOnPc"]}</option>
+        <option value="none">{plugin.i18n["lets-nav-helper.showOnDisabled"]}</option>
       </select>
     </div>
   </div>
@@ -542,7 +541,7 @@
                 <span class="preview-emoji">{item.icon || "🔗"}</span>
               {/if}
             </div>
-            <span class="action-title-text">{item.title || "未命名"}</span>
+            <span class="action-title-text">{item.title || plugin.i18n["lets-nav-helper.buttonSettings.unnamed"]}</span>
           </div>
 
           <div
@@ -554,10 +553,10 @@
           >
             <span class="badge badge-type">
               {item.type === "group"
-                ? "分组"
+                ? plugin.i18n["lets-nav-helper.buttonSettings.typeGroup"]
                 : item.type === "internal"
-                  ? "内置"
-                  : "动作"}
+                  ? plugin.i18n["lets-nav-helper.buttonSettings.typeBuiltin"]
+                  : plugin.i18n["lets-nav-helper.buttonSettings.typeAction"]}
             </span>
 
             <div class="action-arrows fn__flex">
@@ -576,7 +575,7 @@
             <button
               class="remove-btn b3-tooltips b3-tooltips__w"
               style="padding: 4px; opacity: 0.7; font-size: 14px;"
-              aria-label="删除"
+              aria-label={plugin.i18n["lets-nav-helper.buttonSettings.delete"]}
               on:click={() => removeMenuItem(item.id)}
             >
               <svg><use xlink:href="#iconTrashcan"></use></svg>
@@ -596,7 +595,7 @@
               style="gap: 12px; flex-wrap: wrap; margin-bottom: 12px;"
             >
               <div class="form-item fn__flex-1" style="min-width: 180px;">
-                <span class="form-label">标题</span>
+                <span class="form-label">{plugin.i18n["lets-nav-helper.buttonSettings.formTitle"]}</span>
                 <input
                   class="b3-text-field"
                   type="text"
@@ -604,7 +603,7 @@
                 />
               </div>
               <div class="form-item fn__flex-1" style="min-width: 180px;">
-                <span class="form-label">图标 (Emoji或图标ID)</span>
+                <span class="form-label">{plugin.i18n["lets-nav-helper.buttonSettings.formIcon"]}</span>
                 <div class="fn__flex" style="gap: 8px;">
                   <input
                     class="b3-text-field fn__flex-1"
@@ -618,7 +617,7 @@
                       openIconPicker((icon) => {
                         item.icon = icon;
                         updateMenuItems([...menuItems]);
-                      })}>🎨 选择图标</button
+                      })}>{plugin.i18n["lets-nav-helper.buttonSettings.selectIcon"]}</button
                   >
                 </div>
     </div>
@@ -629,12 +628,12 @@
               style="gap: 12px; flex-wrap: wrap; margin-bottom: 12px;"
             >
               <div class="form-item fn__flex-1" style="min-width: 180px;">
-                <span class="form-label">显示位置 (设备)</span>
+                <span class="form-label">{plugin.i18n["lets-nav-helper.buttonSettings.formShowOn"]}</span>
                 <select class="b3-select" bind:value={item.showOn}>
-                  <option value="both">全部设备</option>
-                  <option value="desktop">仅桌面端</option>
-                  <option value="mobile">仅移动端</option>
-                  <option value="none">隐藏 (禁用)</option>
+                  <option value="both">{plugin.i18n["lets-nav-helper.buttonSettings.showOnAll"]}</option>
+                  <option value="desktop">{plugin.i18n["lets-nav-helper.buttonSettings.showOnDesktop"]}</option>
+                  <option value="mobile">{plugin.i18n["lets-nav-helper.buttonSettings.showOnMobileOnly"]}</option>
+                  <option value="none">{plugin.i18n["lets-nav-helper.buttonSettings.showOnHidden"]}</option>
                 </select>
               </div>
 
@@ -643,22 +642,22 @@
                   class="form-item fn__flex-1"
                   style="min-width: 180px;"
                 >
-                  <span class="form-label">动作类型</span>
+                  <span class="form-label">{plugin.i18n["lets-nav-helper.buttonSettings.formActionType"]}</span>
                   <select
                     class="b3-select"
                     bind:value={item.type}
                     on:change={() => handleTypeChange(item)}
                   >
-                    <option value="builtin">内置功能</option>
-                    <option value="command">思源系统/编辑器命令</option>
-                    <option value="pluginCommand">第三方插件命令</option>
+                    <option value="builtin">{plugin.i18n["lets-nav-helper.buttonSettings.typeBuiltinLabel"]}</option>
+                    <option value="command">{plugin.i18n["lets-nav-helper.buttonSettings.typeCommandLabel"]}</option>
+                    <option value="pluginCommand">{plugin.i18n["lets-nav-helper.buttonSettings.typePluginCommandLabel"]}</option>
                   </select>
                 </div>
               {/if}
             </div>
             {#if item.type !== "group"}
               <div class="form-item">
-                <span class="form-label">执行内容</span>
+                <span class="form-label">{plugin.i18n["lets-nav-helper.buttonSettings.formExecute"]}</span>
                 <div class="fn__flex" style="gap: 8px;">
                   {#if item.type === "builtin"}
                     <select
@@ -741,13 +740,13 @@
                 style="gap: 12px; margin-bottom: 12px; padding: 12px; background-color: var(--b3-theme-background-light); border-radius: 4px;"
               >
                 <div class="form-item fn__flex-1">
-                  <span class="form-label">二级菜单布局</span>
+                  <span class="form-label">{plugin.i18n["lets-nav-helper.buttonSettings.submenuLayout"]}</span>
                   <select
                     class="b3-select"
                     bind:value={item.submenuLayout}
                   >
-                    <option value="list">纵向列表 (显示文字)</option>
-                    <option value="grid">图标网格 (隐藏文字)</option>
+                    <option value="list">{plugin.i18n["lets-nav-helper.buttonSettings.submenuList"]}</option>
+                    <option value="grid">{plugin.i18n["lets-nav-helper.buttonSettings.submenuGrid"]}</option>
                   </select>
                 </div>
               </div>
@@ -760,10 +759,10 @@
                   class="fn__flex align-center justify-between"
                   style="margin-bottom: 8px;"
                 >
-                  <strong>组内动作</strong>
+                  <strong>{plugin.i18n["lets-nav-helper.buttonSettings.groupActions"]}</strong>
                   <button
                     class="b3-button b3-button--small b3-button--outline"
-                    on:click={() => addMenuItem(item)}>添加子动作</button
+                    on:click={() => addMenuItem(item)}>{plugin.i18n["lets-nav-helper.buttonSettings.addSubAction"]}</button
                   >
                 </div>
 
@@ -771,7 +770,7 @@
                   <div
                     style="color: var(--b3-theme-on-surface-light); font-size: 12px; padding: 8px 0;"
                   >
-                    该分组暂无动作
+                    {plugin.i18n["lets-nav-helper.buttonSettings.noActions"]}
                   </div>
                 {:else}
                   {#each item.children as child, j (child.id)}
@@ -800,7 +799,7 @@
                           <span
                             class="action-title-text"
                             style="font-size: 13px;"
-                            >{child.title || "未命名"}</span
+                            >{child.title || plugin.i18n["lets-nav-helper.buttonSettings.unnamed"]}</span
                           >
                         </div>
                         <div class="header-right fn__flex align-center">
@@ -809,10 +808,10 @@
                             bind:value={child.showOn}
                             style="width: 80px; margin-right: 8px;"
                           >
-                            <option value="both">全部</option>
-                            <option value="desktop">桌面</option>
-                            <option value="mobile">移动</option>
-                            <option value="none">隐藏</option>
+                            <option value="both">{plugin.i18n["lets-nav-helper.buttonSettings.childShowOnAll"]}</option>
+                            <option value="desktop">{plugin.i18n["lets-nav-helper.buttonSettings.childShowOnDesktop"]}</option>
+                            <option value="mobile">{plugin.i18n["lets-nav-helper.buttonSettings.childShowOnMobile"]}</option>
+                            <option value="none">{plugin.i18n["lets-nav-helper.buttonSettings.childShowOnHide"]}</option>
                           </select>
                           <div class="action-arrows fn__flex">
                             <button
@@ -833,7 +832,7 @@
                           <button
                             class="remove-btn"
                             style="padding: 4px;"
-                            aria-label="删除"
+                            aria-label={plugin.i18n["lets-nav-helper.buttonSettings.delete"]}
                             on:click={() =>
                               removeMenuItem(child.id, item)}
                           >
@@ -851,7 +850,7 @@
                             style="min-width: 120px;"
                             type="text"
                             bind:value={child.title}
-                            placeholder="标题"
+                            placeholder={plugin.i18n["lets-nav-helper.buttonSettings.formTitlePlaceholder"]}
                           />
                           <div
                             class="fn__flex fn__flex-1"
@@ -861,7 +860,7 @@
                               class="b3-text-field fn__flex-1"
                               type="text"
                               bind:value={child.icon}
-                              placeholder="图标/Emoji"
+                              placeholder={plugin.i18n["lets-nav-helper.buttonSettings.formIconPlaceholder"]}
                             />
                             <button
                               class="b3-button b3-button--outline"
@@ -879,9 +878,9 @@
                             bind:value={child.type}
                             on:change={() => handleTypeChange(child)}
                           >
-                            <option value="builtin">内置功能</option>
-                            <option value="command">系统/编辑器命令</option>
-                            <option value="pluginCommand">第三方命令</option>
+                            <option value="builtin">{plugin.i18n["lets-nav-helper.buttonSettings.childTypeBuiltin"]}</option>
+                            <option value="command">{plugin.i18n["lets-nav-helper.buttonSettings.childTypeCommand"]}</option>
+                            <option value="pluginCommand">{plugin.i18n["lets-nav-helper.buttonSettings.childTypePluginCommand"]}</option>
                           </select>
                         </div>
 

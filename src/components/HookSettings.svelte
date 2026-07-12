@@ -39,18 +39,19 @@
     settings.setBySpace("nav-helper", "globalClickHooks", hooks);
     await settings.save();
     await syncHooksToKernel();
-    showMessage(`钩子 "${hook.name}" 已${updated.find(h => h.id === hook.id)!.enabled ? "启用" : "禁用"}`);
+    const toggleMsgKey = updated.find(h => h.id === hook.id)!.enabled ? "lets-nav-helper.hooks.toggledEnabled" : "lets-nav-helper.hooks.toggledDisabled";
+    showMessage(plugin.i18n[toggleMsgKey].replace("{name}", hook.name));
   }
 
   async function deleteHook(id: string, name: string) {
     const dialog = new Dialog({
-      title: "删除全局钩子",
+      title: plugin.i18n["lets-nav-helper.hooks.deleteTitle"],
       content: `<div class="b3-dialog__content" style="padding: 16px;">
-        <p style="margin: 0;">确定要删除钩子 <strong>"${name}"</strong> 吗？</p>
+        <p style="margin: 0;">${plugin.i18n["lets-nav-helper.hooks.deleteConfirmMsg"].replace("{name}", name)}</p>
       </div>
       <div class="b3-dialog__action">
-        <button class="b3-button b3-button--cancel" id="deleteHookCancelBtn">取消</button><div class="fn__space"></div>
-        <button class="b3-button b3-button--text" id="deleteHookConfirmBtn">确定删除</button>
+        <button class="b3-button b3-button--cancel" id="deleteHookCancelBtn">${plugin.i18n["lets-nav-helper.settings.cancel"]}</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="deleteHookConfirmBtn">${plugin.i18n["lets-nav-helper.hooks.confirmDelete"]}</button>
       </div>`,
       width: "360px",
     });
@@ -62,7 +63,7 @@
       settings.setBySpace("nav-helper", "globalClickHooks", hooks);
       await settings.save();
       await syncHooksToKernel();
-      showMessage(`钩子 "${name}" 已删除`);
+      showMessage(plugin.i18n["lets-nav-helper.hooks.deleted"].replace("{name}", name));
       dialog.destroy();
     });
   }
@@ -97,7 +98,7 @@
       })
       .map((b: any) => {
         const key = getActionKey(b);
-        return `<option value="${key}" ${matchKey === key ? "selected" : ""}>${b.title || "(未命名)"} (${b.type})</option>`;
+        return `<option value="${key}" ${matchKey === key ? "selected" : ""}>${b.title || plugin.i18n["lets-nav-helper.hooks.unnamed"]} (${b.type})</option>`;
       })
       .join("");
     const valueOptions = Array.from(usedValues).sort().map(v =>
@@ -105,70 +106,70 @@
     ).join("");
 
     const dialog = new Dialog({
-      title: isEdit ? "编辑全局钩子" : "新建全局钩子",
+      title: isEdit ? plugin.i18n["lets-nav-helper.hooks.editTitle"] : plugin.i18n["lets-nav-helper.hooks.newTitle"],
       content: `<div class="b3-dialog__content" style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
         <label style="display: flex; flex-direction: column; gap: 4px;">
-          <span style="font-size: 12px; opacity: 0.7;">名称</span>
+          <span style="font-size: 12px; opacity: 0.7;">${plugin.i18n["lets-nav-helper.hooks.fieldName"]}</span>
           <input class="b3-text-field" id="hookName" value="${name.replace(/"/g, "&quot;")}" style="width: 100%;" />
         </label>
         <label style="display: flex; flex-direction: column; gap: 4px;">
-          <span style="font-size: 12px; opacity: 0.7;">模式</span>
+          <span style="font-size: 12px; opacity: 0.7;">${plugin.i18n["lets-nav-helper.hooks.fieldMode"]}</span>
           <select class="b3-select" id="hookMode" style="width: 100%;">
-            <option value="before" ${mode === "before" ? "selected" : ""}>before（执行前）</option>
-            <option value="replace" ${mode === "replace" ? "selected" : ""}>replace（替换）</option>
-            <option value="after" ${mode === "after" ? "selected" : ""}>after（执行后）</option>
+            <option value="before" ${mode === "before" ? "selected" : ""}>${plugin.i18n["lets-nav-helper.hooks.modeBefore"]}</option>
+            <option value="replace" ${mode === "replace" ? "selected" : ""}>${plugin.i18n["lets-nav-helper.hooks.modeReplace"]}</option>
+            <option value="after" ${mode === "after" ? "selected" : ""}>${plugin.i18n["lets-nav-helper.hooks.modeAfter"]}</option>
           </select>
         </label>
         <label style="display: flex; align-items: center; gap: 8px;">
           <input type="checkbox" id="hookMatchAll" ${matchAll ? "checked" : ""} />
-          <span style="font-size: 12px;">匹配所有按钮</span>
+          <span style="font-size: 12px;">${plugin.i18n["lets-nav-helper.hooks.matchAll"]}</span>
         </label>
         <div id="matchFields" style="display: flex; flex-direction: column; gap: 8px; ${matchAll ? "display: none;" : ""}">
-          <span id="andHint" style="font-size: 11px; opacity: 0.6;">多个条件需同时满足（AND）</span>
+          <span id="andHint" style="font-size: 11px; opacity: 0.6;">${plugin.i18n["lets-nav-helper.hooks.andHint"]}</span>
           <label style="display: flex; flex-direction: column; gap: 4px;">
-            <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮</span>
+            <span style="font-size: 12px; opacity: 0.7;">${plugin.i18n["lets-nav-helper.hooks.matchButton"]}</span>
             <select class="b3-select" id="hookMatchKey" style="width: 100%;">
-              <option value="">（不限）</option>
+              <option value="">${plugin.i18n["lets-nav-helper.hooks.anyOption"]}</option>
               ${btnOptions}
             </select>
           </label>
           <div id="otherMatchFields" style="display: flex; flex-direction: column; gap: 8px;">
             <label style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮类型</span>
+              <span style="font-size: 12px; opacity: 0.7;">${plugin.i18n["lets-nav-helper.hooks.matchType"]}</span>
               <select class="b3-select" id="hookMatchType" style="width: 100%;">
-                <option value="">（不限）</option>
-                <option value="builtin" ${matchType === "builtin" ? "selected" : ""}>builtin（内置功能）</option>
-                <option value="command" ${matchType === "command" ? "selected" : ""}>command（系统命令）</option>
-                <option value="pluginCommand" ${matchType === "pluginCommand" ? "selected" : ""}>pluginCommand（第三方命令）</option>
-                <option value="group" ${matchType === "group" ? "selected" : ""}>group（分组）</option>
+                <option value="">${plugin.i18n["lets-nav-helper.hooks.anyOption"]}</option>
+                <option value="builtin" ${matchType === "builtin" ? "selected" : ""}>${plugin.i18n["lets-nav-helper.hooks.typeBuiltin"]}</option>
+                <option value="command" ${matchType === "command" ? "selected" : ""}>${plugin.i18n["lets-nav-helper.hooks.typeCommand"]}</option>
+                <option value="pluginCommand" ${matchType === "pluginCommand" ? "selected" : ""}>${plugin.i18n["lets-nav-helper.hooks.typePluginCommand"]}</option>
+                <option value="group" ${matchType === "group" ? "selected" : ""}>${plugin.i18n["lets-nav-helper.hooks.typeGroup"]}</option>
               </select>
             </label>
             <label style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 12px; opacity: 0.7;">匹配 - 按钮标题（包含）</span>
+              <span style="font-size: 12px; opacity: 0.7;">${plugin.i18n["lets-nav-helper.hooks.matchTitle"]}</span>
               <input class="b3-text-field" id="hookMatchTitle" value="${matchTitle.replace(/"/g, "&quot;")}" style="width: 100%;" />
             </label>
             <label style="display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-size: 12px; opacity: 0.7;">匹配 - 功能值</span>
+              <span style="font-size: 12px; opacity: 0.7;">${plugin.i18n["lets-nav-helper.hooks.matchActionValue"]}</span>
               <select class="b3-select" id="hookMatchActionValue" style="width: 100%;">
-                <option value="">（不限）</option>
+                <option value="">${plugin.i18n["lets-nav-helper.hooks.anyOption"]}</option>
                 ${valueOptions}
               </select>
             </label>
           </div>
         </div>
         <label style="display: flex; flex-direction: column; gap: 4px;">
-          <span style="font-size: 12px; opacity: 0.7;">优先级（数值越小越先执行）</span>
+          <span style="font-size: 12px; opacity: 0.7;">${plugin.i18n["lets-nav-helper.hooks.fieldPriority"]}</span>
           <input class="b3-text-field" id="hookPriority" type="number" value="${priority}" style="width: 100%;" />
         </label>
         <label style="display: flex; flex-direction: column; gap: 4px;">
-          <span style="font-size: 12px; opacity: 0.7;">脚本（可用变量: plugin, siyuan, utils, kits, item, event, next, trigger）</span>
+          <span style="font-size: 12px; opacity: 0.7;">${plugin.i18n["lets-nav-helper.hooks.fieldScript"]}</span>
           <textarea class="b3-text-field" id="hookScript" rows="8" style="width: 100%; font-family: monospace; font-size: 11px;">${script.replace(/"/g, "&quot;")}</textarea>
-          <span style="font-size: 11px; opacity: 0.5;">上限 10KB。after/before 可调 trigger("按钮唯一ID") 链式触发其他按钮（注意: match.key 匹配的是 actionKey 而非此 ID）。</span>
+          <span style="font-size: 11px; opacity: 0.5;">${plugin.i18n["lets-nav-helper.hooks.scriptHint"]}</span>
         </label>
       </div>
       <div class="b3-dialog__action" style="padding: 16px 16px 0;">
-        <button class="b3-button b3-button--cancel" id="hookCancelBtn">取消</button><div class="fn__space"></div>
-        <button class="b3-button b3-button--text" id="hookSaveBtn">${isEdit ? "保存" : "创建"}</button>
+        <button class="b3-button b3-button--cancel" id="hookCancelBtn">${plugin.i18n["lets-nav-helper.settings.cancel"]}</button><div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="hookSaveBtn">${isEdit ? plugin.i18n["lets-nav-helper.hooks.saveBtn"] : plugin.i18n["lets-nav-helper.hooks.createBtn"]}</button>
       </div>`,
       width: "520px",
     });
@@ -189,7 +190,7 @@
       const locked = hookMatchKey.value !== "";
       otherMatchFields.style.opacity = locked ? "0.35" : "1";
       otherMatchFields.style.pointerEvents = locked ? "none" : "auto";
-      andHint.textContent = locked ? "已锁定（选中特定按钮后其余条件自动忽略）" : "多个条件需同时满足（AND）";
+      andHint.textContent = locked ? plugin.i18n["lets-nav-helper.hooks.andHintLocked"] : plugin.i18n["lets-nav-helper.hooks.andHint"];
       if (locked) {
         (dialog.element.querySelector("#hookMatchType") as HTMLSelectElement).value = "";
         (dialog.element.querySelector("#hookMatchTitle") as HTMLInputElement).value = "";
@@ -205,11 +206,11 @@
       const el = (id: string) => dialog.element.querySelector(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
       const newName = (el("#hookName") as HTMLInputElement).value.trim();
-      if (!newName) { showMessage("请输入名称"); return; }
+      if (!newName) { showMessage(plugin.i18n["lets-nav-helper.hooks.requireName"]); return; }
 
       const newScript = (el("#hookScript") as HTMLTextAreaElement).value.trim();
-      if (!newScript) { showMessage("请输入脚本"); return; }
-      if (newScript.length > 10 * 1024) { showMessage("脚本超过 10KB 限制"); return; }
+      if (!newScript) { showMessage(plugin.i18n["lets-nav-helper.hooks.requireScript"]); return; }
+      if (newScript.length > 10 * 1024) { showMessage(plugin.i18n["lets-nav-helper.hooks.scriptTooLarge"]); return; }
 
       const newMatchAll = (el("#hookMatchAll") as HTMLInputElement).checked;
       const mKey = (el("#hookMatchKey") as HTMLInputElement).value.trim();
@@ -245,23 +246,23 @@
       settings.setBySpace("nav-helper", "globalClickHooks", hooks);
       await settings.save();
       await syncHooksToKernel();
-      showMessage(isEdit ? `钩子 "${newName}" 已更新` : `钩子 "${newName}" 已创建`);
+      showMessage(isEdit ? plugin.i18n["lets-nav-helper.hooks.updated"].replace("{name}", newName) : plugin.i18n["lets-nav-helper.hooks.created"].replace("{name}", newName));
       dialog.destroy();
     });
   }
 
   function matchSummary(hook: any): string {
-    if (hook.matchAll) return "匹配所有按键";
+    if (hook.matchAll) return plugin.i18n["lets-nav-helper.hooks.matchAllKeys"];
     const parts: string[] = [];
     if (hook.match?.key) {
       const all = (settings.getBySpace("nav-helper", "menuItems") || []);
       const btn = all.find((i: any) => getActionKey(i) === hook.match.key);
-      parts.push(`按钮: ${btn ? btn.title : "(已删除的按钮)"}`);
+      parts.push(plugin.i18n["lets-nav-helper.hooks.matchButtonLabel"] + (btn ? btn.title : plugin.i18n["lets-nav-helper.hooks.matchDeletedButton"]));
     }
-    if (hook.match?.type) parts.push(`类型: ${hook.match.type}`);
-    if (hook.match?.titleMatch) parts.push(`标题包含: ${hook.match.titleMatch}`);
-    if (hook.match?.actionValue) parts.push(`功能值: ${hook.match.actionValue}`);
-    return parts.length > 0 ? "条件全满足: " + parts.join("，") : "无匹配条件";
+    if (hook.match?.type) parts.push(plugin.i18n["lets-nav-helper.hooks.matchTypeLabel"] + hook.match.type);
+    if (hook.match?.titleMatch) parts.push(plugin.i18n["lets-nav-helper.hooks.matchTitleLabel"] + hook.match.titleMatch);
+    if (hook.match?.actionValue) parts.push(plugin.i18n["lets-nav-helper.hooks.matchActionValueLabel"] + hook.match.actionValue);
+    return parts.length > 0 ? plugin.i18n["lets-nav-helper.hooks.matchConditionFull"] + parts.join(plugin.i18n["lets-nav-helper.hooks.matchConditionSep"]) : plugin.i18n["lets-nav-helper.hooks.matchNoCondition"];
   }
 
   function priorityClass(p: number): string {
@@ -274,14 +275,14 @@
 
 <div class="tab-pane">
   <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center;">
-    <span class="setting-title">全局钩子（{hooks.length}）</span>
-    <button class="b3-button b3-button--outline" on:click={() => openHookEditor()}>+ 新建钩子</button>
+    <span class="setting-title">{plugin.i18n["lets-nav-helper.hooks.title"].replace("{count}", hooks.length)}</span>
+    <button class="b3-button b3-button--outline" on:click={() => openHookEditor()}>+ {plugin.i18n["lets-nav-helper.hooks.newBtn"]}</button>
   </div>
   {#if hooks.length === 0}
     <div class="setting-row" style="flex-direction: column; align-items: center; gap: 8px; padding: 24px;">
       <span class="setting-desc" style="text-align: center;">
-        点击上方「新建钩子」开始配置。<br>
-        示例：创建一个 after 钩子，脚本写 <code>showMessage("✨")</code>，实现统一点击动效。
+        {plugin.i18n["lets-nav-helper.hooks.emptyLine1"]}<br>
+        {plugin.i18n["lets-nav-helper.hooks.emptyLine2Prefix"]}<code>showMessage("✨")</code>{plugin.i18n["lets-nav-helper.hooks.emptyLine2Suffix"]}
       </span>
     </div>
   {:else}
@@ -289,13 +290,13 @@
       <div class="setting-row hook-row" style="gap: 12px; align-items: flex-start; {hook.enabled === false ? 'opacity: 0.5;' : ''}">
         <div class="hook-main" style="flex: 1; min-width: 0;">
           <div class="hook-header">
-            <span class="setting-title">{hook.name || "(未命名)"}</span>
+            <span class="setting-title">{hook.name || plugin.i18n["lets-nav-helper.hooks.unnamed"]}</span>
             {#if hook.enabled === false}
-              <span class="hook-badge disabled-label">已禁用</span>
+              <span class="hook-badge disabled-label">{plugin.i18n["lets-nav-helper.hooks.disabled"]}</span>
             {/if}
             <span class="hook-badge mode-{hook.mode}">{hook.mode}</span>
             {#if hook.priority != null}
-              <span class="hook-badge {priorityClass(hook.priority)}">优先级 {hook.priority}</span>
+              <span class="hook-badge {priorityClass(hook.priority)}">{plugin.i18n["lets-nav-helper.hooks.priority"]} {hook.priority}</span>
             {/if}
           </div>
           <div class="setting-desc hook-match">{matchSummary(hook)}</div>
@@ -303,18 +304,18 @@
             <div class="hook-script" style="margin-top: 6px;">
               {#if expandedScripts.has(hook.id)}
                 <pre class="script-pre">{hook.script}</pre>
-                <button class="script-toggle" on:click={() => toggleScriptExpand(hook.id)}>收起脚本</button>
+                <button class="script-toggle" on:click={() => toggleScriptExpand(hook.id)}>{plugin.i18n["lets-nav-helper.hooks.collapseScript"]}</button>
               {:else}
                 <code class="script-preview">{scriptPreview(hook.script)}</code>
                 {#if hook.script.length > 100}
-                  <button class="script-toggle" on:click={() => toggleScriptExpand(hook.id)}>展开脚本</button>
+                  <button class="script-toggle" on:click={() => toggleScriptExpand(hook.id)}>{plugin.i18n["lets-nav-helper.hooks.expandScript"]}</button>
                 {/if}
               {/if}
             </div>
           {/if}
         </div>
         <div class="hook-controls" style="flex-shrink: 0; display: flex; align-items: center; gap: 8px;">
-          <label class="toggle-switch" title={hook.enabled === false ? "点击启用" : "点击禁用"}>
+          <label class="toggle-switch" title={hook.enabled === false ? plugin.i18n["lets-nav-helper.hooks.clickToEnable"] : plugin.i18n["lets-nav-helper.hooks.clickToDisable"]}>
             <input
               type="checkbox"
               checked={hook.enabled !== false}
@@ -325,11 +326,11 @@
           <button
             class="b3-button b3-button--outline"
             style="padding: 2px 8px; font-size: 12px;"
-            on:click={() => openHookEditor(hook)}>编辑</button>
+            on:click={() => openHookEditor(hook)}>{plugin.i18n["lets-nav-helper.hooks.editBtn"]}</button>
           <button
             class="b3-button b3-button--outline"
             style="padding: 2px 8px; font-size: 12px; color: var(--b3-theme-error);"
-            on:click={() => deleteHook(hook.id, hook.name)}>删除</button>
+            on:click={() => deleteHook(hook.id, hook.name)}>{plugin.i18n["lets-nav-helper.hooks.deleteBtn"]}</button>
         </div>
       </div>
     {/each}

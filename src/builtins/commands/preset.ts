@@ -9,6 +9,7 @@ import {
 export const switchPreset: BuiltinCommand = {
   id: "switch-preset",
   title: "切换导航预设",
+  i18nKey: "lets-nav-helper.builtin.switchPreset",
   requiresParam: true,
   paramPlaceholder: "选择预设",
   inputType: "select",
@@ -23,7 +24,7 @@ export const switchPreset: BuiltinCommand = {
   },
   execute: async (plugin: any, param?: string) => {
     if (!param) {
-      showMessage("预设名称不能为空");
+      showMessage(plugin.i18n["lets-nav-helper.presetNameEmpty"]);
       return;
     }
 
@@ -34,7 +35,7 @@ export const switchPreset: BuiltinCommand = {
       if (plugin && typeof plugin.handleSettingsChange === "function") {
         plugin.handleSettingsChange();
       }
-      showMessage("已恢复出厂默认配置");
+      showMessage(plugin.i18n["lets-nav-helper.restoredDefault"]);
       return;
     }
 
@@ -52,7 +53,7 @@ export const switchPreset: BuiltinCommand = {
       if (plugin && typeof plugin.handleSettingsChange === "function") {
         plugin.handleSettingsChange();
       }
-      showMessage(`已切换至预设: ${param}`);
+      showMessage(plugin.i18n["lets-nav-helper.switchedToPreset"].replace("{name}", param));
       return;
     }
 
@@ -65,10 +66,10 @@ export const switchPreset: BuiltinCommand = {
       if (plugin && typeof plugin.handleSettingsChange === "function") {
         plugin.handleSettingsChange();
       }
-      showMessage(`已切换至内置预设: ${param}`);
+      showMessage(plugin.i18n["lets-nav-helper.switchedToBuiltinPreset"].replace("{name}", param));
       return;
     }
 
-    showMessage(`未找到名为 "${param}" 的预设`);
+    showMessage(plugin.i18n["lets-nav-helper.presetNotFound"].replace("{name}", param));
   },
 };

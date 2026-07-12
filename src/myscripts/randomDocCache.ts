@@ -354,10 +354,10 @@ export const goToRandomBlock = async (sql: string) => {
         },
       });
     }
-    showMessage("已跳转到随机文档");
+    showMessage(plugin.i18n["lets-nav-helper.jumpedToRandom"]);
     mobileUtils.vibrate(50);
   } catch (error) {
     log.error("跳转到随机文档失败:", error);
-    showMessage("跳转到随机文档失败");
+    showMessage(plugin.i18n["lets-nav-helper.jumpToRandomFailed"]);
   }
 };

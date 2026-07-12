@@ -38,7 +38,7 @@
     settings.setBySpace("nav-helper", "styleOverrides", styleOverrides);
 
     await settings.save();
-    showMessage("熊猫导航配置已保存");
+    showMessage(plugin.i18n["lets-nav-helper.settings.saved"]);
 
     // 触发插件实例更新
     if (plugin && (plugin as any).handleSettingsChange) {
@@ -55,28 +55,28 @@
       class:active={activeTab === "general"}
       on:click={() => (activeTab = "general")}
     >
-      基础配置
+      {plugin.i18n["lets-nav-helper.settings.generalTab"]}
     </button>
     <button
       class="tab-btn"
       class:active={activeTab === "buttons"}
       on:click={() => (activeTab = "buttons")}
     >
-      菜单构建
+      {plugin.i18n["lets-nav-helper.settings.buttonsTab"]}
     </button>
     <button
       class="tab-btn"
       class:active={activeTab === "appearance"}
       on:click={() => (activeTab = "appearance")}
     >
-      外观
+      {plugin.i18n["lets-nav-helper.settings.appearanceTab"]}
     </button>
     <button
       class="tab-btn"
       class:active={activeTab === "hooks"}
       on:click={() => (activeTab = "hooks")}
     >
-      钩子
+      {plugin.i18n["lets-nav-helper.settings.hooksTab"]}
     </button>
   </div>
 
@@ -86,14 +86,14 @@
       <div class="tab-pane">
         <div class="setting-row">
           <div class="setting-info">
-            <span class="setting-title">启用悬浮导航栏</span>
-            <span class="setting-desc">选择在哪些设备上显示底部导航栏</span>
+            <span class="setting-title">{plugin.i18n["lets-nav-helper.enableBottomNav"]}</span>
+            <span class="setting-desc">{plugin.i18n["lets-nav-helper.settings.deviceSelectDesc"]}</span>
           </div>
           <select class="b3-select" bind:value={enableBottomNav}>
-            <option value="both">移动端与 PC 端</option>
-            <option value="mobile">仅移动端</option>
-            <option value="pc">仅 PC 端</option>
-            <option value="none">禁用</option>
+            <option value="both">{plugin.i18n["lets-nav-helper.settings.both"]}</option>
+            <option value="mobile">{plugin.i18n["lets-nav-helper.settings.mobile"]}</option>
+            <option value="pc">{plugin.i18n["lets-nav-helper.settings.pc"]}</option>
+            <option value="none">{plugin.i18n["lets-nav-helper.settings.none"]}</option>
           </select>
         </div>
       </div>
@@ -119,10 +119,10 @@
   <!-- Footer Actions -->
   <div class="settings-footer fn__flex justify-end">
     <button class="b3-button b3-button--cancel" on:click={closeDialog}
-      >取消</button
+      >{plugin.i18n["lets-nav-helper.settings.cancel"]}</button
     >
     <div class="fn__space"></div>
-    <button class="b3-button" on:click={handleSave}>保存配置</button>
+    <button class="b3-button" on:click={handleSave}>{plugin.i18n["lets-nav-helper.settings.save"]}</button>
   </div>
 
 </div>

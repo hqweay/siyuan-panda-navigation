@@ -1,6 +1,7 @@
 export interface BuiltinCommand {
     id: string;
     title: string;
+    i18nKey?: string;
     requiresParam: boolean;
     paramPlaceholder?: string;
     inputType?: "text" | "textarea" | "select";

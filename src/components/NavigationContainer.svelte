@@ -105,7 +105,7 @@
   const trigger = async (targetId: string) => {
     const targetItem = menuItems.find(i => i.id === targetId);
     if (!targetItem) {
-      showMessage(`找不到按钮: ${targetId}`);
+      showMessage(plugin.i18n["lets-nav-helper.nav.cannotFindButton"]);
       return;
     }
     await handleActionClick(targetItem, new Event("hook-trigger"));
@@ -118,7 +118,7 @@
 
   async function handleActionClick(item: any, event: Event) {
     if (hookDepth >= MAX_HOOK_DEPTH) {
-      showMessage("编排链过深，已自动阻断");
+      showMessage(plugin.i18n["lets-nav-helper.nav.hookChainTooDeep"]);
       return;
     }
     hookDepth++;
@@ -155,10 +155,10 @@
           const param = type === "builtin" ? item.param : item.value;
           Promise.resolve(cmd.execute(plugin, param)).catch((err) => {
             log.error("执行内置命令失败:", err);
-            showMessage("执行内置命令失败");
+            showMessage(plugin.i18n["lets-nav-helper.nav.builtinExecFailed"]);
           });
         } else {
-          showMessage("未知的内置功能: " + cmdId);
+          showMessage(plugin.i18n["lets-nav-helper.nav.unknownBuiltin"]);
         }
         return;
       }
@@ -175,7 +175,7 @@
               if (cmd) {
                 if (cmd.callback) cmd.callback();
                 else if (cmd.globalCallback) cmd.globalCallback();
-                else showMessage(`插件命令不支持外部直接调用: ${value}`);
+                else showMessage(plugin.i18n["lets-nav-helper.nav.pluginCmdNotCallable"]);
               }
             }
           } else if (value.startsWith("editor::")) {
@@ -195,9 +195,9 @@
             if (hotkey) {
               simulateHotkey(hotkey);
             } else if (editor?.[category]?.[key] || Object.values(editor || {}).some((cat: any) => cat?.[key])) {
-              showMessage(`快捷键 "${key}" 存在但未设置自定义快捷键，请先在思源设置中为其分配快捷键`);
+              showMessage(plugin.i18n["lets-nav-helper.nav.hotkeyNotSet"]);
             } else {
-              showMessage(`找不到对应的快捷键配置: ${value}`);
+              showMessage(plugin.i18n["lets-nav-helper.nav.hotkeyNotFound"]);
             }
           } else if (value === "search") {
             const searchDialog = (globalThis as any).siyuan?.dialogs?.find(
@@ -231,7 +231,7 @@
           }
         } catch (err) {
           log.error("执行命令失败:", err);
-          showMessage("执行命令失败");
+          showMessage(plugin.i18n["lets-nav-helper.execFailed"]);
         }
       }
     };
@@ -379,7 +379,7 @@
     });
 
     if (validChildren.length === 0) {
-      showMessage("该分组下没有内容");
+      showMessage(plugin.i18n["lets-nav-helper.nav.groupEmpty"]);
       return;
     }
 

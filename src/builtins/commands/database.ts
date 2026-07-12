@@ -6,6 +6,7 @@ import { getCurrentDocId } from "../../myscripts/syUtils";
 export const avAddCommand: BuiltinCommand = {
     id: "av-add",
     title: "添加到数据库",
+    i18nKey: "lets-nav-helper.builtin.avAdd",
     requiresParam: true,
     paramPlaceholder: "选择数据库",
     inputType: "select",
@@ -32,13 +33,13 @@ export const avAddCommand: BuiltinCommand = {
             const currentDocId = getCurrentDocId();
             if (currentDocId) {
                 await avHelper.addBlocks([currentDocId]);
-                showMessage("已成功添加到属性视图/数据库");
+                showMessage(plugin.i18n["lets-nav-helper.addToDBSuccess"]);
             } else {
-                showMessage("当前没有打开的文档");
+                showMessage(plugin.i18n["lets-nav-helper.noOpenDoc"]);
             }
         } catch (err) {
             console.error("添加到数据库失败:", err);
-            showMessage("添加到属性视图/数据库失败");
+            showMessage(plugin.i18n["lets-nav-helper.addToDBFailed"]);
         }
     }
 };

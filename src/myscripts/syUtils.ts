@@ -91,7 +91,7 @@ export function openByUrl(url) {
   url = url.trim();
   log.info("openByUrl:", url);
   if (!url) {
-    showMessage("url为空");
+    showMessage(plugin.i18n["lets-nav-helper.urlEmpty"]);
     return;
   } else if (url.toLowerCase().startsWith("select ")) {
     goToRandomBlock(url);

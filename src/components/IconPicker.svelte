@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { plugin } from "../utils";
+
   export let active: boolean;
   export let currentIcon: string;
   export let allIcons: string[] = [];
@@ -15,7 +17,7 @@
 {#if active}
   <div class="icon-picker-panel fn__flex-column">
     <div class="picker-header fn__flex align-center justify-between">
-      <span class="picker-title">🎨 选择动作图标</span>
+      <span class="picker-title">{plugin.i18n["lets-nav-helper.iconPicker.title"]}</span>
       <button class="picker-close-btn" on:click={onClose}>
         <svg class="close-icon"><use xlink:href="#iconClose"></use></svg>
       </button>
@@ -25,7 +27,7 @@
       <input
         class="b3-text-field fn__block"
         type="text"
-        placeholder="🔍 搜索图标 (输入英文名称过滤)..."
+        placeholder={plugin.i18n["lets-nav-helper.iconPicker.searchPlaceholder"]}
         bind:value={searchQuery}
       />
     </div>
@@ -42,7 +44,7 @@
         </button>
       {/each}
       {#if filteredIcons.length === 0}
-        <div class="picker-no-results">📭 没有找到匹配的图标</div>
+        <div class="picker-no-results">{plugin.i18n["lets-nav-helper.iconPicker.noResults"]}</div>
       {/if}
     </div>
   </div>

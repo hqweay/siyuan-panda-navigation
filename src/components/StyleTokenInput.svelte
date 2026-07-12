@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { plugin } from "../utils";
   import type { StyleToken } from "../style-tokens";
 
   export let token: StyleToken;
@@ -21,7 +22,7 @@
       type="text"
       value={value}
       on:input={(e) => onChange(e.currentTarget.value)}
-      placeholder={token.cssFallback || "默认"}
+      placeholder={token.cssFallback || plugin.i18n["lets-nav-helper.styleToken.defaultPlaceholder"]}
       style="width: 120px;"
     />
   {:else if token.type === "size" || token.type === "opacity"}
@@ -46,18 +47,18 @@
       type="text"
       value={value}
       on:input={(e) => onChange(e.currentTarget.value)}
-      placeholder={token.cssFallback || "默认"}
+      placeholder={token.cssFallback || plugin.i18n["lets-nav-helper.styleToken.defaultPlaceholder"]}
       style="width: 160px;"
     />
   {/if}
   {#if isDefault}
-    <span class="setting-desc" style="opacity: 0.5; font-size: 11px; white-space: nowrap;">(默认值)</span>
+    <span class="setting-desc" style="opacity: 0.5; font-size: 11px; white-space: nowrap;">{plugin.i18n["lets-nav-helper.styleToken.defaultValue"]}</span>
   {/if}
   {#if value}
     <button
       class="b3-button b3-button--outline"
       style="padding: 0 6px; font-size: 11px;"
-      on:click={() => onChange("")}>重置</button
+      on:click={() => onChange("")}>{plugin.i18n["lets-nav-helper.styleToken.reset"]}</button
     >
   {/if}
 </div>
