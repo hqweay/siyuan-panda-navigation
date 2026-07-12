@@ -49,10 +49,6 @@ export default defineConfig({
           dest: "./",
         },
         {
-          src: "./public/i18n/**",
-          dest: "./public/i18n/",
-        },
-        {
           src: "./public/skills/siyuan-panda-navigation",
           dest: "./skills/",
         },
@@ -88,7 +84,6 @@ export default defineConfig({
                 name: "watch-external",
                 async buildStart() {
                   const files = await fg([
-                    "public/i18n/**",
                     "./README*.md",
                     "./plugin.json",
                   ]);

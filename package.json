@@ -2,7 +2,7 @@
   "name": "siyuan-panda-navigation",
   "version": "0.8.0",
   "type": "module",
-  "description": "熊猫导航 - 思源笔记自适应导航栏与快捷工具",
+  "description": "\u718a\u732b\u5bfc\u822a - \u601d\u6e90\u7b14\u8bb0\u81ea\u9002\u5e94\u5bfc\u822a\u680f\u4e0e\u5feb\u6377\u5de5\u5177",
   "author": "hqweay",
   "license": "MIT",
   "scripts": {
@@ -10,7 +10,10 @@
     "build": "node scripts/gen-builtin-metas.js && node scripts/bundle-dts.js && vite build && pnpm build:kernel",
     "build:kernel": "esbuild src/kernel.ts --bundle --outfile=dist/kernel.js --external:siyuan --platform=node",
     "build:kernel:dev": "esbuild src/kernel.ts --bundle --outfile=\"/Users/hqweay/SiYuan/data/plugins/siyuan-panda-navigation/kernel.js\" --external:siyuan --platform=node",
-    "release": "bash ./update-version.sh"
+    "release": "bash ./update-version.sh",
+    "i18n:check": "node scripts/check-i18n.mjs",
+    "prebuild": "node scripts/check-i18n.mjs",
+    "predev": "node scripts/check-i18n.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",

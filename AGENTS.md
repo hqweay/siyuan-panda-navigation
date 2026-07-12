@@ -204,11 +204,36 @@ import { getActionKey } from "./utils";  // utils.ts 引用了 siyuan SDK、api.
 ```
 
 ```bash
-pnpm build              # 完整构建（前端 + kernel）
-pnpm dev                # 开发模式（前端 watch + kernel watch，自动部署到 SiYuan 插件目录）
+pnpm i18n:check         # 校验 i18n key 完整性（build/dev 前自动执行）
+pnpm build              # 完整构建（前端 + kernel，含 i18n 校验）
+pnpm dev                # 开发模式（前端 watch + kernel watch，自动部署到 SiYuan 插件目录，含 i18n 校验）
 pnpm build:kernel       # 仅构建 kernel.js（输出到 dist/）
 pnpm build:kernel:dev   # 仅构建 kernel.js（输出到 SiYuan 插件目录）
 ```**
+
+# i18n 维护规范
+
+本项目国际化仅有 `i18n/en_US.json` 和 `i18n/zh_CN.json` 两套文件，**不允许再新增其他 i18n 文件或目录**（已删除历史遗留的 `public/i18n/`）。
+
+## 核心规则
+
+1. **命名格式**：`lets-nav-helper.<模块>.<含义>`，点号分层。例如 `settings.saved`、`hooks.matchAllKeys`。**禁止**平铺式命名（如 `settingsSaved`、`hooksDeleted` — 这是已弃用的旧格式）。
+2. **唯一数据源**：所有翻译只存在 `i18n/` 目录中。SiYuan 插件框架自动加载该目录。
+3. **构建前自动校验**：`pnpm build` / `pnpm dev` 前会自动执行 `pnpm i18n:check`，扫描 `src/` 中所有 `plugin.i18n["..."]` 调用，确保每个 key 在 JSON 中都有对应条目。缺失则不通过。
+4. **单独校验**：`pnpm i18n:check` 可随时手动运行，也会列出 JSON 中的废弃 key（代码未引用的）作为警告。
+
+## 新增或修改 key
+
+```ts
+// ✅ 正确：分层命名
+plugin.i18n["lets-nav-helper.settings.generalTab"]
+
+// ❌ 禁止：平铺或非规范命名
+plugin.i18n["lets-nav-helper.settingsGeneralTab"]
+plugin.i18n["lets-nav-helper.GeneralTab"]
+```
+
+改完 JSON 后务必运行 `pnpm i18n:check` 确认两边一致。
 
 # 文档规范 (Documentation Style)
 
