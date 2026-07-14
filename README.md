@@ -51,7 +51,7 @@ Create buttons as individual actions or group them. Supported action types:
 
 | Type | Description |
 |------|-------------|
-| **Built-in** | Enhanced navigation features: document tree traversal (parent/child/sibling/back/forward), scroll to top, random doc, custom links / doc IDs, SQL-powered random roam, add current doc to an attribute view, execute custom JS scripts |
+| **Built-in** | Enhanced navigation features: document tree traversal (parent/child/sibling/back/forward), scroll to top, scroll to bottom, random doc, upload and insert images from camera roll (inserts at cursor, or automatically appends to document end if read-only or unfocused), custom links / doc IDs, SQL-powered random roam, add current doc to an attribute view, execute custom JS scripts |
 | **System Command** | Trigger any global SiYuan system command directly |
 | **Editor Command** | Works as a floating format brush on mobile — trigger native editor actions (bold, list, heading, etc.), great for tablets and phones |
 | **Plugin Command** | Trigger commands registered by **other SiYuan plugins** (e.g., open today's daily note) |

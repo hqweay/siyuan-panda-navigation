@@ -381,6 +381,10 @@
   "lets-nav-helper.builtin.random": "Random Doc",
   "lets-nav-helper.builtin.sql": "Advanced Random Roam (SQL)",
   "lets-nav-helper.builtin.script": "Execute Custom JS Script",
+  "lets-nav-helper.builtin.uploadImage": "Upload and Insert Image",
+  "lets-nav-helper.builtin.uploading": "Uploading image...",
+  "lets-nav-helper.builtin.imageInserted": "Image inserted",
+  "lets-nav-helper.builtin.imageAppended": "Image appended to end of document",
 
   "lets-nav-helper.builtin.isFirstSibling": "Current document is already the first sibling",
   "lets-nav-helper.builtin.isLastSibling": "Current document is already the last sibling",

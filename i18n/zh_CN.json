@@ -381,6 +381,10 @@
   "lets-nav-helper.builtin.random": "随机文档",
   "lets-nav-helper.builtin.sql": "高级随机漫游 (SQL)",
   "lets-nav-helper.builtin.script": "执行自定义 JS 脚本",
+  "lets-nav-helper.builtin.uploadImage": "上传并插入图片",
+  "lets-nav-helper.builtin.uploading": "正在上传图片...",
+  "lets-nav-helper.builtin.imageInserted": "图片已插入",
+  "lets-nav-helper.builtin.imageAppended": "图片已追加到文档末尾",
 
   "lets-nav-helper.builtin.isFirstSibling": "当前文档已经是第一篇相邻文档",
   "lets-nav-helper.builtin.isLastSibling": "当前文档已经是最后一篇相邻文档",
