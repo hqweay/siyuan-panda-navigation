@@ -95,7 +95,8 @@ export const scriptApiReference = {
     "Do NOT use 'document.querySelector' for components inside an editor tab, because there can be multiple editors. Query from 'tab.panelElement'.",
     "If 'getActiveTab()' returns undefined, the user might be clicking outside an editor. Provide a fallback or user warning.",
     "Do NOT call plugin commands via 'plugin.commands[name].execute()'. Execute them properly or extract their logic to utils.",
-    "When listening to events, always register via 'plugin.eventBus.on' instead of native window events if possible."
+    "When listening to events, always register via 'plugin.eventBus.on' instead of native window events if possible.",
+    "Ensure scripts follow the 'Editor State Writing Pattern' when writing to the document. Always fetch editor using 'siyuan.getActiveEditor(false)'. Inspect 'editor.protyle.disabled' (read-only mode) and document selection. If editable and a cursor is present inside the editor, use 'editor.insert(lute.BlockDOM2InlineBlockDOM(lute.Md2BlockDOM(md)))' for inline insertion; otherwise, fallback to appending/inserting via the backend REST API '/api/block/appendBlock' (with dataType: 'markdown') using the doc's root ID 'editor.protyle.block.rootID || kits.getActiveDoc()' to guarantee 100% success."
   ],
   hookScript: {
     description: "当编写钩子（hook）脚本时，以下参数可直接使用（无需声明）:",
