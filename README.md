@@ -24,6 +24,7 @@ https://github.com/user-attachments/assets/55950d50-a6b8-4c3c-8f0a-1f3da14294f1
 - **One-tap preset switching**: Presets aren't just backups — "Switch Preset" is designed as a live button you can trigger anytime. Set up different presets for reading, writing, or exploring, then switch between them like changing channels.
 - **Built-in preset templates**: Not sure where to start? Import a ready-made preset (like the basic 9-grid layout) with one click. You can also save your own setup as a custom preset for backup or scene switching.
 - **Per-device visibility**: Control which buttons show on mobile, desktop, or both. Labels can be toggled independently per device.
+- **One-click configuration sharing**: Share a single action button (including complex custom JS scripts) or your entire layout preset as a link. Tap the link on desktop or mobile, or paste it in settings, to import instantly.
 
 ## Quick Start
 
