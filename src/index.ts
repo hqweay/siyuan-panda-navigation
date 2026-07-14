@@ -1,6 +1,6 @@
-import { Plugin, Dialog, openTab } from "siyuan";
+import { Plugin, Dialog, openTab, showMessage } from "siyuan";
 import { generateDefaultMenuItems } from "./config/presets";
-import { isMobile, setPlugin, mobileUtils } from "./utils";
+import { isMobile, setPlugin, mobileUtils, assignButtonIds } from "./utils";
 import { normalizeMenuItems } from "./normalize";
 import { navigation } from "./navigation";
 import { settings } from "./settings";
@@ -21,6 +21,7 @@ export class PandaNavigation extends Plugin {
   private visibilityListener: () => void = () => {};
   private resizeListener: () => void = () => {};
   private resizeTimeout: NodeJS.Timeout | null = null;
+  private openSiyuanUrlListener: (event: CustomEvent<{ url: string }>) => void = () => {};
 
   async onload() {
     log.info("熊猫导航 - 正在载入插件...");
@@ -53,6 +54,12 @@ export class PandaNavigation extends Plugin {
     navigation.init();
 
     this.setupKernelRpcListener();
+
+    // 监听链接一键导入事件
+    this.openSiyuanUrlListener = ({ detail }: CustomEvent<{ url: string }>) => {
+      this.handlePluginUrlImport(detail.url);
+    };
+    this.eventBus.on("open-siyuan-url-plugin", this.openSiyuanUrlListener);
 
     // 注册键盘快捷命令
     this.addCommand({
@@ -87,6 +94,10 @@ export class PandaNavigation extends Plugin {
       await siyuan.mcp.unregisterTool("panda-nav:set-click-hook");
       await siyuan.mcp.unregisterTool("panda-nav:remove-click-hook");
       await siyuan.mcp.unregisterTool("panda-nav:list-click-hooks");
+    }
+
+    if (this.openSiyuanUrlListener) {
+      this.eventBus.off("open-siyuan-url-plugin", this.openSiyuanUrlListener);
     }
 
     // 销毁 Svelte 实例
@@ -386,6 +397,148 @@ export class PandaNavigation extends Plugin {
     if (this.resizeTimeout) {
       clearTimeout(this.resizeTimeout);
     }
+  }
+
+  private handlePluginUrlImport(urlStr: string) {
+    try {
+      const url = new URL(urlStr);
+      if (!url.pathname.includes("/import")) return;
+      
+      let actionCode = url.searchParams.get("action");
+      let presetCode = url.searchParams.get("preset");
+      
+      if (actionCode) {
+        actionCode = actionCode.replace(/ /g, "+");
+        const decodedStr = decodeURIComponent(escape(atob(actionCode)));
+        const action = JSON.parse(decodedStr);
+        this.showImportConfirmDialog(action, "action");
+      } else if (presetCode) {
+        presetCode = presetCode.replace(/ /g, "+");
+        const decodedStr = decodeURIComponent(escape(atob(presetCode)));
+        const preset = JSON.parse(decodedStr);
+        this.showImportConfirmDialog(preset, "preset");
+      }
+    } catch (e) {
+      log.error("解析导入链接失败", e);
+      showMessage(this.i18n["lets-nav-helper.share.invalidCode"] || "解析分享码失败，可能是内容已损坏", 6000, "error");
+    }
+  }
+
+  private showImportConfirmDialog(data: any, type: "action" | "preset") {
+    if (!data) return;
+
+    const isAction = type === "action";
+    const title = data.title || data.name || this.i18n["lets-nav-helper.buttonSettings.unnamed"];
+    const displayType = isAction 
+      ? (data.type === "group" ? this.i18n["lets-nav-helper.buttonSettings.typeGroup"] : this.i18n["lets-nav-helper.buttonSettings.typeAction"])
+      : this.i18n["lets-nav-helper.share.importPreset"];
+
+    let bodyHtml = "";
+    if (isAction) {
+      bodyHtml = `
+        <div class="b3-form__space" style="margin-bottom: 12px; font-size: 14px; line-height: 1.5;">
+          <strong>${this.i18n["lets-nav-helper.share.actionTitle"] || "标题："}</strong> ${title}<br/>
+          <strong>${this.i18n["lets-nav-helper.share.actionType"] || "类型："}</strong> ${displayType}
+        </div>
+        <div class="b3-form__space" style="font-size: 13px; color: var(--b3-theme-on-surface-light);">
+          ${this.i18n["lets-nav-helper.share.confirmImportAction"] || "确认追加此动作到菜单末尾吗？"}
+        </div>
+      `;
+    } else {
+      bodyHtml = `
+        <div class="b3-form__space" style="margin-bottom: 12px; font-size: 14px; line-height: 1.5;">
+          <strong>${this.i18n["lets-nav-helper.share.importPreset"] || "检测到导入导航预设"}</strong>: ${title}
+        </div>
+        <div class="b3-form__space" style="font-size: 13px; color: var(--b3-theme-on-surface-light); margin-bottom: 12px;">
+          ${this.i18n["lets-nav-helper.share.confirmImportPreset"] || "请选择预设导入方式："}
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="radio" name="import-mode" value="group" checked>
+            <span>${this.i18n["lets-nav-helper.share.importPresetAsGroup"] || "追加为新菜单分组"}</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="radio" name="import-mode" value="replace">
+            <span>${this.i18n["lets-nav-helper.share.importPresetAsReplace"] || "覆盖替换当前菜单"}</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="radio" name="import-mode" value="save">
+            <span>${this.i18n["lets-nav-helper.share.importPresetSaveOnly"] || "仅保存至预设列表"}</span>
+          </label>
+        </div>
+      `;
+    }
+
+    const dialog = new Dialog({
+      title: this.i18n["lets-nav-helper.share.dialogTitle"] || "导入确认",
+      content: `
+        <div class="b3-dialog__content" style="padding: 16px;">
+          ${bodyHtml}
+        </div>
+        <div class="b3-dialog__action" style="display: flex; justify-content: flex-end; padding: 12px 16px; background-color: var(--b3-theme-background-light);">
+          <button class="b3-button b3-button--cancel" id="importCancelBtn">${this.i18n["lets-nav-helper.share.btnCancel"] || "取消"}</button>
+          <div class="fn__space"></div>
+          <button class="b3-button b3-button--text" id="importConfirmBtn">${this.i18n["lets-nav-helper.share.btnConfirm"] || "确认导入"}</button>
+        </div>
+      `,
+      width: "420px",
+    });
+
+    dialog.element.querySelector("#importCancelBtn")?.addEventListener("click", () => dialog.destroy());
+    dialog.element.querySelector("#importConfirmBtn")?.addEventListener("click", () => {
+      if (isAction) {
+        const importedAction = assignButtonIds(JSON.parse(JSON.stringify(data)));
+        const menuItems = settings.getBySpace("nav-helper", "menuItems") || [];
+        settings.setBySpace("nav-helper", "menuItems", [...menuItems, importedAction]);
+        settings.save();
+        this.notifySettingsChanged();
+        showMessage(this.i18n["lets-nav-helper.share.importSuccess"] || "导入成功");
+      } else {
+        const checkedModeEl = dialog.element.querySelector('input[name="import-mode"]:checked') as HTMLInputElement;
+        const mode = checkedModeEl ? checkedModeEl.value : "group";
+        
+        const presetName = data.name || this.i18n["lets-nav-helper.buttonSettings.unnamed"];
+        const presetItems = data.menuItems || [];
+
+        if (mode === "replace") {
+          settings.setBySpace("nav-helper", "menuItems", JSON.parse(JSON.stringify(presetItems)));
+          settings.save();
+          this.notifySettingsChanged();
+          showMessage(this.i18n["lets-nav-helper.share.importSuccess"] || "导入成功");
+        } else if (mode === "group") {
+          const newGroup = assignButtonIds({
+            type: "group",
+            title: presetName,
+            icon: "#iconMenu",
+            showOn: "both",
+            submenuLayout: "list",
+            children: JSON.parse(JSON.stringify(presetItems)),
+          });
+          const menuItems = settings.getBySpace("nav-helper", "menuItems") || [];
+          settings.setBySpace("nav-helper", "menuItems", [...menuItems, newGroup]);
+          settings.save();
+          this.notifySettingsChanged();
+          showMessage(this.i18n["lets-nav-helper.share.importSuccess"] || "导入成功");
+        } else if (mode === "save") {
+          const customPresets = settings.getBySpace("nav-helper", "customPresets") || [];
+          const newPreset = {
+            id: "preset-custom-" + Date.now(),
+            name: presetName,
+            menuItems: JSON.parse(JSON.stringify(presetItems)),
+          };
+          settings.setBySpace("nav-helper", "customPresets", [...customPresets, newPreset]);
+          settings.save();
+          this.notifySettingsChanged();
+          showMessage(this.i18n["lets-nav-helper.share.importSuccess"] || "导入成功");
+        }
+      }
+      dialog.destroy();
+    });
+  }
+
+  private notifySettingsChanged() {
+    this.handleSettingsChange();
+    window.dispatchEvent(new CustomEvent("panda-nav-settings-imported"));
   }
 }
 

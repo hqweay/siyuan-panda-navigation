@@ -4,7 +4,7 @@
   import { normalizeMenuItems } from "../normalize";
   import { showMessage, Dialog } from "siyuan";
   import { plugin } from "../utils";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { builtinCommands, builtinCommandList } from "../builtins";
   import IconPicker from "./IconPicker.svelte";
   import { PRESET_GROUPS, generateDefaultMenuItems } from "../config/presets";
@@ -157,6 +157,8 @@
     } catch (e) {
       console.error("加载命令列表失败", e);
     }
+
+    window.addEventListener("panda-nav-settings-imported", reloadButtonSettings);
   });
 
   let showIconPicker = false;
@@ -377,6 +379,130 @@
     if (type === "av-add") return plugin.i18n["lets-nav-helper.buttonSettings.placeholderAvAdd"];
     return "";
   }
+
+  function reloadButtonSettings() {
+    menuItems = normalizeMenuItems(settings.getBySpace("nav-helper", "menuItems") || []);
+    customPresets = (
+      settings.getBySpace("nav-helper", "customPresets") || []
+    ).map((preset: any) => {
+      if (preset && preset.menuItems) {
+        preset.menuItems = normalizeMenuItems(preset.menuItems);
+      }
+      return preset;
+    });
+  }
+
+  onDestroy(() => {
+    window.removeEventListener("panda-nav-settings-imported", reloadButtonSettings);
+  });
+
+  function showLinkDialog(text: string) {
+    const dialog = new Dialog({
+      title: plugin.i18n["lets-nav-helper.share.exportPresetBtn"] || "导出分享码",
+      content: `<div class="b3-dialog__content" style="padding: 16px;">
+        <textarea class="b3-text-field fn__block" readonly style="height: 120px; font-family: monospace; font-size: 12px; margin-bottom: 8px; box-sizing: border-box; width: 100%;">${text}</textarea>
+        <div style="font-size: 12px; color: var(--b3-theme-on-surface-light);">${plugin.i18n["lets-nav-helper.share.copied"] || "已复制分享链接到剪贴板"}</div>
+      </div>
+      <div class="b3-dialog__action">
+        <button class="b3-button b3-button--text" id="linkCloseBtn">${plugin.i18n["lets-nav-helper.cancelBtn"]}</button>
+      </div>`,
+      width: "400px",
+    });
+    dialog.element.querySelector("#linkCloseBtn")?.addEventListener("click", () => dialog.destroy());
+    const textarea = dialog.element.querySelector("textarea");
+    textarea?.select();
+  }
+
+  function exportActionCode(item: any) {
+    try {
+      const cleanItem = JSON.parse(JSON.stringify(item));
+      const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanItem))));
+      const link = `siyuan://plugins/siyuan-panda-navigation/import?action=${encodeURIComponent(base64)}`;
+      const mdLink = `[${plugin.i18n["lets-nav-helper.displayName"]}动作：${cleanItem.title || plugin.i18n["lets-nav-helper.buttonSettings.unnamed"]}](${link})`;
+      
+      navigator.clipboard.writeText(mdLink).then(() => {
+        showMessage(plugin.i18n["lets-nav-helper.share.copied"] || "已复制分享链接到剪贴板");
+      }).catch((err) => {
+        console.error("写入剪贴板失败", err);
+        showLinkDialog(mdLink);
+      });
+    } catch (e) {
+      console.error("生成动作分享码失败", e);
+    }
+  }
+
+  function exportPresetCode(preset: any) {
+    try {
+      const cleanPreset = JSON.parse(JSON.stringify(preset));
+      const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(cleanPreset))));
+      const link = `siyuan://plugins/siyuan-panda-navigation/import?preset=${encodeURIComponent(base64)}`;
+      const mdLink = `[${plugin.i18n["lets-nav-helper.displayName"]}预设：${cleanPreset.name}](${link})`;
+      
+      navigator.clipboard.writeText(mdLink).then(() => {
+        showMessage(plugin.i18n["lets-nav-helper.share.copied"] || "已复制分享链接到剪贴板");
+      }).catch((err) => {
+        console.error("写入剪贴板失败", err);
+        showLinkDialog(mdLink);
+      });
+    } catch (e) {
+      console.error("生成预设分享码失败", e);
+    }
+  }
+
+  function openImportShareCodeDialog() {
+    const dialog = new Dialog({
+      title: plugin.i18n["lets-nav-helper.share.importBtn"] || "导入分享码",
+      content: `<div class="b3-dialog__content" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 13px; opacity: 0.8;">${plugin.i18n["lets-nav-helper.share.inputPrompt"] || "请粘贴以 `siyuan://plugins/siyuan-panda-navigation/import?...` 开头的链接或纯分享码 Base64 文本"}</span>
+        <textarea class="b3-text-field fn__block" id="importCodeInput" placeholder="${plugin.i18n["lets-nav-helper.share.inputPlaceholder"] || "在此处输入或粘贴分享码/链接..."}" style="height: 100px; font-family: monospace; font-size: 12px; box-sizing: border-box; width: 100%;"></textarea>
+      </div>
+      <div class="b3-dialog__action" style="display: flex; justify-content: flex-end; padding: 12px 16px;">
+        <button class="b3-button b3-button--cancel" id="importDialogCancel">${plugin.i18n["lets-nav-helper.cancelBtn"]}</button>
+        <div class="fn__space"></div>
+        <button class="b3-button b3-button--text" id="importDialogConfirm">${plugin.i18n["lets-nav-helper.share.btnConfirm"] || "确认"}</button>
+      </div>`,
+      width: "460px",
+    });
+    
+    dialog.element.querySelector("#importDialogCancel")?.addEventListener("click", () => dialog.destroy());
+    
+    const confirmBtn = dialog.element.querySelector("#importDialogConfirm");
+    const textarea = dialog.element.querySelector("#importCodeInput") as HTMLTextAreaElement;
+    
+    confirmBtn?.addEventListener("click", () => {
+      const val = textarea.value.trim();
+      if (!val) {
+        dialog.destroy();
+        return;
+      }
+      
+      const match = val.match(/siyuan:\/\/plugins\/siyuan-panda-navigation\/import\?(action|preset)=([^&\s\)]+)/);
+      let parsedUrl = "";
+      if (match) {
+        parsedUrl = match[0];
+      } else if (/^[a-zA-Z0-9+/=]+$/.test(val)) {
+        try {
+          const decoded = JSON.parse(decodeURIComponent(escape(atob(val))));
+          if (decoded.menuItems && Array.isArray(decoded.menuItems)) {
+            parsedUrl = `siyuan://plugins/siyuan-panda-navigation/import?preset=${val}`;
+          } else {
+            parsedUrl = `siyuan://plugins/siyuan-panda-navigation/import?action=${val}`;
+          }
+        } catch(e) {
+          // not valid raw base64 json
+        }
+      }
+      
+      if (parsedUrl) {
+        dialog.destroy();
+        if (plugin && typeof (plugin as any).handlePluginUrlImport === "function") {
+          (plugin as any).handlePluginUrlImport(parsedUrl);
+        }
+      } else {
+        showMessage(plugin.i18n["lets-nav-helper.share.parseFailed"] || "未能从输入中提取出有效的分享码", 6000, "error");
+      }
+    });
+  }
 </script>
 
 <div class="tab-pane align-stretch">
@@ -388,6 +514,12 @@
       >{plugin.i18n["lets-nav-helper.buttonSettings.desc"]}</span
     >
     <div class="fn__flex" style="gap: 8px; flex-wrap: wrap;">
+      <button
+        class="b3-button b3-button--outline"
+        on:click={openImportShareCodeDialog}
+      >
+        📥 {plugin.i18n["lets-nav-helper.share.importBtn"] || "导入分享码"}
+      </button>
       <select
         class="b3-select b3-button--outline"
         style="padding-right: 28px; background-color: var(--b3-theme-surface); cursor: pointer;"
@@ -468,10 +600,25 @@
       >
       {#if customPresets.length > 0}
         {#each customPresets as preset}
-          <button
-            class="b3-button b3-button--outline"
-            style="padding: 2px 8px; font-size: 12px; color: var(--b3-theme-error);"
-            on:click={() => deleteCustomPreset(preset.id, preset.name)}>{preset.name} ✕</button>
+          <div class="fn__flex align-center" style="border: 1px solid var(--b3-border-color); border-radius: 4px; padding: 2px 6px; gap: 6px; background-color: var(--b3-theme-surface);">
+            <span style="font-size: 12px; font-weight: 500;">{preset.name}</span>
+            <button
+              class="remove-btn"
+              style="padding: 2px; font-size: 12px; opacity: 0.7; color: var(--b3-theme-primary); display: inline-flex;"
+              aria-label={plugin.i18n["lets-nav-helper.share.exportBtn"] || "导出"}
+              on:click={() => exportPresetCode(preset)}
+            >
+              📤
+            </button>
+            <button
+              class="remove-btn"
+              style="padding: 2px; font-size: 12px; opacity: 0.7; color: var(--b3-theme-error); display: inline-flex;"
+              aria-label={plugin.i18n["lets-nav-helper.buttonSettings.delete"]}
+              on:click={() => deleteCustomPreset(preset.id, preset.name)}
+            >
+              ✕
+            </button>
+          </div>
         {/each}
       {/if}
       <button
@@ -571,6 +718,15 @@
                 on:click={() => moveMenuItemDown(i, menuItems)}>▼</button
               >
             </div>
+
+            <button
+              class="share-btn b3-tooltips b3-tooltips__w"
+              style="padding: 4px; opacity: 0.7; font-size: 14px;"
+              aria-label={plugin.i18n["lets-nav-helper.share.exportCardBtn"] || "导出为分享码"}
+              on:click={() => exportActionCode(item)}
+            >
+              <svg><use xlink:href="#iconUpload"></use></svg>
+            </button>
 
             <button
               class="remove-btn b3-tooltips b3-tooltips__w"
@@ -829,6 +985,14 @@
                               >▼</button
                             >
                           </div>
+                          <button
+                            class="share-btn b3-tooltips b3-tooltips__w"
+                            style="padding: 4px; opacity: 0.7; font-size: 14px;"
+                            aria-label={plugin.i18n["lets-nav-helper.share.exportCardBtn"] || "导出为分享码"}
+                            on:click={() => exportActionCode(child)}
+                          >
+                            <svg><use xlink:href="#iconUpload"></use></svg>
+                          </button>
                           <button
                             class="remove-btn"
                             style="padding: 4px;"
@@ -1145,6 +1309,30 @@
   }
 
   .remove-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .share-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-btn:hover {
+    background-color: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+    opacity: 1;
+  }
+
+  .share-btn svg {
     width: 12px;
     height: 12px;
   }

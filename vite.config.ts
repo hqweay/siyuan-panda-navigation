@@ -52,6 +52,10 @@ export default defineConfig({
           src: "./public/skills/siyuan-panda-navigation",
           dest: "./skills/",
         },
+        {
+          src: "./i18n/**",
+          dest: "./i18n",
+        },
       ],
     }),
   ],

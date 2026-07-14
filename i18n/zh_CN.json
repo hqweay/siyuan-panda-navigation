@@ -405,5 +405,28 @@
 
   "lets-nav-helper.urlEmpty": "URL 为空",
 
-  "lets-nav-helper.styleToken.defaultPlaceholder": "默认"
+  "lets-nav-helper.styleToken.defaultPlaceholder": "默认",
+
+  "lets-nav-helper.share.importBtn": "导入分享码",
+  "lets-nav-helper.share.exportBtn": "导出",
+  "lets-nav-helper.share.exportCardBtn": "导出为分享码",
+  "lets-nav-helper.share.exportPresetBtn": "导出分享码",
+  "lets-nav-helper.share.invalidCode": "解析分享码失败，可能是内容已损坏",
+  "lets-nav-helper.share.importSuccess": "导入成功",
+  "lets-nav-helper.share.dialogTitle": "导入确认",
+  "lets-nav-helper.share.importAction": "检测到导入单个动作",
+  "lets-nav-helper.share.importPreset": "检测到导入导航预设",
+  "lets-nav-helper.share.confirmImportAction": "确认追加此动作到菜单末尾吗？",
+  "lets-nav-helper.share.confirmImportPreset": "请选择预设导入方式：",
+  "lets-nav-helper.share.importPresetAsGroup": "追加为新菜单分组",
+  "lets-nav-helper.share.importPresetAsReplace": "覆盖替换当前菜单",
+  "lets-nav-helper.share.importPresetSaveOnly": "仅保存至预设列表",
+  "lets-nav-helper.share.btnConfirm": "确认导入",
+  "lets-nav-helper.share.btnCancel": "取消",
+  "lets-nav-helper.share.actionTitle": "标题：",
+  "lets-nav-helper.share.actionType": "类型：",
+  "lets-nav-helper.share.copied": "已复制分享链接到剪贴板",
+  "lets-nav-helper.share.inputPrompt": "请粘贴以 `siyuan://plugins/siyuan-panda-navigation/import?...` 开头的链接或纯分享码 Base64 文本",
+  "lets-nav-helper.share.inputPlaceholder": "在此处输入或粘贴分享码/链接...",
+  "lets-nav-helper.share.parseFailed": "未能从输入中提取出有效的分享码"
 }

@@ -405,5 +405,28 @@
 
   "lets-nav-helper.urlEmpty": "URL is empty",
 
-  "lets-nav-helper.styleToken.defaultPlaceholder": "Default"
+  "lets-nav-helper.styleToken.defaultPlaceholder": "Default",
+
+  "lets-nav-helper.share.importBtn": "Import Share Code",
+  "lets-nav-helper.share.exportBtn": "Export",
+  "lets-nav-helper.share.exportCardBtn": "Export as Share Code",
+  "lets-nav-helper.share.exportPresetBtn": "Export Share Code",
+  "lets-nav-helper.share.invalidCode": "Failed to parse share code, content might be corrupted",
+  "lets-nav-helper.share.importSuccess": "Import successful",
+  "lets-nav-helper.share.dialogTitle": "Import Confirmation",
+  "lets-nav-helper.share.importAction": "Import single action detected",
+  "lets-nav-helper.share.importPreset": "Import navigation preset detected",
+  "lets-nav-helper.share.confirmImportAction": "Are you sure you want to append this action to the end of the menu?",
+  "lets-nav-helper.share.confirmImportPreset": "Please select preset import method:",
+  "lets-nav-helper.share.importPresetAsGroup": "Append as a new menu group",
+  "lets-nav-helper.share.importPresetAsReplace": "Overwrite current menu",
+  "lets-nav-helper.share.importPresetSaveOnly": "Save to preset list only",
+  "lets-nav-helper.share.btnConfirm": "Confirm Import",
+  "lets-nav-helper.share.btnCancel": "Cancel",
+  "lets-nav-helper.share.actionTitle": "Title: ",
+  "lets-nav-helper.share.actionType": "Type: ",
+  "lets-nav-helper.share.copied": "Share link copied to clipboard",
+  "lets-nav-helper.share.inputPrompt": "Please paste the link starting with `siyuan://plugins/siyuan-panda-navigation/import?...` or raw share code Base64 text",
+  "lets-nav-helper.share.inputPlaceholder": "Enter or paste share code/link here...",
+  "lets-nav-helper.share.parseFailed": "Failed to extract valid share code from input"
 }
