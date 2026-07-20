@@ -6,31 +6,12 @@
   "minAppVersion": "3.7.0",
   "disabledInPublish": false,
   "kernels": [
-    "windows",
-    "linux",
-    "darwin",
-    "ios",
-    "android",
-    "harmony",
-    "docker",
     "all"
   ],
   "backends": [
-    "windows",
-    "linux",
-    "darwin",
-    "ios",
-    "android",
-    "harmony",
-    "docker",
     "all"
   ],
   "frontends": [
-    "desktop",
-    "mobile",
-    "browser-desktop",
-    "browser-mobile",
-    "desktop-window",
     "all"
   ],
   "displayName": {
