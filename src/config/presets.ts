@@ -139,6 +139,13 @@ export function generateDefaultMenuItems() {
         },
         {
           type: "builtin",
+          title: "打开思源设置",
+          value: "open-siyuan-setting",
+          icon: "#iconSettings",
+          showOn: "both",
+        },
+        {
+          type: "builtin",
           title: "作者博客",
           value: "url",
           param: "https://leay.net/",

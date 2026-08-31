@@ -25,6 +25,9 @@ https://github.com/user-attachments/assets/55950d50-a6b8-4c3c-8f0a-1f3da14294f1
 - **Built-in preset templates**: Not sure where to start? Import a ready-made preset (like the basic 9-grid layout) with one click. You can also save your own setup as a custom preset for backup or scene switching.
 - **Per-device visibility**: Control which buttons show on mobile, desktop, or both. Labels can be toggled independently per device.
 - **One-click configuration sharing**: Share a single action button (including complex custom JS scripts) or your entire layout preset as a link. Tap the link on desktop or mobile, or paste it in settings, to import instantly.
+- **Native-look style mode**: Move the mobile nav closer to SiYuan's built-in bottom bar — a fine-tuned, theme-aware pill that blends in seamlessly. Great if you prefer the native SiYuan feel.
+- **Hide the native bottom bar**: Optionally hide SiYuan's built-in mobile bottom bar so the floating nav takes over full control. Restore it anytime from settings.
+- **Open SiYuan settings from the bar**: A built-in action that opens SiYuan's settings — on mobile it matches the native "More" menu, on desktop it opens the full settings panel. Separate from the plugin's own settings button.
 
 ## Quick Start
 
@@ -39,6 +42,8 @@ The plugin is pending marketplace review. Install it manually:
 
 - **Enable Navigation Bar**: Choose to show on mobile, desktop, or both.
 - **Button Labels**: Toggle text labels below buttons on or off.
+- **Style Mode**: Switch the mobile nav between the plugin's signature dynamic-island look and a SiYuan-native style that blends with the built-in bottom bar.
+- **Hide Native Bottom Bar**: Hide SiYuan's built-in mobile bottom bar so the floating nav fully takes over. Turn it off to restore the native bar.
 
 ### Presets & Reset
 
