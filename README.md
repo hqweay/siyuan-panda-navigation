@@ -41,7 +41,7 @@ The plugin is pending marketplace review. Install it manually:
 ### Basic Appearance
 
 - **Enable Navigation Bar**: Choose to show on mobile, desktop, or both.
-- **Button Labels**: Toggle text labels below buttons on or off.
+- **Button Labels**: Toggle text labels below buttons on or off. Found under Appearance, next to Style Mode; grayed out when the SiYuan-native style is selected.
 - **Style Mode**: Switch the mobile nav between the plugin's signature dynamic-island look and a SiYuan-native style that blends with the built-in bottom bar.
 - **Hide Native Bottom Bar**: Hide SiYuan's built-in mobile bottom bar so the floating nav fully takes over. Turn it off to restore the native bar.
 
