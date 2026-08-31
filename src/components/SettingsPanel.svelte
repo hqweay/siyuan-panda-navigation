@@ -15,11 +15,19 @@
     settings.getBySpace("nav-helper", "enableBottomNav") ?? "both";
   let showButtonLabels =
     settings.getBySpace("nav-helper", "showButtonLabels") ?? "both";
+  let hideNativeBottomBar =
+    settings.getBySpace("nav-helper", "hideNativeBottomBar") ?? true;
 
   let styleOverrides: Record<string, string> = { ...(settings.getBySpace("nav-helper", "styleOverrides") || {}) };
+  let styleMode: "island" | "native" =
+    (settings.getBySpace("nav-helper", "styleMode") as "island" | "native") || "island";
 
   function handleAppearanceChange(overrides: Record<string, string>) {
     styleOverrides = overrides;
+  }
+
+  function handleStyleModeChange(mode: "island" | "native") {
+    styleMode = mode;
   }
 
   let menuItems: any[] = normalizeMenuItems(
@@ -36,6 +44,8 @@
     settings.setBySpace("nav-helper", "menuItems", menuItems);
     settings.setBySpace("nav-helper", "showButtonLabels", showButtonLabels);
     settings.setBySpace("nav-helper", "styleOverrides", styleOverrides);
+    settings.setBySpace("nav-helper", "styleMode", styleMode);
+    settings.setBySpace("nav-helper", "hideNativeBottomBar", hideNativeBottomBar);
 
     await settings.save();
     showMessage(plugin.i18n["lets-nav-helper.settings.saved"]);
@@ -96,6 +106,15 @@
             <option value="none">{plugin.i18n["lets-nav-helper.settings.none"]}</option>
           </select>
         </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">{plugin.i18n["lets-nav-helper.settings.hideNativeBottomBar"]}</span>
+            <span class="setting-desc">{plugin.i18n["lets-nav-helper.settings.hideNativeBottomBarDesc"]}</span>
+          </div>
+          <label class="fn__flex fn__flex-center" style="justify-content: flex-end;">
+            <input class="b3-switch" type="checkbox" bind:checked={hideNativeBottomBar} />
+          </label>
+        </div>
       </div>
     {/if}
 
@@ -108,7 +127,7 @@
     {/if}
 
     {#if activeTab === "appearance"}
-      <AppearanceSettings {styleOverrides} onChange={handleAppearanceChange} />
+      <AppearanceSettings {styleOverrides} {styleMode} onChange={handleAppearanceChange} onStyleModeChange={handleStyleModeChange} />
     {/if}
 
     {#if activeTab === "hooks"}
@@ -211,6 +230,23 @@
 
   :global(.panda-nav .button-controls .b3-select) {
     width: 130px;
+  }
+
+  :global(.panda-nav .style-mode-switch) {
+    display: flex;
+    gap: 8px;
+  }
+
+  :global(.panda-nav .style-mode-btn) {
+    flex: 1;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+  }
+
+  :global(.panda-nav .style-mode-btn.active) {
+    opacity: 1;
+    background-color: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
   }
 
   :global(.panda-nav .align-center) {

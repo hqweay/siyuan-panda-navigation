@@ -75,6 +75,9 @@ export class PandaNavigation extends Plugin {
   async onLayoutReady() {
     log.info("熊猫导航 - 主界面已就绪，挂载导航栏...");
 
+    // 根据配置隐藏/显示思源原生底部导航栏
+    this.applyNativeBottomBarVisibility();
+
     // 挂载导航栏（根据设备类型和配置）
     this.handleSettingsChange();
 
@@ -113,6 +116,12 @@ export class PandaNavigation extends Plugin {
 
     // 清理事件监听器
     this.unregisterEventListeners();
+
+    // 清理注入的原生底栏隐藏样式
+    if (this.nativeBottomBarStyleElement) {
+      this.nativeBottomBarStyleElement.remove();
+      this.nativeBottomBarStyleElement = null;
+    }
 
     // 销毁导航工具
     mobileUtils.destroy();
@@ -195,6 +204,34 @@ export class PandaNavigation extends Plugin {
         this.desktopNavigationInstance.$destroy();
         this.desktopNavigationInstance = null;
       }
+    }
+  }
+
+  // 控制思源原生底部导航栏的可见性
+  private nativeBottomBarStyleElement: HTMLStyleElement | null = null;
+
+  private applyNativeBottomBarVisibility(): void {
+    const hide = settings.getBySpace("nav-helper", "hideNativeBottomBar") === true;
+
+    if (!hide) {
+      // 移除注入的隐藏样式，恢复原生底栏
+      if (this.nativeBottomBarStyleElement) {
+        this.nativeBottomBarStyleElement.remove();
+        this.nativeBottomBarStyleElement = null;
+      }
+      return;
+    }
+
+    if (!this.nativeBottomBarStyleElement) {
+      const style = document.createElement("style");
+      style.id = "panda-nav-hide-native-bottom-bar";
+      style.textContent = `
+        #mobileBottomBar { display: none !important; }
+        /* 同步清掉原生底栏给正文区预留的内边距，避免底部留白 */
+        :root { --mobile-bottom-bar-offset: 0px !important; }
+      `;
+      document.head.appendChild(style);
+      this.nativeBottomBarStyleElement = style;
     }
   }
 
@@ -292,6 +329,12 @@ export class PandaNavigation extends Plugin {
 
       if (settings.getBySpace("nav-helper", "stylePresets") === undefined) {
         settings.setBySpace("nav-helper", "stylePresets", []);
+      }
+      if (settings.getBySpace("nav-helper", "styleMode") === undefined) {
+        settings.setBySpace("nav-helper", "styleMode", "island");
+      }
+      if (settings.getBySpace("nav-helper", "hideNativeBottomBar") === undefined) {
+        settings.setBySpace("nav-helper", "hideNativeBottomBar", true);
       }
       settings.save();
     }

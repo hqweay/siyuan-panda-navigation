@@ -75,6 +75,11 @@
   let styleOverrides: Record<string, string> =
     settings.getBySpace(pluginMetadata.name, "styleOverrides") || {};
 
+  let styleMode: "island" | "native" =
+    (settings.getBySpace(pluginMetadata.name, "styleMode") as "island" | "native") || "island";
+
+  $: isNativeStyle = deviceType === "mobile" && styleMode === "native";
+
   $: styleString = buildStyleString(styleOverrides);
   $: submenuStyleString = buildStyleString(styleOverrides, "submenu");
 
@@ -348,6 +353,9 @@
   $: visibleButtons = allNavbarButtons;
 
   function shouldShowLabel(): boolean {
+    // 思源原生风格：贴近原生底栏不显示文字标签
+    if (isNativeStyle) return false;
+
     const setting =
       settings.getBySpace(pluginMetadata.name, "showButtonLabels") ?? "both";
     if (setting === "both") return true;
@@ -590,6 +598,7 @@
     class:scrolling-down={isScrollingDown}
     class:expanded={showIconPanel}
     class:is-dragging={isDragging}
+    class:native-style={isNativeStyle}
     on:pointerdown={handlePointerDown}
     style={[
       deviceType === "desktop" && hasInitializedPosition
@@ -686,7 +695,7 @@
   }
 
   .navigation-container.mobile {
-    bottom: env(safe-area-inset-bottom, 16px);
+    bottom: var(--mobile-bottom-bar-bottom);
     left: 50%;
     transform: translateX(-50%);
     width: calc(100vw - 32px);
@@ -704,6 +713,22 @@
       transform 0.3s ease,
       border-radius 0.2s ease;
     cursor: default;
+  }
+
+  /* 思源原生风格：移动端贴近原生底部导航栏视觉 */
+  .navigation-container.mobile.native-style {
+    --nav-bg: var(--b3-theme-background, #ffffff);
+    --nav-radius: calc(var(--nav-height, 48px) / 2);
+    --nav-height: 48px;
+    --nav-icon-size: 20px;
+    --nav-btn-color: var(--b3-theme-on-surface-light, #888);
+    --nav-btn-active-color: var(--b3-theme-primary, #007aff);
+    width: min(calc(100% - 32px), calc(var(--nav-height, 48px) * 6));
+    bottom: var(--mobile-bottom-bar-bottom);
+    border: 0.5px solid var(--b3-border-color, rgba(233, 236, 239, 0.15));
+    box-shadow: var(--b3-point-shadow, 0 4px 20px rgba(0, 0, 0, 0.15));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   /* Safari Pill Handle */

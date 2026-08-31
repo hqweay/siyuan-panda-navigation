@@ -7,6 +7,8 @@
 
   export let styleOverrides: Record<string, string> = {};
   export let onChange: (overrides: Record<string, string>) => void = () => {};
+  export let styleMode: "island" | "native" = "island";
+  export let onStyleModeChange: (mode: "island" | "native") => void = () => {};
 
   let stylePresets: { name: string; overrides: Record<string, string> }[] = settings.getBySpace("nav-helper", "stylePresets") || [];
   let styleAdvancedOpen = settings.getBySpace("nav-helper", "styleAdvancedOpen") === true;
@@ -111,6 +113,21 @@
 </script>
 
 <div class="tab-pane">
+  <div class="setting-row" style="flex-direction: column; align-items: stretch; gap: 8px;">
+    <div class="setting-info">
+      <span class="setting-title">{plugin.i18n["lets-nav-helper.appearance.styleMode"]}</span>
+      <span class="setting-desc">{plugin.i18n["lets-nav-helper.appearance.styleModeDesc"]}</span>
+    </div>
+    <div class="style-mode-switch">
+      <button class="b3-button style-mode-btn" class:active={styleMode === "island"} on:click={() => onStyleModeChange("island")}>
+        {plugin.i18n["lets-nav-helper.appearance.styleIsland"]}
+      </button>
+      <button class="b3-button style-mode-btn" class:active={styleMode === "native"} on:click={() => onStyleModeChange("native")}>
+        {plugin.i18n["lets-nav-helper.appearance.styleNative"]}
+      </button>
+    </div>
+  </div>
+
   <div class="setting-row" style="flex-direction: column; align-items: stretch; gap: 8px;">
     <div class="setting-info">
       <span class="setting-title">{plugin.i18n["lets-nav-helper.appearance.navStyle"]}</span>
