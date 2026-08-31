@@ -404,6 +404,7 @@
     );
 
     if (deviceType === "mobile" && submenuLayout === "grid") {
+      // 图标网格：从主栏顶部展开，与主栏合体成胶囊
       submenuVisible = true;
       showIconPanel = true;
     } else {
@@ -821,6 +822,18 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 20px 20px 0 0;
+  }
+
+  /* 思源原生风格下：让展开层与主栏合体成同一胶囊（一致背景/边框/阴影，去毛玻璃） */
+  .navigation-container.mobile.native-style .nav-expansion {
+    --nav-bg: var(--b3-theme-background, #ffffff);
+    background: var(--b3-theme-background, #ffffff);
+    background-image: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 0.5px solid var(--b3-border-color, rgba(233, 236, 239, 0.15));
+    border-bottom: none;
+    box-shadow: var(--b3-point-shadow, 0 4px 20px rgba(0, 0, 0, 0.15));
   }
 
   .expansion-icons {
