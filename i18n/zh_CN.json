@@ -372,7 +372,8 @@
   "lets-nav-helper.hooks.matchNoCondition": "无匹配条件",
   "lets-nav-helper.hooks.matchDeletedButton": "（已删除的按钮）",
 
-  "lets-nav-helper.builtin.openSetting": "打开设置",
+  "lets-nav-helper.builtin.openSetting": "打开插件设置",
+  "lets-nav-helper.builtin.openSiyuanSetting": "打开思源设置",
   "lets-nav-helper.builtin.avAdd": "添加到数据库",
   "lets-nav-helper.builtin.switchPreset": "切换导航预设",
   "lets-nav-helper.builtin.url": "自定义链接/文档 ID",

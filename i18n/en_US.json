@@ -372,7 +372,8 @@
   "lets-nav-helper.hooks.matchNoCondition": "No match conditions",
   "lets-nav-helper.hooks.matchDeletedButton": "(Deleted button)",
 
-  "lets-nav-helper.builtin.openSetting": "Open Settings",
+  "lets-nav-helper.builtin.openSetting": "Open Plugin Settings",
+  "lets-nav-helper.builtin.openSiyuanSetting": "Open SiYuan Settings",
   "lets-nav-helper.builtin.avAdd": "Add to Database",
   "lets-nav-helper.builtin.switchPreset": "Switch Navigation Preset",
   "lets-nav-helper.builtin.url": "Custom Link / Doc ID",
