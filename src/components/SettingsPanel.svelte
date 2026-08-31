@@ -203,6 +203,16 @@
     gap: 16px;
   }
 
+  :global(.panda-nav .tab-pane fieldset) {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+
   :global(.panda-nav .setting-row) {
     display: flex;
     justify-content: space-between;
