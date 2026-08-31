@@ -30,13 +30,16 @@
     styleMode = mode;
   }
 
+  function handleShowButtonLabelsChange(labels: string) {
+    showButtonLabels = labels;
+  }
+
   let menuItems: any[] = normalizeMenuItems(
     settings.getBySpace("nav-helper", "menuItems") || [],
   );
 
-  function handleButtonSettingsChange(items: any[], labels: string) {
+  function handleButtonSettingsChange(items: any[]) {
     menuItems = items;
-    showButtonLabels = labels;
   }
 
   async function handleSave() {
@@ -121,13 +124,19 @@
     {#if activeTab === "buttons"}
       <ButtonSettings
         {menuItems}
-        {showButtonLabels}
         onChange={handleButtonSettingsChange}
       />
     {/if}
 
     {#if activeTab === "appearance"}
-      <AppearanceSettings {styleOverrides} {styleMode} onChange={handleAppearanceChange} onStyleModeChange={handleStyleModeChange} />
+      <AppearanceSettings
+        {styleOverrides}
+        {styleMode}
+        {showButtonLabels}
+        onChange={handleAppearanceChange}
+        onStyleModeChange={handleStyleModeChange}
+        onShowButtonLabelsChange={handleShowButtonLabelsChange}
+      />
     {/if}
 
     {#if activeTab === "hooks"}
@@ -247,6 +256,21 @@
     opacity: 1;
     background-color: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
+  }
+
+  /* 思源原生模式下：导航栏样式区整体置灰，不可修改 */
+  :global(.panda-nav fieldset[disabled]) {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  :global(.panda-nav fieldset[disabled] .setting-row) {
+    background-color: var(--b3-theme-background, #f8f9fa);
+  }
+
+  :global(.panda-nav .style-mode-switch) {
+    display: flex;
+    gap: 8px;
   }
 
   :global(.panda-nav .align-center) {

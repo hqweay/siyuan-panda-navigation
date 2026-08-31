@@ -90,7 +90,7 @@
     background: var(--submenu-bg, var(--b3-theme-surface, white));
     border-radius: var(--submenu-radius, 12px);
     box-shadow: var(--submenu-shadow, var(--b3-dialog-shadow, 0 4px 20px rgba(0, 0, 0, 0.15)));
-    z-index: 1001;
+    z-index: 3;
     min-width: var(--submenu-min-width, {deviceType === 'mobile' ? '200px' : '180px'});
     max-width: var(--submenu-max-width, {deviceType === 'mobile' ? '250px' : '200px'});
     border: 1px solid var(--b3-border-color, rgba(233, 236, 239, 0.2));

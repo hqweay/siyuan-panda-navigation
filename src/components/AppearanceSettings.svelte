@@ -9,6 +9,10 @@
   export let onChange: (overrides: Record<string, string>) => void = () => {};
   export let styleMode: "island" | "native" = "island";
   export let onStyleModeChange: (mode: "island" | "native") => void = () => {};
+  export let showButtonLabels: string = "both";
+  export let onShowButtonLabelsChange: (labels: string) => void = () => {};
+
+  $: isNative = styleMode === "native";
 
   let stylePresets: { name: string; overrides: Record<string, string> }[] = settings.getBySpace("nav-helper", "stylePresets") || [];
   let styleAdvancedOpen = settings.getBySpace("nav-helper", "styleAdvancedOpen") === true;
@@ -128,6 +132,30 @@
     </div>
   </div>
 
+  <div class="setting-row" style="flex-wrap: wrap; gap: 12px;">
+    <div class="setting-info" style="flex: 1; min-width: 140px;">
+      <span class="setting-title">{plugin.i18n["lets-nav-helper.buttonSettings.labelTitle"]}</span>
+      <span class="setting-desc">{plugin.i18n["lets-nav-helper.buttonSettings.labelDesc"]}</span>
+    </div>
+    <div class="button-controls" style="flex-shrink: 0;">
+      <select
+        class="b3-select"
+        value={showButtonLabels}
+        disabled={isNative}
+        on:change={(e) => {
+          const v = e.currentTarget.value;
+          onShowButtonLabelsChange(v);
+        }}
+      >
+        <option value="both">{plugin.i18n["lets-nav-helper.showOnBoth"]}</option>
+        <option value="mobile">{plugin.i18n["lets-nav-helper.showOnMobile"]}</option>
+        <option value="pc">{plugin.i18n["lets-nav-helper.showOnPc"]}</option>
+        <option value="none">{plugin.i18n["lets-nav-helper.showOnDisabled"]}</option>
+      </select>
+    </div>
+  </div>
+
+  <fieldset disabled={isNative} style="border: none; margin: 0; padding: 0; min-width: 0;">
   <div class="setting-row" style="flex-direction: column; align-items: stretch; gap: 8px;">
     <div class="setting-info">
       <span class="setting-title">{plugin.i18n["lets-nav-helper.appearance.navStyle"]}</span>
@@ -204,6 +232,7 @@
       </div>
     </div>
   </details>
+  </fieldset>
 
   <details style="margin-top: 8px;">
     <summary style="cursor: pointer; opacity: 0.6; font-size: 13px; padding: 8px 0;">{plugin.i18n["lets-nav-helper.appearance.submenuStyle"]}</summary>

@@ -10,8 +10,7 @@
   import { PRESET_GROUPS, generateDefaultMenuItems } from "../config/presets";
 
   export let menuItems: any[] = [];
-  export let showButtonLabels: string = "both";
-  export let onChange: (menuItems: any[], showButtonLabels: string) => void = () => {};
+  export let onChange: (menuItems: any[]) => void = () => {};
 
   let loadedOptions: Record<string, { label: string; value: string }[]> = {};
   let allSiyuanIcons: string[] = [];
@@ -183,7 +182,7 @@
     };
     items.forEach(recalc);
     menuItems = items;
-    onChange(menuItems, showButtonLabels);
+    onChange(menuItems);
   }
 
   function handleTypeChange(item: any) {
@@ -634,29 +633,6 @@
         class="b3-button b3-button--outline"
         on:click={() => addMenuItem()}>{plugin.i18n["lets-nav-helper.buttonSettings.addAction"]}</button
       >
-    </div>
-  </div>
-
-  <div
-    class="setting-row button-setting-row"
-    style="margin-bottom: 16px;"
-  >
-    <div class="button-info">
-      <span class="setting-title">{plugin.i18n["lets-nav-helper.buttonSettings.labelTitle"]}</span>
-      <span class="setting-desc" style="margin: 0;"
-        >{plugin.i18n["lets-nav-helper.buttonSettings.labelDesc"]}</span
-      >
-    </div>
-    <div class="button-controls">
-      <select class="b3-select" value={showButtonLabels} on:change={(e) => {
-        showButtonLabels = e.currentTarget.value;
-        onChange(menuItems, showButtonLabels);
-      }}>
-        <option value="both">{plugin.i18n["lets-nav-helper.showOnBoth"]}</option>
-        <option value="mobile">{plugin.i18n["lets-nav-helper.showOnMobile"]}</option>
-        <option value="pc">{plugin.i18n["lets-nav-helper.showOnPc"]}</option>
-        <option value="none">{plugin.i18n["lets-nav-helper.showOnDisabled"]}</option>
-      </select>
     </div>
   </div>
 
