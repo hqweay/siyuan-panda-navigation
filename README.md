@@ -4,6 +4,8 @@
 
 A sleek, adaptive floating navigation bar for SiYuan Note, designed for both mobile and desktop. Makes browsing documents in SiYuan feel natural and efficient.
 
+It can now **stand in for SiYuan's built-in mobile bottom bar**: hide the native bar and let this floating nav take over the bottom of your screen. The mobile bar can be styled to match the native look for a seamless transition.
+
 Repository: [GitHub - hqweay/siyuan-panda-navigation](https://github.com/hqweay/siyuan-panda-navigation)
 
 https://github.com/user-attachments/assets/e38886d1-bf0f-4c03-95fc-914b25b09d3b

@@ -4,6 +4,8 @@
 
 专为思源笔记打造的移动端/桌面端自适应导航栏，让你在思源中浏览文档时操作更顺手。
 
+现在它可以**替代思源自带的移动端底部导航栏**：隐藏原生导航栏，让悬浮导航栏接管屏幕底部；移动端导航栏还能一键切换为贴近原生视觉的风格，切换体验更自然。
+
 仓库地址：[GitHub - hqweay/siyuan-panda-navigation: 思源插件：熊猫导航 · GitHub](https://github.com/hqweay/siyuan-panda-navigation)
 
 https://github.com/user-attachments/assets/e38886d1-bf0f-4c03-95fc-914b25b09d3b
