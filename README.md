@@ -21,7 +21,7 @@ https://github.com/user-attachments/assets/55950d50-a6b8-4c3c-8f0a-1f3da14294f1
 - **Drag anywhere on desktop**: A minimal floating icon — no clutter, no space wasted. Drag it to any corner; the position is remembered automatically.
 - **Pill-shaped nav on mobile**: Sits at the bottom, auto-collapses into a tiny pill when scrolling down so it never blocks your content. Tap to expand.
 - **Smooth panel transitions**: Menus and groups glide in and out like a dynamic island, adapting width to button count.
-- **Scroll to top & random roam**: One tap to jump back to the top of the current doc, or open a random note and wander your knowledge base.
+- **Scroll to top & random roam**: One tap to jump back to the top of the current doc, or open a random note and wander your knowledge base. Use back/forward to return to previously browsed docs.
 - **Freely customizable menu**: No rigid hierarchy. Create groups (list or grid layout) and arrange shortcuts however you like.
 - **One-tap preset switching**: Presets aren't just backups — "Switch Preset" is designed as a live button you can trigger anytime. Set up different presets for reading, writing, or exploring, then switch between them like changing channels.
 - **Built-in preset templates**: Not sure where to start? Import a ready-made preset (like the basic 9-grid layout) with one click. You can also save your own setup as a custom preset for backup or scene switching.
