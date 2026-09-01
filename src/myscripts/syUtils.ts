@@ -81,6 +81,7 @@ export function openBlockByID(id: string) {
       app: plugin.app,
       doc: {
         id: id,
+        action: ["cb-get-focus", "cb-get-scroll"],
       },
     });
     // window.open(`siyuan://blocks/${id}`, "_blank");

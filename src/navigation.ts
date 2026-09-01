@@ -188,31 +188,31 @@ class MobileNavigation {
 
   /**
    * 回到上一个文档
+   * 与思源原生快捷键 ⌘[ 走完全一致的通路
    */
   goBack(): void {
-    // 移动端有原生 goBack（维护独立历史栈）；PC 端走思源全局命令
+    // 移动端有原生 window.goBack（维护独立历史栈）
     if (typeof (window as any).goBack === "function") {
       (window as any).goBack();
-    } else {
-      globalCommand("goBack", plugin.app);
+      return;
     }
-    showMessage(plugin.i18n["lets-nav-helper.backToPrev"]);
-    mobileUtils.vibrate(50);
+    // PC 端：与原生快捷键 ⌘] / 顶栏后退按钮一致，交给思源全局命令处理
+    globalCommand("goBack", plugin.app);
   }
 
   /**
    * 前进到下一个文档
+   * 与思源原生快捷键 ⌘] 走完全一致的通路
    */
   goForward(): void {
     const tabs = (window.siyuan as any)?.mobile?.tabs;
     if (tabs?.goForward) {
       // 移动端：思源页签提供前进
       void tabs.goForward();
-    } else {
-      globalCommand("goForward", plugin.app);
+      return;
     }
-    showMessage(plugin.i18n["lets-nav-helper.forwardToNext"]);
-    mobileUtils.vibrate(50);
+    // PC 端：与原生快捷键 ⌘] / 顶栏前进按钮一致，交给思源全局命令处理
+    globalCommand("goForward", plugin.app);
   }
 
   /**

@@ -338,7 +338,8 @@ export const clearRandomDocCache = (sql?: string) => {
 };
 
 /**
- * 跳转到随机文档（不传 action，避免聚焦第一行导致视觉延迟）
+ * 跳转到随机文档
+ * 携带 cb-get-focus 以便 PC 端进入原生后退栈（页签内聚焦跳转），前进/后退可完整回退
  */
 export const goToRandomBlock = async (sql: string) => {
   try {
@@ -351,6 +352,7 @@ export const goToRandomBlock = async (sql: string) => {
         app: plugin.app,
         doc: {
           id: randomDocId,
+          action: ["cb-get-focus", "cb-get-scroll"],
         },
       });
     }
