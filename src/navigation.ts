@@ -14,7 +14,6 @@ const log = getLogger("lets-nav-helper");
  */
 class MobileNavigation {
   private historyInitialized = false;
-  private forwardStack: string[] = [];
   private keydownListener: ((e: KeyboardEvent) => void) | null = null;
   /**
    * 初始化导航历史
@@ -191,13 +190,8 @@ class MobileNavigation {
    * 回到上一个文档
    */
   goBack(): void {
-    if (window.siyuan?.backStack?.length <= 0) {
-      showMessage(plugin.i18n["lets-nav-helper.atTopmost"]);
-      mobileUtils.vibrate([100, 50, 100]);
-      return;
-    }
-    this.forwardStack.push(getCurrentDocId());
-    if (typeof (window as any).goBack === 'function') {
+    // 移动端有原生 goBack（维护独立历史栈）；PC 端走思源全局命令
+    if (typeof (window as any).goBack === "function") {
       (window as any).goBack();
     } else {
       globalCommand("goBack", plugin.app);
@@ -210,23 +204,12 @@ class MobileNavigation {
    * 前进到下一个文档
    */
   goForward(): void {
-    if (typeof (window as any).goBack !== 'function') {
-      // PC environment, use Siyuan's native command
+    const tabs = (window.siyuan as any)?.mobile?.tabs;
+    if (tabs?.goForward) {
+      // 移动端：思源页签提供前进
+      void tabs.goForward();
+    } else {
       globalCommand("goForward", plugin.app);
-      showMessage(plugin.i18n["lets-nav-helper.forwardToNext"]);
-      return;
-    }
-
-    // Mobile environment, use plugin's internal stack
-    if (this.forwardStack.length <= 0) {
-      showMessage(plugin.i18n["lets-nav-helper.atLatest"]);
-      mobileUtils.vibrate([100, 50, 100]);
-      return;
-    }
-
-    const nextId = this.forwardStack.pop();
-    if (nextId) {
-      openBlockByID(nextId);
     }
     showMessage(plugin.i18n["lets-nav-helper.forwardToNext"]);
     mobileUtils.vibrate(50);
